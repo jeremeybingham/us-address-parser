@@ -31,9 +31,10 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
   - `lines`: an array of address lines as the source gave them (for example
-    a street line and a `CITY, ST ZIP` line). The runner joins them with
-    `", "` and calls `Parser::parse` until multi-line input has its own entry
-    point; the record keeps the source's line split for when it does.
+    a street line and a `CITY, ST ZIP` line). Two lines are passed to
+    `Parser::parse_fields` as `line1` and `line2`, which reads them like one
+    line when city, state and ZIP are empty; one line goes to `parse`, and
+    more are joined with `", "`.
   - `fields`: `{line1, line2, city, state, zip}`, passed to
     `Parser::parse_fields`.
 - `expect`: expected `ParsedAddress` components, named as the struct fields
@@ -89,8 +90,8 @@ not standard forms from the lexicon tables.
   - A placeholder line is consumed whole: `placeholder`, nothing in
     `unparsed`.
 
-These conventions describe the planned behavior; review them along with the
-tagger (Milestone 2).
+The tagger follows these conventions; its rules and their sources are in
+`docs/usps-pub28-notes.md` ("Parser rules").
 
 ## Sources
 
@@ -130,3 +131,9 @@ formats, and the military and Department of State examples in sections
 225.1, 238.1 and 239. Inputs use the spellings Pub 28 says to change, and
 the expected values are the standard forms it gives. House numbers are only
 present where Pub 28's example has one.
+
+### `regressions.jsonl`
+
+Cases for parsing bugs found while building the tagger (`CLAUDE.md`: every
+parsing bug fixed gets a case), and the multi-field shapes from
+`docs/prior-art.md`. Ids start with `rg-`; each note says what went wrong.

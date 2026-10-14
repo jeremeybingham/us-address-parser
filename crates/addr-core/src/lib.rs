@@ -5,13 +5,26 @@
 //! This crate **parses and formats** addresses. It does **not** validate
 //! deliverability; that requires CASS-certified data.
 //!
-//! Status: the public types and the lexicon tables ([`Lexicons`]) are in
-//! place; the parsing pipeline is not implemented yet. See `docs/design.md`
-//! for the milestone plan.
+//! ```
+//! let a = addr_core::Parser::new()
+//!     .parse("123 N Main St Apt 4, Miami, FL 33101")
+//!     .unwrap();
+//! assert_eq!(a.street_name.as_deref(), Some("MAIN"));
+//! assert_eq!(a.street_suffix.map(|s| s.abbr()), Some("ST"));
+//! assert_eq!(a.city.as_deref(), Some("MIAMI"));
+//! ```
+//!
+//! Status: parsing (Milestone 2) is in place; the USPS, RESO, key and slug
+//! emitters come in Milestone 3. See `docs/design.md` for the plan.
 
+mod assemble;
+mod classify;
+mod clean;
 mod input;
 pub mod lexicon;
 mod parser;
+mod tagger;
+mod tokenize;
 mod types;
 
 pub use input::Fields;

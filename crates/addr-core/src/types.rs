@@ -408,14 +408,12 @@ pub enum Warning {
     MissingZip,
     /// A ZIP that is not 5 digits, or ZIP+4 that is not 4 digits.
     InvalidZip,
-    /// The parser pipeline is not implemented yet (skeleton only).
-    NotImplemented,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 16] = [
+    pub const ALL: [Warning; 15] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -431,7 +429,6 @@ impl Warning {
         Warning::UnknownState,
         Warning::MissingZip,
         Warning::InvalidZip,
-        Warning::NotImplemented,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -453,7 +450,6 @@ impl Warning {
             Warning::UnknownState => "unknown_state",
             Warning::MissingZip => "missing_zip",
             Warning::InvalidZip => "invalid_zip",
-            Warning::NotImplemented => "not_implemented",
         }
     }
 }

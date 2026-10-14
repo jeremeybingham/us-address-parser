@@ -352,9 +352,18 @@ fn run(parser: &Parser, c: &Case) -> Values {
     let result = if let Some(s) = &c.input {
         parser.parse(s)
     } else if let Some(lines) = &c.lines {
-        // Until multi-line input has its own entry point, lines are joined
-        // the way a single-line caller would write them.
-        parser.parse(&lines.join(", "))
+        // Two lines are the address lines of `Fields`; parse_fields reads
+        // them like one line when city, state and ZIP are empty. Longer
+        // records are joined the way a single-line caller would write them.
+        match lines.as_slice() {
+            [l1] => parser.parse(l1),
+            [l1, l2] => parser.parse_fields(&Fields {
+                line1: Some(l1.clone()),
+                line2: Some(l2.clone()),
+                ..Fields::default()
+            }),
+            _ => parser.parse(&lines.join(", ")),
+        }
     } else {
         let f = c.fields.as_ref().unwrap();
         parser.parse_fields(&Fields {
