@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: planning complete, no code written yet. Date: 2026-10-14.
+Status: Milestone 1 (data and types) done; the golden-corpus format and runner from Milestone 4 were brought forward ahead of Milestone 2. Planning date: 2026-10-14.
 
 ---
 
@@ -74,6 +74,9 @@ These were the open questions, with the resolved answers. Items marked *(propose
 | 10 | Distribution | abi3 wheels; library, model, and key-format versions tracked independently. |
 | 11 | Compatibility | Own schema; optional usaddress-compatible tag output. |
 | 12 | License | Dual MIT / Apache-2.0 (confirm if a paid tier is planned). |
+| 13 | Component spans | Byte ranges into the **original** input, not the cleaned text. `clean.rs` keeps a map from cleaned to original offsets. For multi-field input a span also names the field it came from. |
+| 14 | Multi-field input | `parse_fields` tags each field on its own, using the field as a strong signal (the city field is the city), instead of joining the fields into one line. Field quirks from real data are in `docs/prior-art.md`. A source that gives a street line plus a `CITY, ST ZIP` line has no matching `Fields` shape yet; settle that in item 15. |
+| 15 | Address shapes with no field yet | Add fields to `ParsedAddress` for highway routes (prefix kept apart from the route number), general delivery, military (PSC/CMR/UNIT box plus APO/FPO/DPO), and a second unit designator. The RESO emitter folds those it has no field for into `StreetName` or unit fields; document how in `docs/reso-mapping.md`. |
 
 ---
 
@@ -250,6 +253,7 @@ Small and optional, but useful from day one for debugging and bulk work:
 ## 9. Testing and quality
 
 The labeled corpus is the most important asset in the project. Build it first.
+The format, runner and first cases are in place (`tests/corpus/README.md`); the runner fails on regressions against `tests/corpus/passing.txt`, not on cases the parser does not handle yet.
 
 - **Golden corpus** in `tests/corpus/*.jsonl`. Each record: input, expected components, expected USPS output, expected RESO output, expected key. Seed it from the author's existing Florida code and test cases, plus public usaddress training data (MIT; keep attribution).
 - **Property tests** (proptest): parsing the USPS output of a parsed address yields the same key; key equality across known variants; tokenizer never panics.
@@ -297,8 +301,8 @@ Build in this order. Each milestone should end with passing tests.
 
 ### Milestone 4: corpus and CLI
 
-19. `tests/corpus/*.jsonl` (seed from existing Florida code)
-20. `crates/addr-core/tests/corpus.rs` (golden test runner)
+19. `tests/corpus/*.jsonl` (seed from existing Florida code). *First seed done before Milestone 2 (auction-tracker test cases); expand here.*
+20. `crates/addr-core/tests/corpus.rs` (golden test runner). *Done before Milestone 2; add emitter fields (USPS, RESO, key) after Milestone 3.*
 21. `crates/addr-cli/Cargo.toml`, `src/main.rs`
 22. `benches/parse.rs`
 

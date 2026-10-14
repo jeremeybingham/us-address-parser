@@ -16,3 +16,13 @@
     `code()` strings.
   - `docs/prior-art.md`: lessons from the author's Florida address code
     (auction-tracker, dbpr_fl).
+- Golden corpus (brought forward from Milestone 4):
+  - JSONL record format and labeling conventions (`tests/corpus/README.md`).
+  - Runner `crates/addr-core/tests/corpus.rs`: per-field and whole-address
+    accuracy report; fails on malformed records and on regressions against
+    `tests/corpus/passing.txt`.
+  - 67 cases hand-labeled from auction-tracker's address tests.
+  - `Warning::ALL`, used to check expected warning codes.
+- `docs/design.md`: decisions 13 to 15 (spans into the original input,
+  per-field parsing of `Fields`, new fields for highway, general delivery,
+  military and second-unit addresses).

@@ -261,6 +261,27 @@ pub enum Warning {
 }
 
 impl Warning {
+    /// Every variant, in declaration order. Add new variants here too; the
+    /// golden-corpus runner checks expected warning codes against this list.
+    pub const ALL: [Warning; 16] = [
+        Warning::UnparsedRemainder,
+        Warning::AmbiguousToken,
+        Warning::Placeholder,
+        Warning::MissingStreetNumber,
+        Warning::ZeroStreetNumber,
+        Warning::AmbiguousStreetNumber,
+        Warning::MultipleAddresses,
+        Warning::PossiblyTruncated,
+        Warning::MissingUnitNumber,
+        Warning::NonStandardAbbreviation,
+        Warning::MissingCity,
+        Warning::MissingState,
+        Warning::UnknownState,
+        Warning::MissingZip,
+        Warning::InvalidZip,
+        Warning::NotImplemented,
+    ];
+
     /// Stable snake_case identifier. Part of the public contract: never
     /// change an existing code; add new ones.
     pub const fn code(&self) -> &'static str {
@@ -384,24 +405,7 @@ mod tests {
 
     #[test]
     fn warning_codes_are_unique() {
-        let all = [
-            Warning::UnparsedRemainder,
-            Warning::AmbiguousToken,
-            Warning::Placeholder,
-            Warning::MissingStreetNumber,
-            Warning::ZeroStreetNumber,
-            Warning::AmbiguousStreetNumber,
-            Warning::MultipleAddresses,
-            Warning::PossiblyTruncated,
-            Warning::MissingUnitNumber,
-            Warning::NonStandardAbbreviation,
-            Warning::MissingCity,
-            Warning::MissingState,
-            Warning::UnknownState,
-            Warning::MissingZip,
-            Warning::InvalidZip,
-            Warning::NotImplemented,
-        ];
+        let all = Warning::ALL;
         let mut codes: Vec<_> = all.iter().map(Warning::code).collect();
         codes.sort_unstable();
         codes.dedup();

@@ -13,6 +13,6 @@ Rust-core US address parser with a PyO3 Python wrapper. Read docs/design.md firs
 
 ## Workflow
 - Run `cargo fmt`, `cargo clippy -- -D warnings`, and `cargo test --all-features` before finishing a task.
-- Add a golden-corpus case for every parsing bug fixed.
+- Add a golden-corpus case for every parsing bug fixed (format: tests/corpus/README.md). When a change makes more cases pass, rerun the corpus test with `UPDATE_CORPUS_BASELINE=1` and commit `tests/corpus/passing.txt`.
 - Prefer small commits aligned with the milestones in docs/design.md.
 - Python: `maturin develop` then `pytest crates/addr-py/tests`.
