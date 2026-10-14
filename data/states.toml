@@ -7,7 +7,8 @@
 # Source: USPS Publication 28, Appendix B "Two-Letter State and Possession
 # Abbreviations".
 #   https://pe.usps.com/text/pub28/28apb.htm
-# Armed Forces codes AA, AE, AP: Pub 28 military addressing (APO/FPO/DPO).
+# Armed Forces codes AA, AE, AP: Appendix B's Military "State" table and
+# section 225.1 Military Addresses (https://pe.usps.com/text/pub28/28c2_010.htm).
 # See docs/usps-pub28-notes.md for verification status.
 #
 # Each entry:
