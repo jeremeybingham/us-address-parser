@@ -14,12 +14,13 @@
 //! assert_eq!(a.city.as_deref(), Some("MIAMI"));
 //! ```
 //!
-//! Status: parsing (Milestone 2) is in place; the USPS, RESO, key and slug
-//! emitters come in Milestone 3. See `docs/design.md` for the plan.
+//! Status: parsing (Milestone 2) and the canonical key are in place; the USPS,
+//! RESO and slug emitters come next (Milestone 3). See `docs/design.md` for the plan.
 
 mod assemble;
 mod classify;
 mod clean;
+mod emit;
 mod input;
 pub mod lexicon;
 mod parser;
@@ -27,6 +28,7 @@ mod tagger;
 mod tokenize;
 mod types;
 
+pub use emit::KeyOptions;
 pub use input::Fields;
 pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind};
 pub use parser::{ParseError, Parser};

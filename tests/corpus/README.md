@@ -53,8 +53,14 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
   or extra warnings both fail.
 - `note`: optional, why the case is there or why it is labeled this way.
 
-Fields that the emitters will need (USPS lines, RESO fields, key) are added
-in Milestone 3, as optional keys.
+Emitter expectations are optional record keys, checked only when present
+(unlike `expect`, absent means not checked):
+
+- `key`: the property-level key string (`KeyOptions::property()`), or
+  `"none"` when the address has no key.
+- `key_unit`: the same for `KeyOptions::unit()`.
+
+USPS lines and RESO fields will be added the same way.
 
 The runner rejects unknown keys, duplicate ids, unknown warning codes, and
 suffix, unit, state, directional, highway-prefix or military values that are

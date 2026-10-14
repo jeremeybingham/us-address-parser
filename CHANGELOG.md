@@ -52,3 +52,6 @@
     optional dependency).
   - `Warning::NotImplemented` removed.
   - Corpus: 134 cases, all passing (`regressions.jsonl` added).
+- Milestone 3, canonical key (`k1`): `ParsedAddress::key(KeyOptions)` in
+  `emit/key.rs`, spec in `docs/key-format.md`; corpus records can carry
+  `key` and `key_unit`, with `tests/corpus/keys.jsonl` (7 cases).

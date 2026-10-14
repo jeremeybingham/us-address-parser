@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Next: Milestone 3 (emitters). Progress is tracked in section 10. Planning date: 2026-10-14.
+Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is started: the key is done, the rest is next. Progress is tracked in section 10. Planning date: 2026-10-14.
 
 ---
 
@@ -66,7 +66,8 @@ These were the open questions, with the resolved answers. Items marked *(propose
 | 2 | Model training | Train in Python (parserator / python-crfsuite) on usaddress's MIT-licensed training data plus own Florida labels; Rust does inference only via `crfs`. |
 | 3 | Input scope | Both single-line strings and multi-field input (line1, line2, city, state, zip). |
 | 4 | Geographic scope | US-wide grammar. **State-specific tuning packs are deferred** until after the core parser is done (section 11). Design the core so packs can be added later without restructuring. |
-| 5 | Canonical key | Unit inclusion is an explicit option; key carries a version prefix. City excluded from the key *(proposed, see 6.4)*. |
+| 5 | Canonical key | Unit inclusion is an explicit option (default off, property level); key carries a version prefix. City and ZIP+4 excluded. Confirmed by the author; spec in `docs/key-format.md`. |
+| 16 | Key shape | Pipe-delimited uppercase ASCII with a one-letter form (`S`, `P`, `R`, `M`, `G`). `k1:` needs state and ZIP5; otherwise `k1n:`. Unit type is dropped at unit level so `Apt 4` equals `#4`. Placeholders and addresses with nothing to key on give `None`. |
 | 6 | Error model | Always return a `ParsedAddress` with diagnostics; no `Result` for partial parses. `Result` only for truly unusable input (e.g. empty). |
 | 7 | Lexicon extensibility | Fixed at compile time in v1. |
 | 8 | Data sources | USPS Pub 28 and the RESO Data Dictionary; document provenance of each table. |
@@ -269,7 +270,7 @@ The format, runner and first cases are in place (`tests/corpus/README.md`); the 
 
 Build in this order. Each milestone should end with passing tests.
 
-Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 134 cases, all passing; runner compares components and warnings only). Everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
+Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 134 cases, all passing; runner compares components and warnings only). Milestone 3 has begun with the key emitter (item 17 partly: `emit/key.rs`, `docs/key-format.md`); everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
 
 ### Milestone 0: scaffolding (done)
 

@@ -14,7 +14,9 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use addr_core::{Directional, Fields, Lexicons, MatchKind, ParsedAddress, Parser, Warning};
+use addr_core::{
+    Directional, Fields, KeyOptions, Lexicons, MatchKind, ParsedAddress, Parser, Warning,
+};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -27,6 +29,11 @@ struct Case {
     expect: Expect,
     #[serde(default)]
     warnings: Vec<String>,
+    /// Property-level key (`KeyOptions::property()`), or `"none"` when the
+    /// address has no key. Unlike `expect`, absent means not checked.
+    key: Option<String>,
+    /// Unit-level key (`KeyOptions::unit()`); same conventions as `key`.
+    key_unit: Option<String>,
     #[serde(default)]
     #[allow(dead_code)]
     note: Option<String>,
@@ -98,7 +105,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 21] = [
+const FIELDS: [&str; 23] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -120,7 +127,12 @@ const FIELDS: [&str; 21] = [
     "zip4",
     "unparsed",
     "warnings",
+    "key",
+    "key_unit",
 ];
+
+/// Fields checked only for the cases that give them.
+const OPTIONAL_FIELDS: [&str; 2] = ["key", "key_unit"];
 
 type Values = BTreeMap<&'static str, Option<String>>;
 
@@ -186,6 +198,12 @@ fn expected_values(c: &Case) -> Values {
         "warnings",
         warnings_str(c.warnings.iter().map(String::as_str)),
     );
+    if let Some(k) = &c.key {
+        v.insert("key", Some(k.clone()));
+    }
+    if let Some(k) = &c.key_unit {
+        v.insert("key_unit", Some(k.clone()));
+    }
     v
 }
 
@@ -245,6 +263,9 @@ fn actual_values(a: &ParsedAddress) -> Values {
         "warnings",
         warnings_str(a.diagnostics.warnings.iter().map(Warning::code)),
     );
+    let key = |o| Some(a.key(o).unwrap_or_else(|| "none".to_string()));
+    v.insert("key", key(KeyOptions::property()));
+    v.insert("key_unit", key(KeyOptions::unit()));
     v
 }
 
@@ -378,6 +399,8 @@ fn run(parser: &Parser, c: &Case) -> Values {
         Ok(a) => actual_values(&a),
         Err(e) => {
             let mut v: Values = FIELDS.iter().map(|&f| (f, None)).collect();
+            v.insert("key", Some("none".to_string()));
+            v.insert("key_unit", Some("none".to_string()));
             v.insert("unparsed", Some(format!("<error: {e}>")));
             v
         }
@@ -405,6 +428,7 @@ fn golden_corpus() {
 
     let parser = Parser::new();
     let mut field_ok: BTreeMap<&str, usize> = FIELDS.iter().map(|&f| (f, 0)).collect();
+    let mut field_n: BTreeMap<&str, usize> = FIELDS.iter().map(|&f| (f, 0)).collect();
     let mut passing = BTreeSet::new();
     let mut failures: BTreeMap<String, String> = BTreeMap::new();
     for (file, c) in &cases {
@@ -412,6 +436,10 @@ fn golden_corpus() {
         let got = run(&parser, c);
         let mut diffs = Vec::new();
         for f in FIELDS {
+            if OPTIONAL_FIELDS.contains(&f) && !want.contains_key(f) {
+                continue;
+            }
+            *field_n.get_mut(f).unwrap() += 1;
             if want[f] == got[f] {
                 *field_ok.get_mut(f).unwrap() += 1;
             } else {
@@ -448,7 +476,12 @@ fn golden_corpus() {
     );
     for f in FIELDS {
         let n = field_ok[f];
-        println!("  {f:<20} {n:>4}/{total} ({:.1}%)", pct(n));
+        if OPTIONAL_FIELDS.contains(&f) {
+            let of = field_n[f];
+            println!("  {f:<20} {n:>4}/{of} checked");
+        } else {
+            println!("  {f:<20} {n:>4}/{total} ({:.1}%)", pct(n));
+        }
     }
     if std::env::var_os("CORPUS_VERBOSE").is_some() && !failures.is_empty() {
         let all: Vec<_> = failures.values().map(String::as_str).collect();
