@@ -1,0 +1,18 @@
+[package]
+name = "addr-core"
+description = "Pure-Rust US address parser and normalizer (USPS Pub 28 / RESO emitters)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+default = []
+# Parallel batch parsing via rayon (Milestone 2+).
+rayon = []
+# CRF fallback tagger (Milestone 6).
+crf = []
+
+[lints]
+workspace = true

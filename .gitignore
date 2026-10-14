@@ -1,0 +1,11 @@
+/target
+**/*.rs.bk
+Cargo.lock.bak
+__pycache__/
+*.pyc
+*.so
+*.pyd
+.venv/
+dist/
+/crates/addr-py/python/addr/*.so
+.DS_Store

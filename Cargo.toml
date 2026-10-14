@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = ["crates/addr-core", "crates/addr-cli"]
+# addr-py is built with maturin (see crates/addr-py/pyproject.toml) and is
+# intentionally not a default member until Milestone 5.
+
+[workspace.package]
+version = "0.0.1"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/jeremeybingham/us-address-parser"
+rust-version = "1.80"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
