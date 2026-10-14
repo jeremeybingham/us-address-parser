@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: Milestone 1 (data and types) done; the golden-corpus format and runner from Milestone 4 were brought forward ahead of Milestone 2. Planning date: 2026-10-14.
+Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Next: Milestone 3 (emitters). Progress is tracked in section 10. Planning date: 2026-10-14.
 
 ---
 
@@ -269,7 +269,9 @@ The format, runner and first cases are in place (`tests/corpus/README.md`); the 
 
 Build in this order. Each milestone should end with passing tests.
 
-### Milestone 0: scaffolding
+Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 134 cases, all passing; runner compares components and warnings only). Everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
+
+### Milestone 0: scaffolding (done)
 
 1. `Cargo.toml` (workspace), `rust-toolchain.toml`, `.gitignore`, `LICENSE-MIT`, `LICENSE-APACHE`
 2. `README.md` (with the non-goals and the not-a-validator statement)
@@ -277,14 +279,14 @@ Build in this order. Each milestone should end with passing tests.
 4. `crates/addr-core/Cargo.toml`, `crates/addr-core/src/lib.rs`
 5. `.github/workflows/ci.yml`
 
-### Milestone 1: data and types
+### Milestone 1: data and types (done)
 
 6. `data/suffixes.toml`, `directionals.toml`, `units.toml`, `states.toml`, `special.toml`, each with a source comment
 7. `crates/addr-core/build.rs` (compile TOML into static tables) or a `include_str!` plus lazy parse if build script is overkill
 8. `crates/addr-core/src/types.rs` (`ParsedAddress`, enums, `Diagnostics`)
 9. `crates/addr-core/src/lexicon.rs`
 
-### Milestone 2: parser
+### Milestone 2: parser (done)
 
 10. `src/clean.rs` (input normalization)
 11. `src/tokenize.rs` (tokens with spans)
@@ -361,10 +363,11 @@ Open questions to settle when this is picked up:
 
 ## 12. Risks
 
-- **Accuracy parity with usaddress** is the main risk. Measure early on the Florida corpus; do not assume rules alone will match a trained CRF.
+- **Accuracy parity with usaddress** is the main risk. Measure early on the Florida corpus; do not assume rules alone will match a trained CRF. Status: the rule parser passes all 134 hand-labeled corpus cases, but those cases shaped the rules. No held-out data or usaddress comparison exists yet; add both (a held-out set from usaddress's training data, then the comparison script) before claiming parity or deciding on Milestone 6.
 - **Model format compatibility** between CRFsuite-trained models and the `crfs` crate must be verified before Milestone 6 work.
 - **Key stability.** The key format is a public contract once stored; get it reviewed before release.
 - **Licensing.** Confirm the data provenance of every lexicon table before publishing, and keep MIT attribution for any usaddress-derived training data.
+- **Missing safety nets.** No proptest, fuzz targets or benchmarks exist yet, though the parser is written and the never-panic rule is only covered by one unit test. Add a proptest no-panic/span-validity property alongside Milestone 3.
 - **Python boundary overhead** for single-address calls; recommend `parse_many` in docs.
 
 ---

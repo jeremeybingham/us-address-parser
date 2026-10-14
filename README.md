@@ -5,7 +5,7 @@ strings (or pre-split fields) into components, emits **USPS Publication 28**
 style and **RESO Data Dictionary** output, and produces database-ready
 identifiers (a stable canonical match key and a URL-safe slug).
 
-> **Status: Milestone 2 (parser).** `Parser::parse`, `parse_fields` and
+> **Status: Milestones 0 to 2 done (parser).** `Parser::parse`, `parse_fields` and
 > `parse_many` parse single-line and multi-field input into components, with
 > spans into the original text and diagnostics. The rules and their sources
 > are in [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md). The USPS,
