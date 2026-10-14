@@ -375,6 +375,8 @@ Open questions to settle when this is picked up:
 
 ## 13. Open items for the author
 
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Next: RESO emitter and `docs/reso-mapping.md` (needs the current RESO Data Dictionary version and the author's review of the field mapping), then the slug (`emit/slug.rs`), then proptest/no-panic property, then Milestone 4 (CLI, benches). Verification debt: the list "To verify against the live Pub 28 text" in `docs/usps-pub28-notes.md`; do it first if `pe.usps.com` is reachable.
+
 1. Point Claude Code at the existing Florida parsing code so its rules and tests can seed the corpus (and decide whether it stays as a reference or is ported).
 2. Confirm the library name and crate/package names.
 3. Confirm dual MIT/Apache-2.0 licensing.
