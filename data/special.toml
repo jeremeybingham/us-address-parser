@@ -42,6 +42,9 @@ standard = "RR"
 forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "RFD ROUTE", "RURAL FREE DELIVERY", "RTE", "RT", "ROUTE"]
 
 [highway_contract]
+# Pub 28 section 251: write HC ## BOX ##. Use the HC abbreviation; do not use
+# HIGHWAY CONTRACT, ROUTE, NUMBER, NO, STAR ROUTE or the pound sign. Those
+# words are accepted here as input only; the emitter writes HC.
 standard = "HC"
 forms = ["HC", "H C", "HCR", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE"]
 

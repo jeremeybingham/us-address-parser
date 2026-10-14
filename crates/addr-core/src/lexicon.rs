@@ -394,6 +394,12 @@ mod tests {
             sp("Rural Route"),
             Some((Special::RuralRoute, MatchKind::Variant))
         );
+        // Pub 28 section 251: these are input only; HC is the standard.
+        assert_eq!(
+            sp("Highway Contract Route"),
+            Some((Special::HighwayContract, MatchKind::Variant))
+        );
+        assert_eq!(Special::HighwayContract.standard(), "HC");
         assert_eq!(
             sp("STAR ROUTE"),
             Some((Special::HighwayContract, MatchKind::Variant))

@@ -34,7 +34,8 @@ against the live Pub 28 pages and clear the items marked *pending* below.
 | `units.toml` | Appendix C2, Secondary Unit Designators (<https://pe.usps.com/text/pub28/pub28apc_003.htm>) | Copy of the C2 HTML table (October 2026). First transcribed from usaddress-scourgify `OCCUPANCY_TYPE_ABBREVIATIONS`. | **Verified**: all 24 designators and abbreviations, and the `range_required` column (C2 marks BSMT, FRNT, LBBY, LOWR, OFC, PH, REAR, SIDE, UPPR as not needing a secondary range). C2 spells the HNGR description "Hanger"; HANGAR is kept as `observed`. C2 also has a "Blank, unable to determine" row that requires the pound sign (#) on the mailpiece; that is the `#` designator the tagger handles. |
 | `states.toml` | Appendix B, Two-Letter State and Possession Abbreviations (<https://pe.usps.com/text/pub28/28apb.htm>) | usaddress-scourgify `STATE_ABBREVIATIONS` and the street-address gem `STATE_CODES` for names and codes. | Cross-checked: the gem agrees on all 59 codes and names for states, DC and possessions. *Pending*: Armed Forces codes AA/AE/AP (in neither source). |
 | `directionals.toml` | Chapter 2, directionals | usaddress-scourgify `DIRECTIONAL_REPLACEMENTS` and the street-address gem `DIRECTIONAL`. | Cross-checked. *Pending*: the Pub 28 section number. |
-| `special.toml` PO Box, rural route, highway contract, general delivery | Chapter 2, PO Box, rural route, highway contract route and general delivery addresses | None found. | *Pending*: the standard forms (PO BOX, RR, HC, GENERAL DELIVERY) are well established, but the variant lists, the PO Box synonyms (DRAWER, CALLER, LOCKBOX) and the section numbers need checking against the text. |
+| `special.toml` PO Box, rural route, general delivery | Chapter 2, PO Box, rural route and general delivery addresses | None found. | *Pending*: the standard forms (PO BOX, RR, GENERAL DELIVERY) are well established, but the variant lists, the PO Box synonyms (DRAWER, CALLER, LOCKBOX) and the section numbers need checking against the text. |
+| `special.toml` `[highway_contract]` | Section 251, Highway Contract Route Addresses: Format | Copy of the section 251 text and its example (October 2026). | **Verified**: the standard form is `HC ## BOX ##` (example: HC 68 BOX 23A). Section 251 names HIGHWAY CONTRACT and STAR ROUTE as words not to use, which confirms them as input-only variants. HCR, H C, HWY CONTRACT and STAR RTE are not named there; they stay as accepted input. |
 | `special.toml` `[[highway]]` | Chapter 2, highway street names | None found. | *Pending*: which standard form Pub 28 uses for each highway prefix (for example COUNTY ROAD vs CR) must be confirmed before the USPS emitter (Milestone 3) relies on it. In Milestone 2 the table is only used to *recognize* highway names. |
 | `special.toml` `[placeholder]` | Not a USPS rule | auction-tracker `PLACEHOLDER_RE` and its tests (see `docs/prior-art.md`). | Data-quality list; no USPS claim. |
 
@@ -79,4 +80,10 @@ emitted.
 
 ## Emitter rules
 
-TODO: written in Milestone 3.
+TODO: written in Milestone 3. Rules already sourced:
+
+- Highway contract route (section 251): emit `HC <route> BOX <box>`, e.g.
+  `HC 68 BOX 23A`. Drop HIGHWAY CONTRACT, ROUTE, NUMBER, NO, STAR ROUTE and
+  the pound sign, so `HIGHWAY CONTRACT ROUTE 68 BOX 23A`,
+  `STAR ROUTE 68 BOX 23A` and `HC RTE #68 BOX 23A` all become
+  `HC 68 BOX 23A`. The route and box values may hold letters (23A).
