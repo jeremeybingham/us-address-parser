@@ -3,15 +3,12 @@
 # Street suffixes (street types) and their Postal Service standard abbreviations.
 #
 # Source: USPS Publication 28, Appendix C1 "Street Suffix Abbreviations".
-#   https://pe.usps.com/text/pub28/28apc_002.htm
+#   https://pe.usps.com/text/pub28/pub28apc_002.htm
 #
-# Transcription: pe.usps.com was not reachable from the build environment when
-# this table was written, so the variant -> abbreviation pairs were taken from
-# two independent open-source transcriptions of Appendix C1 and kept only where
-# they agree (they agree on every pair; they differ only in whether a standard
-# abbreviation is listed as mapping to itself):
-#   - usaddress-scourgify, scourgify/address_constants.py (MIT)
-#   - street-address gem 2.0.0, lib/street_address.rb (MIT)
+# Verified against a copy of the Appendix C1 page (October 2026). The table
+# was first transcribed from two open-source copies of C1 (usaddress-scourgify
+# and the street-address gem, both MIT); spellings those copies list that the
+# current C1 does not are kept as `observed`.
 # See docs/usps-pub28-notes.md for the verification status of this table.
 #
 # Each entry:
@@ -135,7 +132,10 @@ forms = ["CAPE", "CPE"]
 [[suffix]]
 name = "CAUSEWAY"
 abbr = "CSWY"
-forms = ["CAUSEWAY", "CAUSWAY", "CSWY"]
+forms = ["CAUSEWAY", "CAUSWA", "CSWY"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["CAUSWAY"]
 
 [[suffix]]
 name = "CENTER"
@@ -178,6 +178,11 @@ abbr = "CMN"
 forms = ["CMN", "COMMON"]
 
 [[suffix]]
+name = "COMMONS"
+abbr = "CMNS"
+forms = ["CMNS", "COMMONS"]
+
+[[suffix]]
 name = "CORNER"
 abbr = "COR"
 forms = ["COR", "CORNER"]
@@ -195,7 +200,10 @@ forms = ["COURSE", "CRSE"]
 [[suffix]]
 name = "COURT"
 abbr = "CT"
-forms = ["COURT", "CRT", "CT"]
+forms = ["COURT", "CT"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["CRT"]
 
 [[suffix]]
 name = "COURTS"
@@ -215,12 +223,18 @@ forms = ["COVES", "CVS"]
 [[suffix]]
 name = "CREEK"
 abbr = "CRK"
-forms = ["CK", "CR", "CREEK", "CRK"]
+forms = ["CREEK", "CRK"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["CK", "CR"]
 
 [[suffix]]
 name = "CRESCENT"
 abbr = "CRES"
-forms = ["CRECENT", "CRES", "CRESCENT", "CRESENT", "CRSCNT", "CRSENT", "CRSNT"]
+forms = ["CRES", "CRESCENT", "CRSENT", "CRSNT"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["CRECENT", "CRESENT", "CRSCNT"]
 
 [[suffix]]
 name = "CREST"
@@ -230,7 +244,10 @@ forms = ["CREST", "CRST"]
 [[suffix]]
 name = "CROSSING"
 abbr = "XING"
-forms = ["CROSSING", "CRSSING", "CRSSNG", "XING"]
+forms = ["CROSSING", "CRSSNG", "XING"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["CRSSING"]
 
 [[suffix]]
 name = "CROSSROAD"
@@ -437,12 +454,18 @@ forms = ["HARBORS", "HBRS"]
 [[suffix]]
 name = "HAVEN"
 abbr = "HVN"
-forms = ["HAVEN", "HAVN", "HVN"]
+forms = ["HAVEN", "HVN"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["HAVN"]
 
 [[suffix]]
 name = "HEIGHTS"
 abbr = "HTS"
-forms = ["HEIGHT", "HEIGHTS", "HGTS", "HT", "HTS"]
+forms = ["HEIGHTS", "HT", "HTS"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["HEIGHT", "HGTS"]
 
 [[suffix]]
 name = "HIGHWAY"
@@ -537,7 +560,10 @@ forms = ["LANDING", "LNDG", "LNDNG"]
 [[suffix]]
 name = "LANE"
 abbr = "LN"
-forms = ["LA", "LANE", "LANES", "LN"]
+forms = ["LANE", "LN"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["LA", "LANES"]
 
 [[suffix]]
 name = "LIGHT"
@@ -595,6 +621,8 @@ abbr = "MDW"
 forms = ["MDW", "MEADOW"]
 
 [[suffix]]
+# C1 also lists MDW under MEADOWS. MDW is the standard abbreviation for
+# MEADOW, and a spelling can map to only one entry, so it stays there.
 name = "MEADOWS"
 abbr = "MDWS"
 forms = ["MDWS", "MEADOWS", "MEDOWS"]
@@ -662,7 +690,10 @@ forms = ["OPAS", "OVERPASS"]
 [[suffix]]
 name = "PARK"
 abbr = "PARK"
-forms = ["PARK", "PARKS", "PK", "PRK"]
+forms = ["PARK", "PARKS", "PRK"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["PK"]
 
 [[suffix]]
 name = "PARKWAY"
@@ -712,7 +743,10 @@ forms = ["PLAIN", "PLN"]
 [[suffix]]
 name = "PLAINS"
 abbr = "PLNS"
-forms = ["PLAINES", "PLAINS", "PLNS"]
+forms = ["PLAINS", "PLNS"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["PLAINES"]
 
 [[suffix]]
 name = "PLAZA"
@@ -742,7 +776,10 @@ forms = ["PORTS", "PRTS"]
 [[suffix]]
 name = "PRAIRIE"
 abbr = "PR"
-forms = ["PR", "PRAIRIE", "PRARIE", "PRR"]
+forms = ["PR", "PRAIRIE", "PRR"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["PRARIE"]
 
 [[suffix]]
 name = "RADIAL"
@@ -877,7 +914,10 @@ forms = ["STA", "STATION", "STATN", "STN"]
 [[suffix]]
 name = "STRAVENUE"
 abbr = "STRA"
-forms = ["STRA", "STRAV", "STRAVE", "STRAVEN", "STRAVENUE", "STRAVN", "STRVN", "STRVNUE"]
+forms = ["STRA", "STRAV", "STRAVEN", "STRAVENUE", "STRAVN", "STRVN", "STRVNUE"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["STRAVE"]
 
 [[suffix]]
 name = "STREAM"
@@ -929,7 +969,10 @@ forms = ["TRAFFICWAY", "TRFY"]
 [[suffix]]
 name = "TRAIL"
 abbr = "TRL"
-forms = ["TR", "TRAIL", "TRAILS", "TRL", "TRLS"]
+forms = ["TRAIL", "TRAILS", "TRL", "TRLS"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["TR"]
 
 # Not present in either cross-check transcription; added from Pub 28 Appendix C1
 # and pending verification against the published text.
@@ -946,7 +989,10 @@ forms = ["TUNEL", "TUNL", "TUNLS", "TUNNEL", "TUNNELS", "TUNNL"]
 [[suffix]]
 name = "TURNPIKE"
 abbr = "TPKE"
-forms = ["TPK", "TPKE", "TRNPK", "TRPK", "TURNPIKE", "TURNPK"]
+forms = ["TPKE", "TRNPK", "TURNPIKE", "TURNPK"]
+# observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
+# not in the current Appendix C1
+observed = ["TPK", "TRPK"]
 
 [[suffix]]
 name = "UNDERPASS"

@@ -5,15 +5,15 @@
 # the designator.
 #
 # Source: USPS Publication 28, Appendix C2 "Secondary Unit Designators".
-#   https://pe.usps.com/text/pub28/28apc_003.htm
+#   https://pe.usps.com/text/pub28/pub28apc_003.htm
 # The "#" designator: Pub 28 allows the pound sign in place of a designator
 # when the designator is not known; it is handled by the tagger, not listed
 # here. See docs/usps-pub28-notes.md for the section reference and the
 # verification status of this table.
 #
-# Cross-check: usaddress-scourgify OCCUPANCY_TYPE_ABBREVIATIONS (MIT) agrees
-# on every designator except two spellings it gets wrong: it lists "HANGER"
-# (Pub 28: HANGAR) and abbreviates UPPER as "UPPER" (Pub 28: UPPR).
+# Verified against a copy of the Appendix C2 page (October 2026): every
+# designator, abbreviation and range_required flag (the "**" marks in C2)
+# matches.
 #
 # Each entry:
 #   name            designator name
@@ -64,10 +64,13 @@ range_required = false
 forms = ["FRONT", "FRNT"]
 
 [[unit]]
-name = "HANGAR"
+# C2 spells the description "Hanger". HANGAR is the dictionary spelling.
+name = "HANGER"
 abbr = "HNGR"
 range_required = true
-forms = ["HANGAR", "HNGR"]
+forms = ["HANGER", "HNGR"]
+# observed: correct English spelling, not the one C2 lists
+observed = ["HANGAR"]
 
 [[unit]]
 name = "KEY"
