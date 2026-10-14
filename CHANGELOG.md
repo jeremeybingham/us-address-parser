@@ -33,5 +33,5 @@
   `Lexicons::military_post_office` (Pub 28 sections 225.1, 238.1, 239).
 - Component spans into the original input (decision 13): `Span`,
   `Component`, `SourceInfo::spans`, `SourceInfo::text`.
-- Corpus: the two held-back highway cases, and `pub28.jsonl` with 48 cases
+- Corpus: the two held-back highway cases, and `pub28.jsonl` with 49 cases
   from Pub 28's own examples.
