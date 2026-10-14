@@ -120,7 +120,66 @@ shapes in real county data (`docs/prior-art.md`) and are not USPS rules.
 
 ## Emitter rules
 
-TODO: written in Milestone 3. Rules already sourced:
+### USPS emitter (`emit/usps.rs`, `ParsedAddress::to_usps`)
+
+Output: `UspsAddress { line1, line2, city, state, zip }` plus `last_line()`
+(`CITY ST ZIP`). **Status of the layout rules below: UNVERIFIED.** They were
+written from memory of Pub 28 because `pe.usps.com` was blocked in the
+session that wrote the emitter. Check each against the live text and fill in
+the section numbers before release (Milestone 7). The rules in the second
+list ("Special forms"), which were sourced earlier, are implemented as
+written.
+
+| Rule | Source |
+|---|---|
+| Uppercase; punctuation dropped (`. , ' " ; : ( )`) except the hyphen in house numbers and ZIP+4 and the slash in fractions. | Unverified (Pub 28 chapter 2 on punctuation). |
+| Street line order: number, predirectional, name, suffix abbreviation, postdirectional, with directionals abbreviated. | Sections 231, 233.1, 234 (as in the parser table above); order unverified. |
+| Secondary unit goes on the delivery line after the street (`APT 4`); a unit with no known designator is written `# 4`; a designator with no number stands alone (`REAR`). Two units are written in input order. | Section 213 and Appendix C2 (the `#` rule is cited in the parser table); same-line placement unverified. |
+| If the delivery line plus the unit would be longer than 40 characters, the unit goes to `line2` and `line1` keeps the street. The 40-character limit is a placeholder. | Unverified. Pub 28 may also require the unit line *above* the street line on a mailpiece; `line2` is the data-field convention, not mailpiece order. |
+| Last line: `CITY ST ZIP`, one space between, ZIP+4 with a hyphen, no comma. A military post office (APO, FPO, DPO) takes the city's place. | Unverified (section 22x for the last line; 225.1 and 239 for military, already cited above). |
+| Parts the parse did not find are left out. `diagnostics` is not consulted; unparsed text is not emitted. | Library behavior, not a USPS rule. |
+| Not implemented: writing a state name inside a street name as its code (see Highways below), and ST/SAINT, FORT/FT and similar place-name abbreviations. | Left for later; the parser does not expose them. |
+
+### To verify against the live Pub 28 text
+
+`pe.usps.com` was blocked when the USPS emitter was written (the session
+network policy denied it), so these items need a session where it is
+reachable (allow the host, or paste the page text). Page map for chapter 2 is
+in "Verification status" above; sections 21x and 22x are not yet mapped to
+page names, so start from <https://pe.usps.com/text/pub28/welcome.htm>. For
+each item: read the section, correct `emit/usps.rs` and the tests if the text
+differs, replace "Unverified" in the table above with the section number,
+and add or fix corpus cases (`usps` field) for any change.
+
+1. **Punctuation.** Which marks Pub 28 allows (hyphen in ZIP+4 and house
+   numbers? slash in fractions? `#`?). `plain()` in `emit/usps.rs` drops
+   `. , ' " ; : ( )` and keeps `-` and `/`. Apostrophes (`O'BRIEN`) are
+   dropped here and in the key (`docs/key-format.md`, rule 1); confirm.
+2. **Secondary unit placement.** Same line as the delivery line, or the line
+   above? What to do when it does not fit, and the real maximum line length
+   (`MAX_LINE = 40` is a placeholder). Decide whether `line2` should hold the
+   unit (data-field convention, current) and document mailpiece order.
+3. **`#` for an unknown designator.** Confirm the written form (`# 4` with a
+   space vs `#4`) and that `APT #4` should lose its `#` (current behavior:
+   `APT 4`).
+4. **Last line.** Confirm `CITY ST ZIP`, one space between, no comma, ZIP+4
+   with a hyphen, and any city-name abbreviation rules (SAINT/ST, FORT/FT,
+   MOUNT/MT, and so on). None is applied now.
+5. **State inside a street name.** Appendix F (cited under "Highways")
+   writes `KENTUCKY STATE HIGHWAY 625` as `KY STATE HIGHWAY 625`, but a state
+   name that is the whole primary name stays spelled out. Not implemented in
+   the parser or emitter.
+6. **Leading zeros.** Section 242 says a leading zero on a rural route number
+   is not needed; the emitter leaves values as given. Decide whether to strip.
+   Section 243 hyphens in box numbers: kept as given.
+7. **Military and general delivery last lines.** Re-check `APO AE 09001`
+   layout (sections 225.1, 239) and the `GENERAL DELIVERY` line.
+8. **Key punctuation rule** in `docs/key-format.md` (normalization rule 1)
+   cites no section; resolve with item 1.
+9. **Release re-check** of every lexicon table (Milestone 7), already listed
+   under "Verification status".
+
+Special forms (sourced):
 
 - Highway contract route (section 251): emit `HC <route> BOX <box>`, e.g.
   `HC 68 BOX 23A`. Drop HIGHWAY CONTRACT, ROUTE, NUMBER, NO, STAR ROUTE and

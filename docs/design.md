@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: Milestone 1 (data and types) done; the golden-corpus format and runner from Milestone 4 were brought forward ahead of Milestone 2. Planning date: 2026-10-14.
+Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is started: the key and USPS emitter are done, RESO and slug are next. Progress is tracked in section 10. Planning date: 2026-10-14.
 
 ---
 
@@ -66,7 +66,8 @@ These were the open questions, with the resolved answers. Items marked *(propose
 | 2 | Model training | Train in Python (parserator / python-crfsuite) on usaddress's MIT-licensed training data plus own Florida labels; Rust does inference only via `crfs`. |
 | 3 | Input scope | Both single-line strings and multi-field input (line1, line2, city, state, zip). |
 | 4 | Geographic scope | US-wide grammar. **State-specific tuning packs are deferred** until after the core parser is done (section 11). Design the core so packs can be added later without restructuring. |
-| 5 | Canonical key | Unit inclusion is an explicit option; key carries a version prefix. City excluded from the key *(proposed, see 6.4)*. |
+| 5 | Canonical key | Unit inclusion is an explicit option (default off, property level); key carries a version prefix. City and ZIP+4 excluded. Confirmed by the author; spec in `docs/key-format.md`. |
+| 16 | Key shape | Pipe-delimited uppercase ASCII with a one-letter form (`S`, `P`, `R`, `M`, `G`). `k1:` needs state and ZIP5; otherwise `k1n:`. Unit type is dropped at unit level so `Apt 4` equals `#4`. Placeholders and addresses with nothing to key on give `None`. |
 | 6 | Error model | Always return a `ParsedAddress` with diagnostics; no `Result` for partial parses. `Result` only for truly unusable input (e.g. empty). |
 | 7 | Lexicon extensibility | Fixed at compile time in v1. |
 | 8 | Data sources | USPS Pub 28 and the RESO Data Dictionary; document provenance of each table. |
@@ -269,7 +270,9 @@ The format, runner and first cases are in place (`tests/corpus/README.md`); the 
 
 Build in this order. Each milestone should end with passing tests.
 
-### Milestone 0: scaffolding
+Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 134 cases, all passing; runner compares components and warnings only). Milestone 3 has begun (item 17 partly: `emit/key.rs`, `emit/usps.rs`, `docs/key-format.md`; the USPS layout rules are unverified against Pub 28, see `docs/usps-pub28-notes.md`); everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
+
+### Milestone 0: scaffolding (done)
 
 1. `Cargo.toml` (workspace), `rust-toolchain.toml`, `.gitignore`, `LICENSE-MIT`, `LICENSE-APACHE`
 2. `README.md` (with the non-goals and the not-a-validator statement)
@@ -277,14 +280,14 @@ Build in this order. Each milestone should end with passing tests.
 4. `crates/addr-core/Cargo.toml`, `crates/addr-core/src/lib.rs`
 5. `.github/workflows/ci.yml`
 
-### Milestone 1: data and types
+### Milestone 1: data and types (done)
 
 6. `data/suffixes.toml`, `directionals.toml`, `units.toml`, `states.toml`, `special.toml`, each with a source comment
 7. `crates/addr-core/build.rs` (compile TOML into static tables) or a `include_str!` plus lazy parse if build script is overkill
 8. `crates/addr-core/src/types.rs` (`ParsedAddress`, enums, `Diagnostics`)
 9. `crates/addr-core/src/lexicon.rs`
 
-### Milestone 2: parser
+### Milestone 2: parser (done)
 
 10. `src/clean.rs` (input normalization)
 11. `src/tokenize.rs` (tokens with spans)
@@ -361,15 +364,18 @@ Open questions to settle when this is picked up:
 
 ## 12. Risks
 
-- **Accuracy parity with usaddress** is the main risk. Measure early on the Florida corpus; do not assume rules alone will match a trained CRF.
+- **Accuracy parity with usaddress** is the main risk. Measure early on the Florida corpus; do not assume rules alone will match a trained CRF. Status: the rule parser passes all 134 hand-labeled corpus cases, but those cases shaped the rules. No held-out data or usaddress comparison exists yet; add both (a held-out set from usaddress's training data, then the comparison script) before claiming parity or deciding on Milestone 6.
 - **Model format compatibility** between CRFsuite-trained models and the `crfs` crate must be verified before Milestone 6 work.
 - **Key stability.** The key format is a public contract once stored; get it reviewed before release.
 - **Licensing.** Confirm the data provenance of every lexicon table before publishing, and keep MIT attribution for any usaddress-derived training data.
+- **Missing safety nets.** No proptest, fuzz targets or benchmarks exist yet, though the parser is written and the never-panic rule is only covered by one unit test. Add a proptest no-panic/span-validity property alongside Milestone 3.
 - **Python boundary overhead** for single-address calls; recommend `parse_many` in docs.
 
 ---
 
 ## 13. Open items for the author
+
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Next: RESO emitter and `docs/reso-mapping.md` (needs the current RESO Data Dictionary version and the author's review of the field mapping), then the slug (`emit/slug.rs`), then proptest/no-panic property, then Milestone 4 (CLI, benches). Verification debt: the list "To verify against the live Pub 28 text" in `docs/usps-pub28-notes.md`; do it first if `pe.usps.com` is reachable.
 
 1. Point Claude Code at the existing Florida parsing code so its rules and tests can seed the corpus (and decide whether it stays as a reference or is ported).
 2. Confirm the library name and crate/package names.

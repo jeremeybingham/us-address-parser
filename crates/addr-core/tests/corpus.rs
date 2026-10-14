@@ -14,7 +14,9 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use addr_core::{Directional, Fields, Lexicons, MatchKind, ParsedAddress, Parser, Warning};
+use addr_core::{
+    Directional, Fields, KeyOptions, Lexicons, MatchKind, ParsedAddress, Parser, Warning,
+};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -27,9 +29,25 @@ struct Case {
     expect: Expect,
     #[serde(default)]
     warnings: Vec<String>,
+    /// Property-level key (`KeyOptions::property()`), or `"none"` when the
+    /// address has no key. Unlike `expect`, absent means not checked.
+    key: Option<String>,
+    /// Unit-level key (`KeyOptions::unit()`); same conventions as `key`.
+    key_unit: Option<String>,
+    /// Expected `to_usps()` output; absent means not checked.
+    usps: Option<ExpectUsps>,
     #[serde(default)]
     #[allow(dead_code)]
     note: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ExpectUsps {
+    line1: Option<String>,
+    line2: Option<String>,
+    /// `CITY ST ZIP`, as `UspsAddress::last_line`.
+    last_line: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -98,7 +116,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 21] = [
+const FIELDS: [&str; 24] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -120,7 +138,13 @@ const FIELDS: [&str; 21] = [
     "zip4",
     "unparsed",
     "warnings",
+    "key",
+    "key_unit",
+    "usps",
 ];
+
+/// Fields checked only for the cases that give them.
+const OPTIONAL_FIELDS: [&str; 3] = ["key", "key_unit", "usps"];
 
 type Values = BTreeMap<&'static str, Option<String>>;
 
@@ -142,6 +166,11 @@ fn warnings_str<'a>(codes: impl IntoIterator<Item = &'a str>) -> Option<String> 
     } else {
         Some(set.into_iter().collect::<Vec<_>>().join(","))
     }
+}
+
+fn usps_str(l1: &Option<String>, l2: &Option<String>, last: &Option<String>) -> String {
+    let f = |o: &Option<String>| o.clone().unwrap_or_default();
+    format!("[{}] [{}] [{}]", f(l1), f(l2), f(last))
 }
 
 fn expected_values(c: &Case) -> Values {
@@ -186,6 +215,15 @@ fn expected_values(c: &Case) -> Values {
         "warnings",
         warnings_str(c.warnings.iter().map(String::as_str)),
     );
+    if let Some(k) = &c.key {
+        v.insert("key", Some(k.clone()));
+    }
+    if let Some(k) = &c.key_unit {
+        v.insert("key_unit", Some(k.clone()));
+    }
+    if let Some(u) = &c.usps {
+        v.insert("usps", Some(usps_str(&u.line1, &u.line2, &u.last_line)));
+    }
     v
 }
 
@@ -244,6 +282,19 @@ fn actual_values(a: &ParsedAddress) -> Values {
     v.insert(
         "warnings",
         warnings_str(a.diagnostics.warnings.iter().map(Warning::code)),
+    );
+    let key = |o| Some(a.key(o).unwrap_or_else(|| "none".to_string()));
+    v.insert("key", key(KeyOptions::property()));
+    v.insert("key_unit", key(KeyOptions::unit()));
+    let u = a.to_usps();
+    let last = u.last_line();
+    v.insert(
+        "usps",
+        Some(usps_str(
+            &u.line1,
+            &u.line2,
+            &(!last.is_empty()).then_some(last),
+        )),
     );
     v
 }
@@ -348,7 +399,7 @@ fn validate(cases: &[(String, Case)], errors: &mut Vec<String>) {
     }
 }
 
-fn run(parser: &Parser, c: &Case) -> Values {
+fn parse_case(parser: &Parser, c: &Case) -> Option<ParsedAddress> {
     let result = if let Some(s) = &c.input {
         parser.parse(s)
     } else if let Some(lines) = &c.lines {
@@ -374,11 +425,18 @@ fn run(parser: &Parser, c: &Case) -> Values {
             zip: f.zip.clone(),
         })
     };
-    match result {
-        Ok(a) => actual_values(&a),
-        Err(e) => {
+    result.ok()
+}
+
+fn run(parser: &Parser, c: &Case) -> Values {
+    match parse_case(parser, c) {
+        Some(a) => actual_values(&a),
+        None => {
             let mut v: Values = FIELDS.iter().map(|&f| (f, None)).collect();
-            v.insert("unparsed", Some(format!("<error: {e}>")));
+            v.insert("key", Some("none".to_string()));
+            v.insert("key_unit", Some("none".to_string()));
+            v.insert("usps", Some(usps_str(&None, &None, &None)));
+            v.insert("unparsed", Some("<error>".to_string()));
             v
         }
     }
@@ -405,6 +463,7 @@ fn golden_corpus() {
 
     let parser = Parser::new();
     let mut field_ok: BTreeMap<&str, usize> = FIELDS.iter().map(|&f| (f, 0)).collect();
+    let mut field_n: BTreeMap<&str, usize> = FIELDS.iter().map(|&f| (f, 0)).collect();
     let mut passing = BTreeSet::new();
     let mut failures: BTreeMap<String, String> = BTreeMap::new();
     for (file, c) in &cases {
@@ -412,6 +471,10 @@ fn golden_corpus() {
         let got = run(&parser, c);
         let mut diffs = Vec::new();
         for f in FIELDS {
+            if OPTIONAL_FIELDS.contains(&f) && !want.contains_key(f) {
+                continue;
+            }
+            *field_n.get_mut(f).unwrap() += 1;
             if want[f] == got[f] {
                 *field_ok.get_mut(f).unwrap() += 1;
             } else {
@@ -448,7 +511,12 @@ fn golden_corpus() {
     );
     for f in FIELDS {
         let n = field_ok[f];
-        println!("  {f:<20} {n:>4}/{total} ({:.1}%)", pct(n));
+        if OPTIONAL_FIELDS.contains(&f) {
+            let of = field_n[f];
+            println!("  {f:<20} {n:>4}/{of} checked");
+        } else {
+            println!("  {f:<20} {n:>4}/{total} ({:.1}%)", pct(n));
+        }
     }
     if std::env::var_os("CORPUS_VERBOSE").is_some() && !failures.is_empty() {
         let all: Vec<_> = failures.values().map(String::as_str).collect();
@@ -498,5 +566,53 @@ fn golden_corpus() {
         regressed.is_empty(),
         "regressions: these cases are in passing.txt but now fail:\n{}",
         diffs.join("\n")
+    );
+}
+
+/// Parsing the USPS output of a parsed address must give the same keys.
+#[test]
+fn usps_output_round_trips_to_the_same_key() {
+    let dir = corpus_dir();
+    let mut errors = Vec::new();
+    let cases = load(&dir, &mut errors);
+    let parser = Parser::new();
+    let mut bad = Vec::new();
+    for (_, c) in &cases {
+        let Some(a) = parse_case(&parser, c) else {
+            continue;
+        };
+        let u = a.to_usps();
+        let mut lines = Vec::new();
+        lines.extend(u.line2.clone());
+        lines.extend(u.line1.clone());
+        let last = u.last_line();
+        if !last.is_empty() {
+            lines.push(last);
+        }
+        if lines.is_empty() {
+            continue;
+        }
+        let Ok(b) = parser.parse(&lines.join(", ")) else {
+            bad.push(format!("{}: reparse failed", c.id));
+            continue;
+        };
+        for o in [KeyOptions::property(), KeyOptions::unit()] {
+            if a.key(o) != b.key(o) {
+                bad.push(format!(
+                    "{}: {:?} -> {:?}: {:?} != {:?}",
+                    c.id,
+                    c.input,
+                    lines,
+                    a.key(o),
+                    b.key(o)
+                ));
+            }
+        }
+    }
+    println!("usps round trip: {} mismatch(es)", bad.len());
+    assert!(
+        bad.is_empty(),
+        "round-trip mismatches:\n  {}",
+        bad.join("\n  ")
     );
 }
