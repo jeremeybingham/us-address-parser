@@ -1,3 +1,62 @@
 # directionals.toml
-# Source: USPS Publication 28, directional abbreviations (Pub 28).
-# TODO (Milestone 1): populate and verify every entry against the Pub 28 text.
+#
+# Compass directionals used before (predirectional) or after (postdirectional)
+# a street name, and their standard one- or two-letter abbreviations.
+#
+# Source: USPS Publication 28, chapter 2, directionals (the table of
+# directionals and abbreviations, and the rule that directionals are
+# abbreviated in standardized output).
+#   https://pe.usps.com/text/pub28/  (chapter 2; section number in docs)
+# Cross-checked against usaddress-scourgify DIRECTIONAL_REPLACEMENTS and the
+# street-address gem DIRECTIONAL table (both MIT), which agree with this table.
+# See docs/usps-pub28-notes.md for verification status.
+#
+# Each entry:
+#   name   full directional
+#   abbr   standard abbreviation (what we emit)
+#   forms  accepted spellings, including name and abbreviation. Dotted and
+#          spaced forms ("N.", "N.E.", "N E") are handled by key normalization
+#          in the lexicon, not listed here.
+#
+# Whether a token like "N" or "NORTH" is a directional or part of the street
+# name ("NORTH ST") is decided by the tagger, not this table.
+
+[[directional]]
+name = "NORTH"
+abbr = "N"
+forms = ["N", "NORTH"]
+
+[[directional]]
+name = "SOUTH"
+abbr = "S"
+forms = ["S", "SOUTH"]
+
+[[directional]]
+name = "EAST"
+abbr = "E"
+forms = ["E", "EAST"]
+
+[[directional]]
+name = "WEST"
+abbr = "W"
+forms = ["W", "WEST"]
+
+[[directional]]
+name = "NORTHEAST"
+abbr = "NE"
+forms = ["NE", "NORTHEAST", "NORTH EAST", "NORTH-EAST"]
+
+[[directional]]
+name = "NORTHWEST"
+abbr = "NW"
+forms = ["NW", "NORTHWEST", "NORTH WEST", "NORTH-WEST"]
+
+[[directional]]
+name = "SOUTHEAST"
+abbr = "SE"
+forms = ["SE", "SOUTHEAST", "SOUTH EAST", "SOUTH-EAST"]
+
+[[directional]]
+name = "SOUTHWEST"
+abbr = "SW"
+forms = ["SW", "SOUTHWEST", "SOUTH WEST", "SOUTH-WEST"]

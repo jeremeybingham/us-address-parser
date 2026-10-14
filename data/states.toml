@@ -1,3 +1,371 @@
 # states.toml
-# Source: USPS Publication 28, state names and USPS codes (Pub 28 Appendix B).
-# TODO (Milestone 1): populate and verify every entry against the Pub 28 text.
+#
+# States, the District of Columbia, US possessions and freely associated
+# states, and Armed Forces (APO/FPO/DPO) "state" codes, with their two-letter
+# USPS abbreviations.
+#
+# Source: USPS Publication 28, Appendix B "Two-Letter State and Possession
+# Abbreviations".
+#   https://pe.usps.com/text/pub28/28apb.htm
+# Armed Forces codes AA, AE, AP: Pub 28 military addressing (APO/FPO/DPO).
+# See docs/usps-pub28-notes.md for verification status.
+#
+# Each entry:
+#   code     two-letter USPS abbreviation (what we emit)
+#   name     full name
+#   kind     state | district | territory | freely_associated | military
+#   aliases  optional; other spellings seen in input that are NOT USPS codes:
+#            traditional (pre-ZIP, GPO-style) abbreviations such as FLA and
+#            CALIF, taken from usaddress-scourgify STATE_ABBREVIATIONS (MIT),
+#            plus common long forms. Recognized as input only; never emitted.
+#
+# Short aliases collide with ordinary words (MISS, WASH, ORE, IND, ILL); the
+# tagger must only accept them in the state position.
+
+[[state]]
+code = "AL"
+name = "ALABAMA"
+kind = "state"
+aliases = ["ALA"]
+
+[[state]]
+code = "AK"
+name = "ALASKA"
+kind = "state"
+aliases = ["ALAS"]
+
+[[state]]
+code = "AS"
+name = "AMERICAN SAMOA"
+kind = "territory"
+
+[[state]]
+code = "AZ"
+name = "ARIZONA"
+kind = "state"
+aliases = ["ARIZ"]
+
+[[state]]
+code = "AR"
+name = "ARKANSAS"
+kind = "state"
+aliases = ["ARK"]
+
+[[state]]
+code = "CA"
+name = "CALIFORNIA"
+kind = "state"
+aliases = ["CALIF", "CAL"]
+
+[[state]]
+code = "CO"
+name = "COLORADO"
+kind = "state"
+aliases = ["COLO", "COL"]
+
+[[state]]
+code = "CT"
+name = "CONNECTICUT"
+kind = "state"
+aliases = ["CONN"]
+
+[[state]]
+code = "DE"
+name = "DELAWARE"
+kind = "state"
+aliases = ["DEL"]
+
+[[state]]
+code = "DC"
+name = "DISTRICT OF COLUMBIA"
+kind = "district"
+aliases = ["WASHINGTON DC", "WASHINGTON D C", "D C"]
+
+[[state]]
+code = "FM"
+name = "FEDERATED STATES OF MICRONESIA"
+kind = "freely_associated"
+aliases = ["MICRONESIA"]
+
+[[state]]
+code = "FL"
+name = "FLORIDA"
+kind = "state"
+aliases = ["FLA", "FLOR"]
+
+[[state]]
+code = "GA"
+name = "GEORGIA"
+kind = "state"
+
+[[state]]
+code = "GU"
+name = "GUAM"
+kind = "territory"
+
+[[state]]
+code = "HI"
+name = "HAWAII"
+kind = "state"
+
+[[state]]
+code = "ID"
+name = "IDAHO"
+kind = "state"
+aliases = ["IDA"]
+
+[[state]]
+code = "IL"
+name = "ILLINOIS"
+kind = "state"
+aliases = ["ILL"]
+
+[[state]]
+code = "IN"
+name = "INDIANA"
+kind = "state"
+aliases = ["IND"]
+
+[[state]]
+code = "IA"
+name = "IOWA"
+kind = "state"
+
+[[state]]
+code = "KS"
+name = "KANSAS"
+kind = "state"
+aliases = ["KANS", "KAN"]
+
+[[state]]
+code = "KY"
+name = "KENTUCKY"
+kind = "state"
+aliases = ["KEN", "KENT"]
+
+[[state]]
+code = "LA"
+name = "LOUISIANA"
+kind = "state"
+
+[[state]]
+code = "ME"
+name = "MAINE"
+kind = "state"
+
+[[state]]
+code = "MH"
+name = "MARSHALL ISLANDS"
+kind = "freely_associated"
+
+[[state]]
+code = "MD"
+name = "MARYLAND"
+kind = "state"
+
+[[state]]
+code = "MA"
+name = "MASSACHUSETTS"
+kind = "state"
+aliases = ["MASS"]
+
+[[state]]
+code = "MI"
+name = "MICHIGAN"
+kind = "state"
+aliases = ["MICH"]
+
+[[state]]
+code = "MN"
+name = "MINNESOTA"
+kind = "state"
+aliases = ["MINN"]
+
+[[state]]
+code = "MS"
+name = "MISSISSIPPI"
+kind = "state"
+aliases = ["MISS"]
+
+[[state]]
+code = "MO"
+name = "MISSOURI"
+kind = "state"
+
+[[state]]
+code = "MT"
+name = "MONTANA"
+kind = "state"
+aliases = ["MONT"]
+
+[[state]]
+code = "NE"
+name = "NEBRASKA"
+kind = "state"
+aliases = ["NEBR", "NEB"]
+
+[[state]]
+code = "NV"
+name = "NEVADA"
+kind = "state"
+aliases = ["NEV"]
+
+[[state]]
+code = "NH"
+name = "NEW HAMPSHIRE"
+kind = "state"
+
+[[state]]
+code = "NJ"
+name = "NEW JERSEY"
+kind = "state"
+
+[[state]]
+code = "NM"
+name = "NEW MEXICO"
+kind = "state"
+aliases = ["N MEX", "NEW M"]
+
+[[state]]
+code = "NY"
+name = "NEW YORK"
+kind = "state"
+
+[[state]]
+code = "NC"
+name = "NORTH CAROLINA"
+kind = "state"
+
+[[state]]
+code = "ND"
+name = "NORTH DAKOTA"
+kind = "state"
+aliases = ["N DAK"]
+
+[[state]]
+code = "MP"
+name = "NORTHERN MARIANA ISLANDS"
+kind = "territory"
+aliases = ["NORTHERN MARIANAS"]
+
+[[state]]
+code = "OH"
+name = "OHIO"
+kind = "state"
+
+[[state]]
+code = "OK"
+name = "OKLAHOMA"
+kind = "state"
+aliases = ["OKLA"]
+
+[[state]]
+code = "OR"
+name = "OREGON"
+kind = "state"
+aliases = ["OREG", "ORE"]
+
+[[state]]
+code = "PW"
+name = "PALAU"
+kind = "freely_associated"
+
+[[state]]
+code = "PA"
+name = "PENNSYLVANIA"
+kind = "state"
+aliases = ["PENN"]
+
+[[state]]
+code = "PR"
+name = "PUERTO RICO"
+kind = "territory"
+
+[[state]]
+code = "RI"
+name = "RHODE ISLAND"
+kind = "state"
+
+[[state]]
+code = "SC"
+name = "SOUTH CAROLINA"
+kind = "state"
+
+[[state]]
+code = "SD"
+name = "SOUTH DAKOTA"
+kind = "state"
+aliases = ["S DAK"]
+
+[[state]]
+code = "TN"
+name = "TENNESSEE"
+kind = "state"
+aliases = ["TENN"]
+
+[[state]]
+code = "TX"
+name = "TEXAS"
+kind = "state"
+aliases = ["TEX"]
+
+[[state]]
+code = "UT"
+name = "UTAH"
+kind = "state"
+
+[[state]]
+code = "VT"
+name = "VERMONT"
+kind = "state"
+
+[[state]]
+code = "VI"
+name = "VIRGIN ISLANDS"
+kind = "territory"
+aliases = ["US VIRGIN ISLANDS", "U S VIRGIN ISLANDS"]
+
+[[state]]
+code = "VA"
+name = "VIRGINIA"
+kind = "state"
+
+[[state]]
+code = "WA"
+name = "WASHINGTON"
+kind = "state"
+aliases = ["WASH"]
+
+[[state]]
+code = "WV"
+name = "WEST VIRGINIA"
+kind = "state"
+aliases = ["W VA"]
+
+[[state]]
+code = "WI"
+name = "WISCONSIN"
+kind = "state"
+aliases = ["WIS", "WISC"]
+
+[[state]]
+code = "WY"
+name = "WYOMING"
+kind = "state"
+aliases = ["WYO"]
+
+[[state]]
+code = "AA"
+name = "ARMED FORCES AMERICAS"
+kind = "military"
+
+[[state]]
+code = "AE"
+name = "ARMED FORCES EUROPE"
+kind = "military"
+aliases = ["ARMED FORCES AFRICA", "ARMED FORCES CANADA", "ARMED FORCES MIDDLE EAST"]
+
+[[state]]
+code = "AP"
+name = "ARMED FORCES PACIFIC"
+kind = "military"

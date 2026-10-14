@@ -1,3 +1,176 @@
 # units.toml
-# Source: USPS Publication 28, secondary unit designators (Pub 28 Appendix C2).
-# TODO (Milestone 1): populate and verify every entry against the Pub 28 text.
+#
+# Secondary unit designators (apartment, suite, ...), their standard
+# abbreviations, and whether Pub 28 expects a secondary range (number) after
+# the designator.
+#
+# Source: USPS Publication 28, Appendix C2 "Secondary Unit Designators".
+#   https://pe.usps.com/text/pub28/28apc_003.htm
+# The "#" designator: Pub 28 allows the pound sign in place of a designator
+# when the designator is not known; it is handled by the tagger, not listed
+# here. See docs/usps-pub28-notes.md for the section reference and the
+# verification status of this table.
+#
+# Cross-check: usaddress-scourgify OCCUPANCY_TYPE_ABBREVIATIONS (MIT) agrees
+# on every designator except two spellings it gets wrong: it lists "HANGER"
+# (Pub 28: HANGAR) and abbreviates UPPER as "UPPER" (Pub 28: UPPR).
+#
+# Each entry:
+#   name            designator name
+#   abbr            standard abbreviation (what we emit)
+#   range_required  true when Pub 28 expects a number after the designator
+#   forms           accepted spellings, including name and abbreviation
+#   observed        optional; spellings seen in real data that Appendix C2 does
+#                   not list. Recognized, but flagged as non-standard. Source
+#                   noted per entry.
+#
+# Some forms collide with other tables (FL = Floor vs Florida, LOT, KEY vs the
+# KEY street suffix, SIDE). Context decides; that is the tagger's job.
+
+[[unit]]
+name = "APARTMENT"
+abbr = "APT"
+range_required = true
+forms = ["APARTMENT", "APT"]
+
+[[unit]]
+name = "BASEMENT"
+abbr = "BSMT"
+range_required = false
+forms = ["BASEMENT", "BSMT"]
+
+[[unit]]
+name = "BUILDING"
+abbr = "BLDG"
+range_required = true
+forms = ["BUILDING", "BLDG"]
+
+[[unit]]
+name = "DEPARTMENT"
+abbr = "DEPT"
+range_required = true
+forms = ["DEPARTMENT", "DEPT"]
+
+[[unit]]
+name = "FLOOR"
+abbr = "FL"
+range_required = true
+forms = ["FLOOR", "FL"]
+
+[[unit]]
+name = "FRONT"
+abbr = "FRNT"
+range_required = false
+forms = ["FRONT", "FRNT"]
+
+[[unit]]
+name = "HANGAR"
+abbr = "HNGR"
+range_required = true
+forms = ["HANGAR", "HNGR"]
+
+[[unit]]
+name = "KEY"
+abbr = "KEY"
+range_required = true
+forms = ["KEY"]
+
+[[unit]]
+name = "LOBBY"
+abbr = "LBBY"
+range_required = false
+forms = ["LOBBY", "LBBY"]
+
+[[unit]]
+name = "LOT"
+abbr = "LOT"
+range_required = true
+forms = ["LOT"]
+# observed: auction-tracker, Florida tax-deed listings ("2613 LEAR RD -UNIT B LT 18")
+observed = ["LT"]
+
+[[unit]]
+name = "LOWER"
+abbr = "LOWR"
+range_required = false
+forms = ["LOWER", "LOWR"]
+
+[[unit]]
+name = "OFFICE"
+abbr = "OFC"
+range_required = false
+forms = ["OFFICE", "OFC"]
+
+[[unit]]
+name = "PENTHOUSE"
+abbr = "PH"
+range_required = false
+forms = ["PENTHOUSE", "PH"]
+
+[[unit]]
+name = "PIER"
+abbr = "PIER"
+range_required = true
+forms = ["PIER"]
+
+[[unit]]
+name = "REAR"
+abbr = "REAR"
+range_required = false
+forms = ["REAR"]
+
+[[unit]]
+name = "ROOM"
+abbr = "RM"
+range_required = true
+forms = ["ROOM", "RM"]
+
+[[unit]]
+name = "SIDE"
+abbr = "SIDE"
+range_required = false
+forms = ["SIDE"]
+
+[[unit]]
+name = "SLIP"
+abbr = "SLIP"
+range_required = true
+forms = ["SLIP"]
+
+[[unit]]
+name = "SPACE"
+abbr = "SPC"
+range_required = true
+forms = ["SPACE", "SPC"]
+
+[[unit]]
+name = "STOP"
+abbr = "STOP"
+range_required = true
+forms = ["STOP"]
+
+[[unit]]
+name = "SUITE"
+abbr = "STE"
+range_required = true
+forms = ["SUITE", "STE"]
+
+[[unit]]
+name = "TRAILER"
+abbr = "TRLR"
+range_required = true
+forms = ["TRAILER", "TRLR"]
+
+[[unit]]
+name = "UNIT"
+abbr = "UNIT"
+range_required = true
+forms = ["UNIT"]
+# observed: auction-tracker, Pasco County listings ("9960 EAGLES POINT CIRCLE UN 3")
+observed = ["UN"]
+
+[[unit]]
+name = "UPPER"
+abbr = "UPPR"
+range_required = false
+forms = ["UPPER", "UPPR"]

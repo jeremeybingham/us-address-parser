@@ -1,3 +1,122 @@
 # special.toml
-# Source: USPS Publication 28, PO BOX, RR, HC and highway patterns (Pub 28).
-# TODO (Milestone 1): populate and verify every entry against the Pub 28 text.
+#
+# Non-street address forms (PO Box, rural route, highway contract route,
+# general delivery), highway-name prefixes, and placeholder text.
+#
+# Sources:
+#   USPS Publication 28, chapter 2: Post Office Box, rural route, highway
+#   contract route and general delivery addresses, and highway street names.
+#     https://pe.usps.com/text/pub28/
+#   Placeholder phrases are NOT a USPS rule: they are stand-in text seen in
+#   county assessor and clerk data, collected in auction-tracker
+#   (packages/radar/src/radar/parse/addresses.py, PLACEHOLDER_RE).
+# See docs/usps-pub28-notes.md for the section references and verification
+# status of each table.
+#
+# Spellings are written as normalized lexicon keys: uppercase, periods
+# removed, runs of spaces collapsed. "P.O. Box", "P O BOX" and "PO  BOX" all
+# normalize to a listed form; "POBOX" (no space) is listed separately.
+#
+# Shapes:
+#   standard  the form we emit
+#   forms     accepted spellings, including the standard one
+#   synonyms  (po_box only) other words for a box that Pub 28 says to write
+#             as PO BOX
+#
+# Context matters for several forms (BOX alone, RTE, RT, CR, US, I). The
+# tagger accepts them only in the right position, e.g. RR/HC followed by a
+# route number and BOX, or a highway prefix followed by a route number.
+
+[po_box]
+standard = "PO BOX"
+forms = ["PO BOX", "P O BOX", "POBOX", "PO BX", "POB", "P O B", "POST OFFICE BOX", "POST BOX"]
+synonyms = ["DRAWER", "PO DRAWER", "CALLER", "FIRM CALLER", "LOCKBOX", "LOCK BOX"]
+
+[box]
+# The box word inside rural route and highway contract addresses ("RR 2 BOX 15").
+standard = "BOX"
+forms = ["BOX", "BX"]
+
+[rural_route]
+standard = "RR"
+forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "RFD ROUTE", "RURAL FREE DELIVERY", "RTE", "RT", "ROUTE"]
+
+[highway_contract]
+standard = "HC"
+forms = ["HC", "H C", "HCR", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE"]
+
+[general_delivery]
+standard = "GENERAL DELIVERY"
+forms = ["GENERAL DELIVERY", "GEN DELIVERY", "GENERAL DEL", "GEN DEL"]
+
+# Highway prefixes: a prefix followed by a route number is the street name
+# ("COUNTY ROAD 23", "HWY 2301"). The number after it is the road's, not a
+# house number or unit (auction-tracker: "8932 HWY 2301").
+#
+# State-dependent abbreviations are deliberately left out of the base table
+# and belong in state packs (docs/design.md section 11): "SR" is State Road in
+# Florida and State Route elsewhere; "RR" is Ranch Road in Texas but a rural
+# route everywhere in Pub 28.
+
+[[highway]]
+standard = "HIGHWAY"
+forms = ["HIGHWAY", "HWY", "HIGHWY", "HIWAY", "HIWY", "HWAY"]
+
+[[highway]]
+standard = "COUNTY ROAD"
+forms = ["COUNTY ROAD", "COUNTY RD", "CNTY RD", "CO RD", "CR"]
+
+[[highway]]
+standard = "COUNTY HIGHWAY"
+forms = ["COUNTY HIGHWAY", "COUNTY HWY", "CNTY HWY", "CO HWY"]
+
+[[highway]]
+standard = "STATE HIGHWAY"
+forms = ["STATE HIGHWAY", "STATE HWY", "ST HWY", "SH"]
+
+[[highway]]
+standard = "STATE ROAD"
+forms = ["STATE ROAD", "STATE RD"]
+
+[[highway]]
+standard = "STATE ROUTE"
+forms = ["STATE ROUTE", "STATE RTE"]
+
+[[highway]]
+standard = "US HIGHWAY"
+forms = ["US HIGHWAY", "US HWY", "US"]
+
+[[highway]]
+standard = "INTERSTATE"
+forms = ["INTERSTATE", "INTERSTATE HIGHWAY", "INTERSTATE HWY", "IH", "I"]
+
+[[highway]]
+standard = "FM"
+forms = ["FM", "FARM TO MARKET", "FARM TO MARKET ROAD", "FARM ROAD", "HWY FM"]
+
+[[highway]]
+standard = "RANCH ROAD"
+forms = ["RANCH ROAD", "RANCH RD"]
+
+[placeholder]
+# Whole-line stand-ins meaning "no usable street address". Matched against the
+# normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",
+# "00 UNASSIGNED LOCATION RE"). Source: auction-tracker PLACEHOLDER_RE and its
+# tests (Florida county data, but the phrases are generic assessor wording).
+phrases = [
+  "UNKNOWN",
+  "PROPERTY ADDRESS UNKNOWN",
+  "NO SITUS",
+  "NOT ASSIGNED",
+  "NO STREET",
+  "NO PHYSICAL ADDRESS",
+  "N/A",
+  "NA",
+  "CONFIDENTIAL",
+  "UNASSIGNED",
+  "UNASSIGNED LOCATION",
+  "PROPERTY LOCATION IS NOT AVAILABLE",
+  "PROPERTY LOCATION IS NOT AVAIL",
+  "NO ADDRESS",
+  "NO ADDRESS ON TAX ROLL",
+]

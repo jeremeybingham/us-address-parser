@@ -1,3 +1,1039 @@
 # suffixes.toml
-# Source: USPS Publication 28, Pub 28 street suffixes and abbreviations (Appendix C1).
-# TODO (Milestone 1): populate and verify every entry against the Pub 28 text.
+#
+# Street suffixes (street types) and their Postal Service standard abbreviations.
+#
+# Source: USPS Publication 28, Appendix C1 "Street Suffix Abbreviations".
+#   https://pe.usps.com/text/pub28/28apc_002.htm
+#
+# Transcription: pe.usps.com was not reachable from the build environment when
+# this table was written, so the variant -> abbreviation pairs were taken from
+# two independent open-source transcriptions of Appendix C1 and kept only where
+# they agree (they agree on every pair; they differ only in whether a standard
+# abbreviation is listed as mapping to itself):
+#   - usaddress-scourgify, scourgify/address_constants.py (MIT)
+#   - street-address gem 2.0.0, lib/street_address.rb (MIT)
+# See docs/usps-pub28-notes.md for the verification status of this table.
+#
+# Each entry:
+#   name     full suffix name (the Appendix C1 primary name; for rows whose
+#            primaries include a plural, e.g. PARK / PARKS, the singular)
+#   abbr     Postal Service standard suffix abbreviation (what we emit)
+#   forms    every spelling Appendix C1 lists for this abbreviation, including
+#            the name and the abbreviation itself
+#   observed optional; spellings seen in real assessor and listing data that
+#            Appendix C1 does not list. Recognized, but flagged in diagnostics
+#            as non-standard. Source noted per entry.
+#
+# Every spelling must map to exactly one abbreviation; build.rs rejects
+# duplicates.
+
+[[suffix]]
+name = "ALLEY"
+abbr = "ALY"
+forms = ["ALLEE", "ALLEY", "ALLY", "ALY"]
+
+[[suffix]]
+name = "ANNEX"
+abbr = "ANX"
+forms = ["ANEX", "ANNEX", "ANNX", "ANX"]
+
+[[suffix]]
+name = "ARCADE"
+abbr = "ARC"
+forms = ["ARC", "ARCADE"]
+
+[[suffix]]
+name = "AVENUE"
+abbr = "AVE"
+forms = ["AV", "AVE", "AVEN", "AVENU", "AVENUE", "AVN", "AVNUE"]
+
+[[suffix]]
+name = "BAYOU"
+abbr = "BYU"
+forms = ["BAYOO", "BAYOU", "BYU"]
+
+[[suffix]]
+name = "BEACH"
+abbr = "BCH"
+forms = ["BCH", "BEACH"]
+
+[[suffix]]
+name = "BEND"
+abbr = "BND"
+forms = ["BEND", "BND"]
+
+[[suffix]]
+name = "BLUFF"
+abbr = "BLF"
+forms = ["BLF", "BLUF", "BLUFF"]
+
+[[suffix]]
+name = "BLUFFS"
+abbr = "BLFS"
+forms = ["BLFS", "BLUFFS"]
+
+[[suffix]]
+name = "BOTTOM"
+abbr = "BTM"
+forms = ["BOT", "BOTTM", "BOTTOM", "BTM"]
+
+[[suffix]]
+name = "BOULEVARD"
+abbr = "BLVD"
+forms = ["BLVD", "BOUL", "BOULEVARD", "BOULV"]
+
+[[suffix]]
+name = "BRANCH"
+abbr = "BR"
+forms = ["BR", "BRANCH", "BRNCH"]
+
+[[suffix]]
+name = "BRIDGE"
+abbr = "BRG"
+forms = ["BRDGE", "BRG", "BRIDGE"]
+
+[[suffix]]
+name = "BROOK"
+abbr = "BRK"
+forms = ["BRK", "BROOK"]
+
+[[suffix]]
+name = "BROOKS"
+abbr = "BRKS"
+forms = ["BRKS", "BROOKS"]
+
+[[suffix]]
+name = "BURG"
+abbr = "BG"
+forms = ["BG", "BURG"]
+
+[[suffix]]
+name = "BURGS"
+abbr = "BGS"
+forms = ["BGS", "BURGS"]
+
+[[suffix]]
+name = "BYPASS"
+abbr = "BYP"
+forms = ["BYP", "BYPA", "BYPAS", "BYPASS", "BYPS"]
+
+[[suffix]]
+name = "CAMP"
+abbr = "CP"
+forms = ["CAMP", "CMP", "CP"]
+
+[[suffix]]
+name = "CANYON"
+abbr = "CYN"
+forms = ["CANYN", "CANYON", "CNYN", "CYN"]
+
+[[suffix]]
+name = "CAPE"
+abbr = "CPE"
+forms = ["CAPE", "CPE"]
+
+[[suffix]]
+name = "CAUSEWAY"
+abbr = "CSWY"
+forms = ["CAUSEWAY", "CAUSWAY", "CSWY"]
+
+[[suffix]]
+name = "CENTER"
+abbr = "CTR"
+forms = ["CEN", "CENT", "CENTER", "CENTR", "CENTRE", "CNTER", "CNTR", "CTR"]
+
+[[suffix]]
+name = "CENTERS"
+abbr = "CTRS"
+forms = ["CENTERS", "CTRS"]
+
+[[suffix]]
+name = "CIRCLE"
+abbr = "CIR"
+forms = ["CIR", "CIRC", "CIRCL", "CIRCLE", "CRCL", "CRCLE"]
+
+[[suffix]]
+name = "CIRCLES"
+abbr = "CIRS"
+forms = ["CIRCLES", "CIRS"]
+
+[[suffix]]
+name = "CLIFF"
+abbr = "CLF"
+forms = ["CLF", "CLIFF"]
+
+[[suffix]]
+name = "CLIFFS"
+abbr = "CLFS"
+forms = ["CLFS", "CLIFFS"]
+
+[[suffix]]
+name = "CLUB"
+abbr = "CLB"
+forms = ["CLB", "CLUB"]
+
+[[suffix]]
+name = "COMMON"
+abbr = "CMN"
+forms = ["CMN", "COMMON"]
+
+[[suffix]]
+name = "CORNER"
+abbr = "COR"
+forms = ["COR", "CORNER"]
+
+[[suffix]]
+name = "CORNERS"
+abbr = "CORS"
+forms = ["CORNERS", "CORS"]
+
+[[suffix]]
+name = "COURSE"
+abbr = "CRSE"
+forms = ["COURSE", "CRSE"]
+
+[[suffix]]
+name = "COURT"
+abbr = "CT"
+forms = ["COURT", "CRT", "CT"]
+
+[[suffix]]
+name = "COURTS"
+abbr = "CTS"
+forms = ["COURTS", "CTS"]
+
+[[suffix]]
+name = "COVE"
+abbr = "CV"
+forms = ["COVE", "CV"]
+
+[[suffix]]
+name = "COVES"
+abbr = "CVS"
+forms = ["COVES", "CVS"]
+
+[[suffix]]
+name = "CREEK"
+abbr = "CRK"
+forms = ["CK", "CR", "CREEK", "CRK"]
+
+[[suffix]]
+name = "CRESCENT"
+abbr = "CRES"
+forms = ["CRECENT", "CRES", "CRESCENT", "CRESENT", "CRSCNT", "CRSENT", "CRSNT"]
+
+[[suffix]]
+name = "CREST"
+abbr = "CRST"
+forms = ["CREST", "CRST"]
+
+[[suffix]]
+name = "CROSSING"
+abbr = "XING"
+forms = ["CROSSING", "CRSSING", "CRSSNG", "XING"]
+
+[[suffix]]
+name = "CROSSROAD"
+abbr = "XRD"
+forms = ["CROSSROAD", "XRD"]
+
+# Not present in either cross-check transcription; added from Pub 28 Appendix C1
+# and pending verification against the published text.
+[[suffix]]
+name = "CROSSROADS"
+abbr = "XRDS"
+forms = ["CROSSROADS", "XRDS"]
+
+[[suffix]]
+name = "CURVE"
+abbr = "CURV"
+forms = ["CURV", "CURVE"]
+
+[[suffix]]
+name = "DALE"
+abbr = "DL"
+forms = ["DALE", "DL"]
+
+[[suffix]]
+name = "DAM"
+abbr = "DM"
+forms = ["DAM", "DM"]
+
+[[suffix]]
+name = "DIVIDE"
+abbr = "DV"
+forms = ["DIV", "DIVIDE", "DV", "DVD"]
+
+[[suffix]]
+name = "DRIVE"
+abbr = "DR"
+forms = ["DR", "DRIV", "DRIVE", "DRV"]
+
+[[suffix]]
+name = "DRIVES"
+abbr = "DRS"
+forms = ["DRIVES", "DRS"]
+
+[[suffix]]
+name = "ESTATE"
+abbr = "EST"
+forms = ["EST", "ESTATE"]
+
+[[suffix]]
+name = "ESTATES"
+abbr = "ESTS"
+forms = ["ESTATES", "ESTS"]
+
+[[suffix]]
+name = "EXPRESSWAY"
+abbr = "EXPY"
+forms = ["EXP", "EXPR", "EXPRESS", "EXPRESSWAY", "EXPW", "EXPY"]
+
+[[suffix]]
+name = "EXTENSION"
+abbr = "EXT"
+forms = ["EXT", "EXTENSION", "EXTN", "EXTNSN"]
+
+[[suffix]]
+name = "EXTENSIONS"
+abbr = "EXTS"
+forms = ["EXTENSIONS", "EXTS"]
+
+[[suffix]]
+name = "FALL"
+abbr = "FALL"
+forms = ["FALL"]
+
+[[suffix]]
+name = "FALLS"
+abbr = "FLS"
+forms = ["FALLS", "FLS"]
+
+[[suffix]]
+name = "FERRY"
+abbr = "FRY"
+forms = ["FERRY", "FRRY", "FRY"]
+
+[[suffix]]
+name = "FIELD"
+abbr = "FLD"
+forms = ["FIELD", "FLD"]
+
+[[suffix]]
+name = "FIELDS"
+abbr = "FLDS"
+forms = ["FIELDS", "FLDS"]
+
+[[suffix]]
+name = "FLAT"
+abbr = "FLT"
+forms = ["FLAT", "FLT"]
+
+[[suffix]]
+name = "FLATS"
+abbr = "FLTS"
+forms = ["FLATS", "FLTS"]
+
+[[suffix]]
+name = "FORD"
+abbr = "FRD"
+forms = ["FORD", "FRD"]
+
+[[suffix]]
+name = "FORDS"
+abbr = "FRDS"
+forms = ["FORDS", "FRDS"]
+
+[[suffix]]
+name = "FOREST"
+abbr = "FRST"
+forms = ["FOREST", "FORESTS", "FRST"]
+
+[[suffix]]
+name = "FORGE"
+abbr = "FRG"
+forms = ["FORG", "FORGE", "FRG"]
+
+[[suffix]]
+name = "FORGES"
+abbr = "FRGS"
+forms = ["FORGES", "FRGS"]
+
+[[suffix]]
+name = "FORK"
+abbr = "FRK"
+forms = ["FORK", "FRK"]
+
+[[suffix]]
+name = "FORKS"
+abbr = "FRKS"
+forms = ["FORKS", "FRKS"]
+
+[[suffix]]
+name = "FORT"
+abbr = "FT"
+forms = ["FORT", "FRT", "FT"]
+
+[[suffix]]
+name = "FREEWAY"
+abbr = "FWY"
+forms = ["FREEWAY", "FREEWY", "FRWAY", "FRWY", "FWY"]
+
+[[suffix]]
+name = "GARDEN"
+abbr = "GDN"
+forms = ["GARDEN", "GARDN", "GDN", "GRDEN", "GRDN"]
+
+[[suffix]]
+name = "GARDENS"
+abbr = "GDNS"
+forms = ["GARDENS", "GDNS", "GRDNS"]
+
+[[suffix]]
+name = "GATEWAY"
+abbr = "GTWY"
+forms = ["GATEWAY", "GATEWY", "GATWAY", "GTWAY", "GTWY"]
+
+[[suffix]]
+name = "GLEN"
+abbr = "GLN"
+forms = ["GLEN", "GLN"]
+
+[[suffix]]
+name = "GLENS"
+abbr = "GLNS"
+forms = ["GLENS", "GLNS"]
+
+[[suffix]]
+name = "GREEN"
+abbr = "GRN"
+forms = ["GREEN", "GRN"]
+
+[[suffix]]
+name = "GREENS"
+abbr = "GRNS"
+forms = ["GREENS", "GRNS"]
+
+[[suffix]]
+name = "GROVE"
+abbr = "GRV"
+forms = ["GROV", "GROVE", "GRV"]
+
+[[suffix]]
+name = "GROVES"
+abbr = "GRVS"
+forms = ["GROVES", "GRVS"]
+
+[[suffix]]
+name = "HARBOR"
+abbr = "HBR"
+forms = ["HARB", "HARBOR", "HARBR", "HBR", "HRBOR"]
+
+[[suffix]]
+name = "HARBORS"
+abbr = "HBRS"
+forms = ["HARBORS", "HBRS"]
+
+[[suffix]]
+name = "HAVEN"
+abbr = "HVN"
+forms = ["HAVEN", "HAVN", "HVN"]
+
+[[suffix]]
+name = "HEIGHTS"
+abbr = "HTS"
+forms = ["HEIGHT", "HEIGHTS", "HGTS", "HT", "HTS"]
+
+[[suffix]]
+name = "HIGHWAY"
+abbr = "HWY"
+forms = ["HIGHWAY", "HIGHWY", "HIWAY", "HIWY", "HWAY", "HWY"]
+
+[[suffix]]
+name = "HILL"
+abbr = "HL"
+forms = ["HILL", "HL"]
+
+[[suffix]]
+name = "HILLS"
+abbr = "HLS"
+forms = ["HILLS", "HLS"]
+
+[[suffix]]
+name = "HOLLOW"
+abbr = "HOLW"
+forms = ["HLLW", "HOLLOW", "HOLLOWS", "HOLW", "HOLWS"]
+
+[[suffix]]
+name = "INLET"
+abbr = "INLT"
+forms = ["INLET", "INLT"]
+
+[[suffix]]
+name = "ISLAND"
+abbr = "IS"
+forms = ["IS", "ISLAND", "ISLND"]
+
+[[suffix]]
+name = "ISLANDS"
+abbr = "ISS"
+forms = ["ISLANDS", "ISLNDS", "ISS"]
+
+[[suffix]]
+name = "ISLE"
+abbr = "ISLE"
+forms = ["ISLE", "ISLES"]
+
+[[suffix]]
+name = "JUNCTION"
+abbr = "JCT"
+forms = ["JCT", "JCTION", "JCTN", "JUNCTION", "JUNCTN", "JUNCTON"]
+
+[[suffix]]
+name = "JUNCTIONS"
+abbr = "JCTS"
+forms = ["JCTNS", "JCTS", "JUNCTIONS"]
+
+[[suffix]]
+name = "KEY"
+abbr = "KY"
+forms = ["KEY", "KY"]
+
+[[suffix]]
+name = "KEYS"
+abbr = "KYS"
+forms = ["KEYS", "KYS"]
+
+[[suffix]]
+name = "KNOLL"
+abbr = "KNL"
+forms = ["KNL", "KNOL", "KNOLL"]
+
+[[suffix]]
+name = "KNOLLS"
+abbr = "KNLS"
+forms = ["KNLS", "KNOLLS"]
+
+[[suffix]]
+name = "LAKE"
+abbr = "LK"
+forms = ["LAKE", "LK"]
+
+[[suffix]]
+name = "LAKES"
+abbr = "LKS"
+forms = ["LAKES", "LKS"]
+
+[[suffix]]
+name = "LAND"
+abbr = "LAND"
+forms = ["LAND"]
+
+[[suffix]]
+name = "LANDING"
+abbr = "LNDG"
+forms = ["LANDING", "LNDG", "LNDNG"]
+
+[[suffix]]
+name = "LANE"
+abbr = "LN"
+forms = ["LA", "LANE", "LANES", "LN"]
+
+[[suffix]]
+name = "LIGHT"
+abbr = "LGT"
+forms = ["LGT", "LIGHT"]
+
+[[suffix]]
+name = "LIGHTS"
+abbr = "LGTS"
+forms = ["LGTS", "LIGHTS"]
+
+[[suffix]]
+name = "LOAF"
+abbr = "LF"
+forms = ["LF", "LOAF"]
+
+[[suffix]]
+name = "LOCK"
+abbr = "LCK"
+forms = ["LCK", "LOCK"]
+
+[[suffix]]
+name = "LOCKS"
+abbr = "LCKS"
+forms = ["LCKS", "LOCKS"]
+
+[[suffix]]
+name = "LODGE"
+abbr = "LDG"
+forms = ["LDG", "LDGE", "LODG", "LODGE"]
+
+[[suffix]]
+name = "LOOP"
+abbr = "LOOP"
+forms = ["LOOP", "LOOPS"]
+
+[[suffix]]
+name = "MALL"
+abbr = "MALL"
+forms = ["MALL"]
+
+[[suffix]]
+name = "MANOR"
+abbr = "MNR"
+forms = ["MANOR", "MNR"]
+
+[[suffix]]
+name = "MANORS"
+abbr = "MNRS"
+forms = ["MANORS", "MNRS"]
+
+[[suffix]]
+name = "MEADOW"
+abbr = "MDW"
+forms = ["MDW", "MEADOW"]
+
+[[suffix]]
+name = "MEADOWS"
+abbr = "MDWS"
+forms = ["MDWS", "MEADOWS", "MEDOWS"]
+
+[[suffix]]
+name = "MEWS"
+abbr = "MEWS"
+forms = ["MEWS"]
+
+[[suffix]]
+name = "MILL"
+abbr = "ML"
+forms = ["MILL", "ML"]
+
+[[suffix]]
+name = "MILLS"
+abbr = "MLS"
+forms = ["MILLS", "MLS"]
+
+[[suffix]]
+name = "MISSION"
+abbr = "MSN"
+forms = ["MISSION", "MISSN", "MSN", "MSSN"]
+
+[[suffix]]
+name = "MOTORWAY"
+abbr = "MTWY"
+forms = ["MOTORWAY", "MTWY"]
+
+[[suffix]]
+name = "MOUNT"
+abbr = "MT"
+forms = ["MNT", "MOUNT", "MT"]
+
+[[suffix]]
+name = "MOUNTAIN"
+abbr = "MTN"
+forms = ["MNTAIN", "MNTN", "MOUNTAIN", "MOUNTIN", "MTIN", "MTN"]
+
+[[suffix]]
+name = "MOUNTAINS"
+abbr = "MTNS"
+forms = ["MNTNS", "MOUNTAINS", "MTNS"]
+
+[[suffix]]
+name = "NECK"
+abbr = "NCK"
+forms = ["NCK", "NECK"]
+
+[[suffix]]
+name = "ORCHARD"
+abbr = "ORCH"
+forms = ["ORCH", "ORCHARD", "ORCHRD"]
+
+[[suffix]]
+name = "OVAL"
+abbr = "OVAL"
+forms = ["OVAL", "OVL"]
+
+[[suffix]]
+name = "OVERPASS"
+abbr = "OPAS"
+forms = ["OPAS", "OVERPASS"]
+
+[[suffix]]
+name = "PARK"
+abbr = "PARK"
+forms = ["PARK", "PARKS", "PK", "PRK"]
+
+[[suffix]]
+name = "PARKWAY"
+abbr = "PKWY"
+forms = ["PARKWAY", "PARKWAYS", "PARKWY", "PKWAY", "PKWY", "PKWYS", "PKY"]
+
+[[suffix]]
+name = "PASS"
+abbr = "PASS"
+forms = ["PASS"]
+
+[[suffix]]
+name = "PASSAGE"
+abbr = "PSGE"
+forms = ["PASSAGE", "PSGE"]
+
+[[suffix]]
+name = "PATH"
+abbr = "PATH"
+forms = ["PATH", "PATHS"]
+
+[[suffix]]
+name = "PIKE"
+abbr = "PIKE"
+forms = ["PIKE", "PIKES"]
+
+[[suffix]]
+name = "PINE"
+abbr = "PNE"
+forms = ["PINE", "PNE"]
+
+[[suffix]]
+name = "PINES"
+abbr = "PNES"
+forms = ["PINES", "PNES"]
+
+[[suffix]]
+name = "PLACE"
+abbr = "PL"
+forms = ["PL", "PLACE"]
+
+[[suffix]]
+name = "PLAIN"
+abbr = "PLN"
+forms = ["PLAIN", "PLN"]
+
+[[suffix]]
+name = "PLAINS"
+abbr = "PLNS"
+forms = ["PLAINES", "PLAINS", "PLNS"]
+
+[[suffix]]
+name = "PLAZA"
+abbr = "PLZ"
+forms = ["PLAZA", "PLZ", "PLZA"]
+
+[[suffix]]
+name = "POINT"
+abbr = "PT"
+forms = ["POINT", "PT"]
+
+[[suffix]]
+name = "POINTS"
+abbr = "PTS"
+forms = ["POINTS", "PTS"]
+
+[[suffix]]
+name = "PORT"
+abbr = "PRT"
+forms = ["PORT", "PRT"]
+
+[[suffix]]
+name = "PORTS"
+abbr = "PRTS"
+forms = ["PORTS", "PRTS"]
+
+[[suffix]]
+name = "PRAIRIE"
+abbr = "PR"
+forms = ["PR", "PRAIRIE", "PRARIE", "PRR"]
+
+[[suffix]]
+name = "RADIAL"
+abbr = "RADL"
+forms = ["RAD", "RADIAL", "RADIEL", "RADL"]
+
+[[suffix]]
+name = "RAMP"
+abbr = "RAMP"
+forms = ["RAMP"]
+
+[[suffix]]
+name = "RANCH"
+abbr = "RNCH"
+forms = ["RANCH", "RANCHES", "RNCH", "RNCHS"]
+
+[[suffix]]
+name = "RAPID"
+abbr = "RPD"
+forms = ["RAPID", "RPD"]
+
+[[suffix]]
+name = "RAPIDS"
+abbr = "RPDS"
+forms = ["RAPIDS", "RPDS"]
+
+[[suffix]]
+name = "REST"
+abbr = "RST"
+forms = ["REST", "RST"]
+
+[[suffix]]
+name = "RIDGE"
+abbr = "RDG"
+forms = ["RDG", "RDGE", "RIDGE"]
+
+[[suffix]]
+name = "RIDGES"
+abbr = "RDGS"
+forms = ["RDGS", "RIDGES"]
+
+[[suffix]]
+name = "RIVER"
+abbr = "RIV"
+forms = ["RIV", "RIVER", "RIVR", "RVR"]
+
+[[suffix]]
+name = "ROAD"
+abbr = "RD"
+forms = ["RD", "ROAD"]
+
+[[suffix]]
+name = "ROADS"
+abbr = "RDS"
+forms = ["RDS", "ROADS"]
+
+[[suffix]]
+name = "ROUTE"
+abbr = "RTE"
+forms = ["ROUTE", "RTE"]
+
+[[suffix]]
+name = "ROW"
+abbr = "ROW"
+forms = ["ROW"]
+
+[[suffix]]
+name = "RUE"
+abbr = "RUE"
+forms = ["RUE"]
+
+[[suffix]]
+name = "RUN"
+abbr = "RUN"
+forms = ["RUN"]
+
+[[suffix]]
+name = "SHOAL"
+abbr = "SHL"
+forms = ["SHL", "SHOAL"]
+
+[[suffix]]
+name = "SHOALS"
+abbr = "SHLS"
+forms = ["SHLS", "SHOALS"]
+
+[[suffix]]
+name = "SHORE"
+abbr = "SHR"
+forms = ["SHOAR", "SHORE", "SHR"]
+
+[[suffix]]
+name = "SHORES"
+abbr = "SHRS"
+forms = ["SHOARS", "SHORES", "SHRS"]
+
+[[suffix]]
+name = "SKYWAY"
+abbr = "SKWY"
+forms = ["SKWY", "SKYWAY"]
+
+[[suffix]]
+name = "SPRING"
+abbr = "SPG"
+forms = ["SPG", "SPNG", "SPRING", "SPRNG"]
+
+[[suffix]]
+name = "SPRINGS"
+abbr = "SPGS"
+forms = ["SPGS", "SPNGS", "SPRINGS", "SPRNGS"]
+
+[[suffix]]
+name = "SPUR"
+abbr = "SPUR"
+forms = ["SPUR", "SPURS"]
+
+[[suffix]]
+name = "SQUARE"
+abbr = "SQ"
+forms = ["SQ", "SQR", "SQRE", "SQU", "SQUARE"]
+
+[[suffix]]
+name = "SQUARES"
+abbr = "SQS"
+forms = ["SQRS", "SQS", "SQUARES"]
+
+[[suffix]]
+name = "STATION"
+abbr = "STA"
+forms = ["STA", "STATION", "STATN", "STN"]
+
+[[suffix]]
+name = "STRAVENUE"
+abbr = "STRA"
+forms = ["STRA", "STRAV", "STRAVE", "STRAVEN", "STRAVENUE", "STRAVN", "STRVN", "STRVNUE"]
+
+[[suffix]]
+name = "STREAM"
+abbr = "STRM"
+forms = ["STREAM", "STREME", "STRM"]
+
+[[suffix]]
+name = "STREET"
+abbr = "ST"
+forms = ["ST", "STR", "STREET", "STRT"]
+
+[[suffix]]
+name = "STREETS"
+abbr = "STS"
+forms = ["STREETS", "STS"]
+
+[[suffix]]
+name = "SUMMIT"
+abbr = "SMT"
+forms = ["SMT", "SUMIT", "SUMITT", "SUMMIT"]
+
+[[suffix]]
+name = "TERRACE"
+abbr = "TER"
+forms = ["TER", "TERR", "TERRACE"]
+
+[[suffix]]
+name = "THROUGHWAY"
+abbr = "TRWY"
+forms = ["THROUGHWAY", "TRWY"]
+
+[[suffix]]
+name = "TRACE"
+abbr = "TRCE"
+forms = ["TRACE", "TRACES", "TRCE"]
+# observed: auction-tracker (Florida clerk/tax-deed listings), STREET_TYPES
+observed = ["TRC"]
+
+[[suffix]]
+name = "TRACK"
+abbr = "TRAK"
+forms = ["TRACK", "TRACKS", "TRAK", "TRK", "TRKS"]
+
+[[suffix]]
+name = "TRAFFICWAY"
+abbr = "TRFY"
+forms = ["TRAFFICWAY", "TRFY"]
+
+[[suffix]]
+name = "TRAIL"
+abbr = "TRL"
+forms = ["TR", "TRAIL", "TRAILS", "TRL", "TRLS"]
+
+# Not present in either cross-check transcription; added from Pub 28 Appendix C1
+# and pending verification against the published text.
+[[suffix]]
+name = "TRAILER"
+abbr = "TRLR"
+forms = ["TRAILER", "TRLR", "TRLRS"]
+
+[[suffix]]
+name = "TUNNEL"
+abbr = "TUNL"
+forms = ["TUNEL", "TUNL", "TUNLS", "TUNNEL", "TUNNELS", "TUNNL"]
+
+[[suffix]]
+name = "TURNPIKE"
+abbr = "TPKE"
+forms = ["TPK", "TPKE", "TRNPK", "TRPK", "TURNPIKE", "TURNPK"]
+
+[[suffix]]
+name = "UNDERPASS"
+abbr = "UPAS"
+forms = ["UNDERPASS", "UPAS"]
+
+[[suffix]]
+name = "UNION"
+abbr = "UN"
+forms = ["UN", "UNION"]
+
+[[suffix]]
+name = "UNIONS"
+abbr = "UNS"
+forms = ["UNIONS", "UNS"]
+
+[[suffix]]
+name = "VALLEY"
+abbr = "VLY"
+forms = ["VALLEY", "VALLY", "VLLY", "VLY"]
+
+[[suffix]]
+name = "VALLEYS"
+abbr = "VLYS"
+forms = ["VALLEYS", "VLYS"]
+
+[[suffix]]
+name = "VIADUCT"
+abbr = "VIA"
+forms = ["VDCT", "VIA", "VIADCT", "VIADUCT"]
+
+[[suffix]]
+name = "VIEW"
+abbr = "VW"
+forms = ["VIEW", "VW"]
+
+[[suffix]]
+name = "VIEWS"
+abbr = "VWS"
+forms = ["VIEWS", "VWS"]
+
+[[suffix]]
+name = "VILLAGE"
+abbr = "VLG"
+forms = ["VILL", "VILLAG", "VILLAGE", "VILLG", "VILLIAGE", "VLG"]
+
+[[suffix]]
+name = "VILLAGES"
+abbr = "VLGS"
+forms = ["VILLAGES", "VLGS"]
+
+[[suffix]]
+name = "VILLE"
+abbr = "VL"
+forms = ["VILLE", "VL"]
+
+[[suffix]]
+name = "VISTA"
+abbr = "VIS"
+forms = ["VIS", "VIST", "VISTA", "VST", "VSTA"]
+
+[[suffix]]
+name = "WALK"
+abbr = "WALK"
+forms = ["WALK", "WALKS"]
+
+[[suffix]]
+name = "WALL"
+abbr = "WALL"
+forms = ["WALL"]
+
+[[suffix]]
+name = "WAY"
+abbr = "WAY"
+forms = ["WAY", "WY"]
+
+[[suffix]]
+name = "WAYS"
+abbr = "WAYS"
+forms = ["WAYS"]
+
+[[suffix]]
+name = "WELL"
+abbr = "WL"
+forms = ["WELL", "WL"]
+
+[[suffix]]
+name = "WELLS"
+abbr = "WLS"
+forms = ["WELLS", "WLS"]
