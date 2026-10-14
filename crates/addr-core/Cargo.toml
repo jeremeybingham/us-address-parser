@@ -9,13 +9,16 @@ rust-version.workspace = true
 
 [features]
 default = []
-# Parallel batch parsing via rayon (Milestone 2+).
-rayon = []
+# Parallel `Parser::parse_many`.
+rayon = ["dep:rayon"]
 # CRF fallback tagger (Milestone 6).
 crf = []
 
 [lints]
 workspace = true
+
+[dependencies]
+rayon = { version = "1.10", optional = true }
 
 [build-dependencies]
 toml = { version = "0.8", default-features = false, features = ["parse"] }

@@ -31,15 +31,24 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
   - `lines`: an array of address lines as the source gave them (for example
-    a street line and a `CITY, ST ZIP` line). The runner joins them with
-    `", "` and calls `Parser::parse` until multi-line input has its own entry
-    point; the record keeps the source's line split for when it does.
+    a street line and a `CITY, ST ZIP` line). Two lines are passed to
+    `Parser::parse_fields` as `line1` and `line2`, which reads them like one
+    line when city, state and ZIP are empty; one line goes to `parse`, and
+    more are joined with `", "`.
   - `fields`: `{line1, line2, city, state, zip}`, passed to
     `Parser::parse_fields`.
 - `expect`: expected `ParsedAddress` components, named as the struct fields
   are, plus `unparsed` (`Diagnostics::unparsed`). **An absent key means that
   component must be empty**, so a parser that fills in extra parts fails.
-  `rural_route` is `{"kind": "RR" | "HC", "route": "2", "box": "152"}`.
+  Structured values:
+  - `rural_route`: `{"kind": "RR" | "HC", "route": "2", "box": "152"}`
+  - `highway`: `{"prefix": "COUNTY ROAD", "route": "23"}`, with the
+    standard prefix from `data/special.toml` `[[highway]]`
+  - `military`: `{"kind": "PSC", "number": "1650", "box": "10"}`
+  - `military_post_office`: `"APO"`, `"FPO"` or `"DPO"`
+  - `general_delivery`: `true` (absent means false)
+  - `second_unit_type`, `second_unit_number`: a second unit after the
+    first, in input order
 - `warnings`: `Warning::code()` strings. Compared as a set, exactly: missing
   or extra warnings both fail.
 - `note`: optional, why the case is there or why it is labeled this way.
@@ -48,8 +57,8 @@ Fields that the emitters will need (USPS lines, RESO fields, key) are added
 in Milestone 3, as optional keys.
 
 The runner rejects unknown keys, duplicate ids, unknown warning codes, and
-`street_suffix`, `unit_type`, `state` or directional values that are not
-standard abbreviations from the lexicon tables.
+suffix, unit, state, directional, highway-prefix or military values that are
+not standard forms from the lexicon tables.
 
 ## Labeling conventions
 
@@ -67,17 +76,22 @@ standard abbreviations from the lexicon tables.
 - Warnings follow these rules, so labels stay consistent:
   - `unparsed_remainder` exactly when `unparsed` is set.
   - `missing_city`, `missing_state`, `missing_zip` whenever that component is
-    empty, including for street-only lines and placeholders.
-  - `missing_street_number` when there is a street name but no number;
-    `zero_street_number` replaces it for house number 0. Neither is raised
-    when nothing street-like was found.
+    empty, including for street-only lines and placeholders. An APO, FPO or
+    DPO in the city position counts as the city.
+  - `missing_street_number` when there is a street name or highway but no
+    number; `zero_street_number` replaces it for house number 0. Neither is
+    raised when nothing street-like was found, or for PO Box, rural route,
+    general delivery and military lines.
+- A highway address keeps the prefix and route in `highway` and leaves
+  `street_name` empty. Words after the route are labeled as on any street:
+  `HWY 11 BYPASS` has suffix BYP, `US 41 SW` has postdirectional SW.
   - `invalid_zip` replaces `missing_zip` when there is a ZIP-like token that
     is not a valid ZIP (a cut-off `3`); the token goes to `unparsed`.
   - A placeholder line is consumed whole: `placeholder`, nothing in
     `unparsed`.
 
-These conventions describe the planned behavior; review them along with the
-tagger (Milestone 2).
+The tagger follows these conventions; its rules and their sources are in
+`docs/usps-pub28-notes.md` ("Parser rules").
 
 ## Sources
 
@@ -102,5 +116,24 @@ Not taken from auction-tracker:
   (`13551 WILSON STREETDADE CITY`), a cut-off city completed from the county's
   places (`26322 BRAHMA DRIVEWESLEY CHA`, `7709 SEASHORE DRIVEPORT RICH`), and
   a city taken from the ZIP (`TAL`, `SAINT LUCIE COUNTY`).
-- Highway routes (`8932 HWY 2301`, `3911 HIGHWAY 97`). `ParsedAddress` has
-  no field for a highway prefix yet; these are added with that field.
+
+The highway routes `8932 HWY 2301` and `3911 HIGHWAY 97` were held back
+until `ParsedAddress` had a highway field; they are `at-highway-001` and
+`at-highway-002`.
+
+### `pub28.jsonl`
+
+Built from the examples in USPS Publication 28 (`docs/usps-pub28-notes.md`
+has the page for each section): the highway table in section 237 and the
+"Examples in Use" column of Appendix F, the PO Box (281, 283), rural route
+(241, 244), highway contract route (251, 253) and general delivery (261)
+formats, and the military and Department of State examples in sections
+225.1, 238.1 and 239. Inputs use the spellings Pub 28 says to change, and
+the expected values are the standard forms it gives. House numbers are only
+present where Pub 28's example has one.
+
+### `regressions.jsonl`
+
+Cases for parsing bugs found while building the tagger (`CLAUDE.md`: every
+parsing bug fixed gets a case), and the multi-field shapes from
+`docs/prior-art.md`. Ids start with `rg-`; each note says what went wrong.

@@ -91,6 +91,33 @@ emitted.
   elsewhere; RR for Ranch Road in Texas) are left out of the base tables, to
   be added by state packs.
 
+## Parser rules (Milestone 2)
+
+How the tagger (`crates/addr-core/src/tagger/`) reads an address, and where
+each rule comes from. Rules from Pub 28 cite its section; the rest come from
+shapes in real county data (`docs/prior-art.md`) and are not USPS rules.
+
+| Rule | Source |
+|---|---|
+| Read the last line (ZIP, state, city) first, then the delivery line from both ends: units and postdirectional from the right, house number and predirectional from the left. | Section 231 (parse from the right-most element). |
+| Directionals: one or two words before the name are the predirectional, after the name and suffix the postdirectional, abbreviated to the Appendix B forms. A directional with no name left beside it is the name (`100 N ST`, `2 SOUTH ST`). | Sections 233.1, 233.21, 233.22; Appendix B. |
+| A one-letter directional right after a lone suffix word is part of the name, like any letter there (`AVENUE N`, `AVENUE G`). | Section 233.3 (letters used as alphabet indicators); prior art (`2108 AVENUE G`). |
+| Suffix: the last word before units and postdirectional, when a name is left before it. Suffix words earlier in the line stay in the name (`EAGLES POINT CIRCLE`). | Section 234; Appendix C1. |
+| Highway names: a prefix from `[[highway]]` right after the house number (or a predirectional) and followed by a route that starts with a digit. The prefix and route go in `highway`; later words are suffix, postdirectional or name (`HWY 11 BYPASS`, `US 41 SW`). `I10` and `IH280` are split by the tokenizer. | Section 237; Appendix F. |
+| Units: a designator and value (`APT 4B`), `#` and value, a designator with `#` (`UNIT # 4`), or a designator alone (`REAR`, or `UNIT` with a missing number when Appendix C2 requires a range). Up to two, the first in input order going to `unit_*`. | Section 213; Appendix C2 (designators, range column, `#` when the designator is unknown). |
+| Bare units: after a suffix (and optional postdirectional), a value with a digit or a single letter, or a letter and a number (`DR 706`, `DR B`, `DR V 21`). Not a directional letter (`PARK AVE S` is a postdirectional), not after a highway word other than ROAD, and only when a name comes before the suffix. | Prior art (Florida county data). |
+| PO Box: a `[po_box]` form or synonym, then an optional `#` and the box value. | Sections 281, 283. |
+| Rural route and highway contract route: the route word, optional `#`, route number, then `BOX` and the box value. RD, RT, RTE and ROUTE (also highway prefixes or suffixes) need the BOX part. | Sections 241, 244, 251, 253. |
+| General delivery: the `[general_delivery]` forms. | Section 261. |
+| Military: a `[[military]]` type, its number, then `BOX` and the box value; APO, FPO or DPO before AA, AE or AP takes the city's place. | Sections 225.1, 238.1, 239. |
+| ZIP: the last token, 5 or 9 digits or `5-4`, not after `#`. A shorter all-digit token after a state is an invalid ZIP when the state starts its line or the input is at least 30 characters long. | ZIP formats; truncation from prior art. |
+| State: right before the ZIP (traditional abbreviations such as FLA allowed), else first in the ZIP's line. With no ZIP, only a USPS code or full name ending a later line, or ending a one-line address after a city. | Appendix B; prior art (`FL- PORT RICHEY 34654`). |
+| City: the line before the state or ZIP line, or the words before the state on its line. On a line with no commas, the words after the street's suffix (and any postdirectional and unit). A one-line address whose street has suffix words in the city (`MOUNTAIN VIEW`) needs a place list, which is a state-pack job. | Prior art; design section 11. |
+| A copy of the city at the end of the street line, possibly cut off, is dropped (`... DR FERNANDINA B`). A suffix is never dropped this way. | Prior art (Nassau). |
+| Placeholders: a whole street line in `[placeholder]`, or a placeholder before ` - ` (dropped, or the whole line when only a code follows). | Prior art; not a USPS rule. |
+| Truncation: `possibly_truncated` when a line of at least 30 characters ends in something incomplete: a cut-off ZIP, a designator without its number, a cut-off designator (`UNI`), or a name with no suffix. | Prior art (county sites cut lines at about 30 characters). |
+| The parser does not guess: `409742ND` (4097 42ND or 40974 2ND), slash pairs (`5210/5212`) and anything no rule claims go to `unparsed`. | Prior art. |
+
 ## Emitter rules
 
 TODO: written in Milestone 3. Rules already sourced:

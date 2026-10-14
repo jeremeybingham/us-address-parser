@@ -5,10 +5,11 @@ strings (or pre-split fields) into components, emits **USPS Publication 28**
 style and **RESO Data Dictionary** output, and produces database-ready
 identifiers (a stable canonical match key and a URL-safe slug).
 
-> **Status: Milestone 1 (data and types).** The public types and the USPS
-> Pub 28 lexicon tables (`Lexicons`) are in place, but the parsing pipeline is
-> not implemented yet. `Parser::parse` currently returns the input as an
-> unparsed remainder with a `NotImplemented` warning. See
+> **Status: Milestone 2 (parser).** `Parser::parse`, `parse_fields` and
+> `parse_many` parse single-line and multi-field input into components, with
+> spans into the original text and diagnostics. The rules and their sources
+> are in [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md). The USPS,
+> RESO, key and slug emitters (Milestone 3) are not written yet. See
 > [`docs/design.md`](docs/design.md) for the milestone plan.
 
 ## This is not an address validator
@@ -54,8 +55,10 @@ use addr_core::Parser;
 
 let parser = Parser::new();
 let parsed = parser.parse("123 north main street apt 4, Miami FL 33101")?;
+assert_eq!(parsed.street_name.as_deref(), Some("MAIN"));
+assert_eq!(parsed.unit_number.as_deref(), Some("4"));
 
-// Lexicon lookups are available now:
+// Lexicon lookups:
 let lex = addr_core::Lexicons::builtin();
 assert_eq!(lex.suffix("Avenue").unwrap().value.abbr(), "AVE");
 assert_eq!(lex.state("Fla.").unwrap().value.code(), "FL");

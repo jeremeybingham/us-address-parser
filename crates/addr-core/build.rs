@@ -402,6 +402,31 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<()> {
     .ok();
     hw.emit(out, "HIGHWAY_INDEX", "(u16, MatchKind)");
 
+    gen_fixed(
+        t,
+        "military",
+        "MilitaryKind",
+        &[
+            ("CPR", "Cpr"),
+            ("OPC", "Opc"),
+            ("PSC", "Psc"),
+            ("UPR", "Upr"),
+            ("UNIT", "Unit"),
+        ],
+        "MILITARY_INDEX",
+        out,
+        mw,
+    )?;
+    gen_fixed(
+        t,
+        "military_post_office",
+        "MilitaryPostOffice",
+        &[("APO", "Apo"), ("FPO", "Fpo"), ("DPO", "Dpo")],
+        "MILITARY_PO_INDEX",
+        out,
+        mw,
+    )?;
+
     let pctx = format!("{ctx} [placeholder]");
     let mut phrases = key_list(table(t, "placeholder", ctx)?, "phrases", &pctx, true)?;
     phrases.sort();
@@ -410,5 +435,52 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<()> {
         "pub(crate) static PLACEHOLDERS: &[&str] = &{phrases:?};\n"
     )
     .ok();
+    Ok(())
+}
+
+/// An `[[array]]` of `standard` + `forms` entries whose standards form a
+/// fixed set, each mapped to an enum variant. Unknown or missing standards
+/// are build errors.
+#[allow(clippy::too_many_arguments)]
+fn gen_fixed(
+    t: &Table,
+    key: &str,
+    ty: &str,
+    variants: &[(&str, &str)],
+    index_name: &str,
+    out: &mut String,
+    mw: &mut usize,
+) -> Result<()> {
+    let ctx = format!("special.toml [[{key}]]");
+    let mut index = Index::default();
+    let mut seen = Vec::new();
+    for (i, r) in tables(t, key, &ctx)?.iter().enumerate() {
+        let ectx = format!("{ctx} #{}", i + 1);
+        let standard = key_str(r, "standard", &ectx)?;
+        let variant = variants
+            .iter()
+            .find(|(s, _)| *s == standard)
+            .map(|(_, v)| *v)
+            .ok_or_else(|| format!("{ectx}: unknown standard `{standard}`"))?;
+        let forms = key_list(r, "forms", &ectx, true)?;
+        if !forms.contains(&standard) {
+            return Err(format!("{ectx}: forms must include `{standard}`"));
+        }
+        seen.push(standard.clone());
+        for f in &forms {
+            let k = if *f == standard {
+                "Standard"
+            } else {
+                "Variant"
+            };
+            index.add(f, format!("({ty}::{variant}, MatchKind::{k})"), &ectx, mw)?;
+        }
+    }
+    for (s, _) in variants {
+        if !seen.iter().any(|x| x == s) {
+            return Err(format!("{ctx}: missing entry for `{s}`"));
+        }
+    }
+    index.emit(out, index_name, &format!("({ty}, MatchKind)"));
     Ok(())
 }

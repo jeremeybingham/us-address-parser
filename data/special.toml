@@ -159,6 +159,48 @@ forms = ["EXPRESSWAY"]
 standard = "LOOP"
 forms = ["LOOP"]
 
+# Military delivery lines (Pub 28 section 238.1): one of five address types
+# with its number, then BOX and the box number ("PSC 1650 BOX 10",
+# "UNIT 908 BOX 111"). Department of State mail uses the same shape
+# (section 239: "UNIT 9900 BOX 0500"). CMR (community mail room) is an older
+# type that the current Pub 28 does not list, so it is left out.
+# The standard values are fixed: build.rs maps each to a MilitaryKind.
+
+[[military]]
+standard = "CPR"
+forms = ["CPR", "CONSOLIDATED POSTAL ROOM"]
+
+[[military]]
+standard = "OPC"
+forms = ["OPC", "OFFICIAL POSTAL CENTER"]
+
+[[military]]
+standard = "PSC"
+forms = ["PSC", "POSTAL SERVICE CENTER"]
+
+[[military]]
+standard = "UPR"
+forms = ["UPR", "UNIT POSTAL ROOM"]
+
+[[military]]
+standard = "UNIT"
+forms = ["UNIT"]
+
+# Military post offices, written in the city position with AA, AE or AP as
+# the state (Pub 28 section 225.1 for APO and FPO; section 239 for DPO).
+
+[[military_post_office]]
+standard = "APO"
+forms = ["APO"]
+
+[[military_post_office]]
+standard = "FPO"
+forms = ["FPO"]
+
+[[military_post_office]]
+standard = "DPO"
+forms = ["DPO"]
+
 [placeholder]
 # Whole-line stand-ins meaning "no usable street address". Matched against the
 # normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",

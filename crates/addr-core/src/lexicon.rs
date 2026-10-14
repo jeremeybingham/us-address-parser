@@ -13,7 +13,9 @@ mod key;
 
 pub use key::normalize_key;
 
-use crate::types::{Directional, StateCode, StateKind, StreetSuffix, UnitType};
+use crate::types::{
+    Directional, MilitaryKind, MilitaryPostOffice, StateCode, StateKind, StreetSuffix, UnitType,
+};
 
 /// How a looked-up spelling relates to its table entry.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -100,7 +102,7 @@ struct StateRow {
 
 mod tables {
     use super::{MatchKind, Special, StateKind, StateRow, SuffixRow, UnitRow};
-    use crate::types::Directional;
+    use crate::types::{Directional, MilitaryKind, MilitaryPostOffice};
 
     include!(concat!(env!("OUT_DIR"), "/lexicon_tables.rs"));
 }
@@ -197,6 +199,18 @@ impl Lexicons {
         })
     }
 
+    /// Military delivery-line type: `"PSC"`, `"Postal Service Center"` -> PSC.
+    pub fn military(&self, s: &str) -> Option<Lookup<MilitaryKind>> {
+        let (value, kind) = *find(tables::MILITARY_INDEX, &normalize_key(s))?;
+        Some(Lookup { value, kind })
+    }
+
+    /// Military post office: `"APO"`, `"FPO"`, `"DPO"`.
+    pub fn military_post_office(&self, s: &str) -> Option<Lookup<MilitaryPostOffice>> {
+        let (value, kind) = *find(tables::MILITARY_PO_INDEX, &normalize_key(s))?;
+        Some(Lookup { value, kind })
+    }
+
     /// Whether a whole street line is placeholder text ("NO SITUS",
     /// "0 UNKNOWN", "00 UNASSIGNED LOCATION RE"), or has no letters or digits
     /// at all ("-"). A leading run of zeros is ignored, and an
@@ -280,6 +294,8 @@ mod tests {
         check("state", tables::STATE_INDEX);
         check("special", tables::SPECIAL_INDEX);
         check("highway", tables::HIGHWAY_INDEX);
+        check("military", tables::MILITARY_INDEX);
+        check("military_po", tables::MILITARY_PO_INDEX);
         assert!(tables::PLACEHOLDERS.windows(2).all(|w| w[0] < w[1]));
     }
 
@@ -437,6 +453,21 @@ mod tests {
         assert_eq!(h("LOOP"), Some("LOOP"));
         // State-dependent; left to state packs.
         assert_eq!(h("SR"), None);
+    }
+
+    #[test]
+    fn military_lookup() {
+        assert_eq!(LEX.military("psc").unwrap().value, MilitaryKind::Psc);
+        assert_eq!(
+            LEX.military("Unit Postal Room").unwrap().value,
+            MilitaryKind::Upr
+        );
+        assert_eq!(LEX.military("UNIT").unwrap().value, MilitaryKind::Unit);
+        assert_eq!(
+            LEX.military_post_office("fpo").unwrap().value,
+            MilitaryPostOffice::Fpo
+        );
+        assert!(LEX.military("CMR").is_none());
     }
 
     #[test]
