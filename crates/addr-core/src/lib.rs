@@ -15,10 +15,11 @@ mod parser;
 mod types;
 
 pub use input::Fields;
-pub use lexicon::{Lexicons, Lookup, MatchKind};
+pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind};
 pub use parser::{ParseError, Parser};
 pub use types::{
-    Diagnostics, Directional, InputKind, ParsedAddress, RouteKind, RuralRoute, SourceInfo,
+    Component, ComponentSpan, Diagnostics, Directional, FieldName, Highway, InputKind, MilitaryBox,
+    MilitaryKind, MilitaryPostOffice, ParsedAddress, RouteKind, RuralRoute, SourceInfo, Span,
     StateCode, StateKind, StreetSuffix, UnitType, Warning,
 };
 

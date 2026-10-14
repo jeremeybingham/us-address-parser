@@ -14,7 +14,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use addr_core::{Directional, Fields, Lexicons, ParsedAddress, Parser, Warning};
+use addr_core::{Directional, Fields, Lexicons, MatchKind, ParsedAddress, Parser, Warning};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -51,10 +51,17 @@ struct Expect {
     street_name: Option<String>,
     street_suffix: Option<String>,
     street_dir_suffix: Option<String>,
+    highway: Option<ExpectHighway>,
     unit_type: Option<String>,
     unit_number: Option<String>,
+    second_unit_type: Option<String>,
+    second_unit_number: Option<String>,
     po_box: Option<String>,
     rural_route: Option<ExpectRoute>,
+    #[serde(default)]
+    general_delivery: bool,
+    military: Option<ExpectMilitary>,
+    military_post_office: Option<String>,
     city: Option<String>,
     state: Option<String>,
     zip5: Option<String>,
@@ -72,17 +79,41 @@ struct ExpectRoute {
     box_number: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ExpectHighway {
+    /// Standard prefix: "COUNTY ROAD", "HIGHWAY", "FM".
+    prefix: String,
+    route: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ExpectMilitary {
+    /// "CPR", "OPC", "PSC", "UPR" or "UNIT".
+    kind: String,
+    number: String,
+    #[serde(rename = "box")]
+    box_number: Option<String>,
+}
+
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 15] = [
+const FIELDS: [&str; 21] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
     "street_suffix",
     "street_dir_suffix",
+    "highway",
     "unit_type",
     "unit_number",
+    "second_unit_type",
+    "second_unit_number",
     "po_box",
     "rural_route",
+    "general_delivery",
+    "military",
+    "military_post_office",
     "city",
     "state",
     "zip5",
@@ -92,6 +123,10 @@ const FIELDS: [&str; 15] = [
 ];
 
 type Values = BTreeMap<&'static str, Option<String>>;
+
+fn flag(b: bool) -> Option<String> {
+    b.then(|| "true".to_string())
+}
 
 fn route_str(kind: &str, route: &str, box_number: Option<&str>) -> String {
     match box_number {
@@ -117,8 +152,16 @@ fn expected_values(c: &Case) -> Values {
     v.insert("street_name", e.street_name.clone());
     v.insert("street_suffix", e.street_suffix.clone());
     v.insert("street_dir_suffix", e.street_dir_suffix.clone());
+    v.insert(
+        "highway",
+        e.highway
+            .as_ref()
+            .map(|h| format!("{} {}", h.prefix, h.route)),
+    );
     v.insert("unit_type", e.unit_type.clone());
     v.insert("unit_number", e.unit_number.clone());
+    v.insert("second_unit_type", e.second_unit_type.clone());
+    v.insert("second_unit_number", e.second_unit_number.clone());
     v.insert("po_box", e.po_box.clone());
     v.insert(
         "rural_route",
@@ -126,6 +169,14 @@ fn expected_values(c: &Case) -> Values {
             .as_ref()
             .map(|r| route_str(&r.kind, &r.route, r.box_number.as_deref())),
     );
+    v.insert("general_delivery", flag(e.general_delivery));
+    v.insert(
+        "military",
+        e.military
+            .as_ref()
+            .map(|m| route_str(&m.kind, &m.number, m.box_number.as_deref())),
+    );
+    v.insert("military_post_office", e.military_post_office.clone());
     v.insert("city", e.city.clone());
     v.insert("state", e.state.clone());
     v.insert("zip5", e.zip5.clone());
@@ -154,14 +205,36 @@ fn actual_values(a: &ParsedAddress) -> Values {
         "street_dir_suffix",
         a.street_dir_suffix.map(|d| d.abbr().to_string()),
     );
+    v.insert(
+        "highway",
+        a.highway
+            .as_ref()
+            .map(|h| format!("{} {}", h.prefix.standard(), h.route)),
+    );
     v.insert("unit_type", a.unit_type.map(|u| u.abbr().to_string()));
     v.insert("unit_number", a.unit_number.clone());
+    v.insert(
+        "second_unit_type",
+        a.second_unit_type.map(|u| u.abbr().to_string()),
+    );
+    v.insert("second_unit_number", a.second_unit_number.clone());
     v.insert("po_box", a.po_box.clone());
     v.insert(
         "rural_route",
         a.rural_route
             .as_ref()
             .map(|r| route_str(r.kind.abbr(), &r.route, r.box_number.as_deref())),
+    );
+    v.insert("general_delivery", flag(a.general_delivery));
+    v.insert(
+        "military",
+        a.military
+            .as_ref()
+            .map(|m| route_str(m.kind.abbr(), &m.number, m.box_number.as_deref())),
+    );
+    v.insert(
+        "military_post_office",
+        a.military_post_office.map(|m| m.abbr().to_string()),
     );
     v.insert("city", a.city.clone());
     v.insert("state", a.state.map(|s| s.code().to_string()));
@@ -229,6 +302,7 @@ fn validate(cases: &[(String, Case)], errors: &mut Vec<String>) {
         let checks = [
             ("street_suffix", &e.street_suffix, &suffixes),
             ("unit_type", &e.unit_type, &units),
+            ("second_unit_type", &e.second_unit_type, &units),
             ("state", &e.state, &states),
             ("street_dir_prefix", &e.street_dir_prefix, &dirs),
             ("street_dir_suffix", &e.street_dir_suffix, &dirs),
@@ -243,6 +317,27 @@ fn validate(cases: &[(String, Case)], errors: &mut Vec<String>) {
         if let Some(r) = &e.rural_route {
             if r.kind != "RR" && r.kind != "HC" {
                 errors.push(format!("{at}: rural_route kind must be RR or HC"));
+            }
+        }
+        if let Some(h) = &e.highway {
+            let standard = lex
+                .highway(&h.prefix)
+                .filter(|l| l.kind == MatchKind::Standard);
+            if standard.is_none() {
+                errors.push(format!(
+                    "{at}: highway prefix {:?} is not a standard prefix",
+                    h.prefix
+                ));
+            }
+        }
+        if let Some(m) = &e.military {
+            if lex.military(&m.kind).map(|l| l.value.abbr()) != Some(m.kind.as_str()) {
+                errors.push(format!("{at}: military kind {:?} is not standard", m.kind));
+            }
+        }
+        if let Some(p) = &e.military_post_office {
+            if lex.military_post_office(p).map(|l| l.value.abbr()) != Some(p.as_str()) {
+                errors.push(format!("{at}: military_post_office {p:?} is not standard"));
             }
         }
         for w in &c.warnings {
@@ -344,7 +439,7 @@ fn golden_corpus() {
     );
     for f in FIELDS {
         let n = field_ok[f];
-        println!("  {f:<18} {n:>4}/{total} ({:.1}%)", pct(n));
+        println!("  {f:<20} {n:>4}/{total} ({:.1}%)", pct(n));
     }
     if std::env::var_os("CORPUS_VERBOSE").is_some() && !failures.is_empty() {
         let all: Vec<_> = failures.values().map(String::as_str).collect();

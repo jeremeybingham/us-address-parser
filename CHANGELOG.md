@@ -26,3 +26,12 @@
 - `docs/design.md`: decisions 13 to 15 (spans into the original input,
   per-field parsing of `Fields`, new fields for highway, general delivery,
   military and second-unit addresses).
+- `ParsedAddress` fields from decision 15: `highway` (prefix and route),
+  `second_unit_type` / `second_unit_number`, `general_delivery`, `military`
+  (CPR, OPC, PSC, UPR, UNIT box lines) and `military_post_office` (APO,
+  FPO, DPO), with `data/special.toml` tables and `Lexicons::military`,
+  `Lexicons::military_post_office` (Pub 28 sections 225.1, 238.1, 239).
+- Component spans into the original input (decision 13): `Span`,
+  `Component`, `SourceInfo::spans`, `SourceInfo::text`.
+- Corpus: the two held-back highway cases, and `pub28.jsonl` with 48 cases
+  from Pub 28's own examples.

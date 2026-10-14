@@ -7,6 +7,8 @@
 
 use std::fmt;
 
+use crate::input::Fields;
+use crate::lexicon::HighwayPrefix;
 use crate::VERSION;
 
 /// Compass directional (N, S, E, W, NE, NW, SE, SW), used as a street
@@ -200,6 +202,73 @@ pub struct RuralRoute {
     pub box_number: Option<String>,
 }
 
+/// A street named after a highway, with the prefix kept apart from the route
+/// number: `COUNTY ROAD 23`, `US HIGHWAY 1`, `FM 1960`. Source: Pub 28
+/// section 237 and Appendix F, `data/special.toml` `[[highway]]`.
+///
+/// The route is the road's number, not a house number or unit. It may hold
+/// letters (`60E`, `1080A`) or be letters only (`STATE ROUTE MM`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Highway {
+    pub prefix: HighwayPrefix,
+    pub route: String,
+}
+
+/// Military delivery-line address type. Source: Pub 28 section 238.1,
+/// `data/special.toml` `[[military]]`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MilitaryKind {
+    /// Consolidated Postal Room.
+    Cpr,
+    /// Official Postal Center.
+    Opc,
+    /// Postal Service Center.
+    Psc,
+    /// Unit Postal Room.
+    Upr,
+    Unit,
+}
+
+impl MilitaryKind {
+    pub const fn abbr(self) -> &'static str {
+        match self {
+            MilitaryKind::Cpr => "CPR",
+            MilitaryKind::Opc => "OPC",
+            MilitaryKind::Psc => "PSC",
+            MilitaryKind::Upr => "UPR",
+            MilitaryKind::Unit => "UNIT",
+        }
+    }
+}
+
+/// Military or Department of State delivery line: `PSC 1650 BOX 10`,
+/// `UNIT 9900 BOX 0500` (Pub 28 sections 238.1 and 239).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MilitaryBox {
+    pub kind: MilitaryKind,
+    pub number: String,
+    pub box_number: Option<String>,
+}
+
+/// Military post office, written where the city goes, with AA, AE or AP as
+/// the state: `APO AE 09001` (Pub 28 sections 225.1 and 239).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MilitaryPostOffice {
+    Apo,
+    Fpo,
+    Dpo,
+}
+
+impl MilitaryPostOffice {
+    pub const fn abbr(self) -> &'static str {
+        match self {
+            MilitaryPostOffice::Apo => "APO",
+            MilitaryPostOffice::Fpo => "FPO",
+            MilitaryPostOffice::Dpo => "DPO",
+        }
+    }
+}
+
 /// How the input was supplied.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InputKind {
@@ -207,12 +276,95 @@ pub enum InputKind {
     Fields,
 }
 
+/// One field of [`crate::Fields`] input.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FieldName {
+    Line1,
+    Line2,
+    City,
+    State,
+    Zip,
+}
+
+/// Byte range into the original input (decision 13), not into cleaned text.
+///
+/// For single-line input `field` is `None` and the range indexes
+/// [`SourceInfo::original`]. For [`crate::Fields`] input it names the field
+/// and the range indexes that field's string; see [`SourceInfo::text`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Span {
+    pub field: Option<FieldName>,
+    pub start: usize,
+    pub end: usize,
+}
+
+/// A [`ParsedAddress`] component, for labeling spans.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum Component {
+    StreetNumber,
+    StreetDirPrefix,
+    StreetName,
+    StreetSuffix,
+    StreetDirSuffix,
+    Highway,
+    UnitType,
+    UnitNumber,
+    SecondUnitType,
+    SecondUnitNumber,
+    PoBox,
+    RuralRoute,
+    GeneralDelivery,
+    Military,
+    MilitaryPostOffice,
+    City,
+    State,
+    Zip5,
+    Zip4,
+    /// Text the parser could not place ([`Diagnostics::unparsed`]).
+    Unparsed,
+}
+
+/// Where a component came from in the input. A component built from
+/// separated pieces (an unparsed remainder) has one span per piece.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ComponentSpan {
+    pub component: Component,
+    pub span: Span,
+}
+
 /// Original input and provenance.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceInfo {
+    /// The input string, or for [`crate::Fields`] input the non-empty fields
+    /// joined with `", "` (for display; spans index the fields themselves).
     pub original: String,
     pub kind: InputKind,
-    // Component byte spans are added in Milestone 2.
+    /// The fields as given, for [`InputKind::Fields`].
+    pub fields: Option<Fields>,
+    /// Component spans, in input order.
+    pub spans: Vec<ComponentSpan>,
+}
+
+impl SourceInfo {
+    /// The original text a span covers, or `None` if it does not index the
+    /// input (which would be a parser bug).
+    pub fn text(&self, span: &Span) -> Option<&str> {
+        let s = match (span.field, &self.fields) {
+            (None, _) => self.original.as_str(),
+            (Some(f), Some(fields)) => fields.get(f)?,
+            (Some(_), None) => return None,
+        };
+        s.get(span.start..span.end)
+    }
+
+    /// The spans recorded for one component.
+    pub fn spans_of(&self, component: Component) -> impl Iterator<Item = &Span> {
+        self.spans
+            .iter()
+            .filter(move |c| c.component == component)
+            .map(|c| &c.span)
+    }
 }
 
 /// Non-fatal parse issues, for routing rows to review. Extensible; keep
@@ -355,13 +507,28 @@ pub struct ParsedAddress {
     /// "123", "123-125", "123 1/2", "12A".
     pub street_number: Option<String>,
     pub street_dir_prefix: Option<Directional>,
+    /// The primary name. Empty for a highway address, whose name is in
+    /// [`ParsedAddress::highway`].
     pub street_name: Option<String>,
     pub street_suffix: Option<StreetSuffix>,
     pub street_dir_suffix: Option<Directional>,
+    /// Highway street name (`8932 HWY 2301`): prefix and route number.
+    pub highway: Option<Highway>,
+    /// Secondary unit designator. Empty for a bare unit (`DR 706`) or `#`.
     pub unit_type: Option<UnitType>,
     pub unit_number: Option<String>,
+    /// A second unit after the first (`-UNIT B LT 18`): building then unit,
+    /// unit then lot, and so on, in input order.
+    pub second_unit_type: Option<UnitType>,
+    pub second_unit_number: Option<String>,
     pub po_box: Option<String>,
     pub rural_route: Option<RuralRoute>,
+    /// The delivery line is GENERAL DELIVERY (Pub 28 section 261).
+    pub general_delivery: bool,
+    /// Military or Department of State box line (`PSC 1650 BOX 10`).
+    pub military: Option<MilitaryBox>,
+    /// APO, FPO or DPO in the city position. When set, `city` is empty.
+    pub military_post_office: Option<MilitaryPostOffice>,
     pub city: Option<String>,
     pub state: Option<StateCode>,
     pub zip5: Option<String>,
@@ -371,23 +538,34 @@ pub struct ParsedAddress {
 }
 
 impl ParsedAddress {
-    pub(crate) fn empty(original: String, kind: InputKind) -> Self {
+    pub(crate) fn empty(original: String, kind: InputKind, fields: Option<Fields>) -> Self {
         Self {
             street_number: None,
             street_dir_prefix: None,
             street_name: None,
             street_suffix: None,
             street_dir_suffix: None,
+            highway: None,
             unit_type: None,
             unit_number: None,
+            second_unit_type: None,
+            second_unit_number: None,
             po_box: None,
             rural_route: None,
+            general_delivery: false,
+            military: None,
+            military_post_office: None,
             city: None,
             state: None,
             zip5: None,
             zip4: None,
             diagnostics: Diagnostics::default(),
-            source: SourceInfo { original, kind },
+            source: SourceInfo {
+                original,
+                kind,
+                fields,
+                spans: Vec::new(),
+            },
         }
     }
 }

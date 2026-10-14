@@ -53,7 +53,7 @@ impl Parser {
         if trimmed.is_empty() {
             return Err(ParseError::EmptyInput);
         }
-        let mut addr = ParsedAddress::empty(input.to_string(), kind);
+        let mut addr = ParsedAddress::empty(input.to_string(), kind, None);
         addr.diagnostics.unparsed = Some(trimmed.to_string());
         addr.diagnostics.warn(Warning::NotImplemented);
         Ok(addr)
