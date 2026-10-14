@@ -390,10 +390,15 @@ mod tests {
         assert_eq!(sp("p o box"), Some((Special::PoBox, MatchKind::Variant)));
         assert_eq!(sp("POBOX"), Some((Special::PoBox, MatchKind::Variant)));
         assert_eq!(sp("Drawer"), Some((Special::PoBox, MatchKind::Variant)));
+        // Pub 28 section 283.
+        assert_eq!(sp("BIN"), Some((Special::PoBox, MatchKind::Variant)));
         assert_eq!(
             sp("Rural Route"),
             Some((Special::RuralRoute, MatchKind::Variant))
         );
+        // Pub 28 section 244: RFD and RD become RR.
+        assert_eq!(sp("RFD"), Some((Special::RuralRoute, MatchKind::Variant)));
+        assert_eq!(sp("RD"), Some((Special::RuralRoute, MatchKind::Variant)));
         // Pub 28 section 251: these are input only; HC is the standard.
         assert_eq!(
             sp("Highway Contract Route"),
@@ -421,6 +426,15 @@ mod tests {
         assert_eq!(h("HWY"), Some("HIGHWAY"));
         assert_eq!(h("US HWY"), Some("US HIGHWAY"));
         assert_eq!(h("farm to market"), Some("FM"));
+        // Pub 28 Appendix F.
+        assert_eq!(h("ST HIGHWAY"), Some("STATE HIGHWAY"));
+        assert_eq!(h("ST RD"), Some("STATE ROAD"));
+        assert_eq!(h("ST RT"), Some("STATE ROUTE"));
+        assert_eq!(h("TSR"), Some("TOWNSHIP ROAD"));
+        assert_eq!(h("IH"), Some("INTERSTATE"));
+        assert_eq!(h("RTE"), Some("ROUTE"));
+        assert_eq!(h("RD"), Some("ROAD"));
+        assert_eq!(h("LOOP"), Some("LOOP"));
         // State-dependent; left to state packs.
         assert_eq!(h("SR"), None);
     }

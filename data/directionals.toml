@@ -3,10 +3,11 @@
 # Compass directionals used before (predirectional) or after (postdirectional)
 # a street name, and their standard one- or two-letter abbreviations.
 #
-# Source: USPS Publication 28, chapter 2, directionals (the table of
-# directionals and abbreviations, and the rule that directionals are
-# abbreviated in standardized output).
-#   https://pe.usps.com/text/pub28/  (chapter 2; section number in docs)
+# Source: USPS Publication 28, section 233 Directionals (233.1: abbreviate the
+# eight directionals to their one- or two-letter form), and the Geographic
+# Directional table in Appendix B, which lists these eight abbreviations.
+#   https://pe.usps.com/text/pub28/28c2_014.htm
+#   https://pe.usps.com/text/pub28/28apb.htm
 # Cross-checked against usaddress-scourgify DIRECTIONAL_REPLACEMENTS and the
 # street-address gem DIRECTIONAL table (both MIT), which agree with this table.
 # See docs/usps-pub28-notes.md for verification status.

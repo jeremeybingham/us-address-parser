@@ -4,8 +4,9 @@
 # general delivery), highway-name prefixes, and placeholder text.
 #
 # Sources:
-#   USPS Publication 28, chapter 2: Post Office Box, rural route, highway
-#   contract route and general delivery addresses, and highway street names.
+#   USPS Publication 28, chapter 2: sections 24x (rural route), 25x (highway
+#   contract route), 26x (general delivery) and 28x (Post Office Box); section
+#   237 and Appendix F (highway street names).
 #     https://pe.usps.com/text/pub28/
 #   Placeholder phrases are NOT a USPS rule: they are stand-in text seen in
 #   county assessor and clerk data, collected in auction-tracker
@@ -28,9 +29,12 @@
 # route number and BOX, or a highway prefix followed by a route number.
 
 [po_box]
+# Pub 28 section 281: write PO BOX ##. Section 283: CALLER, FIRM CALLER, BIN,
+# LOCKBOX and DRAWER are changed to PO BOX. PO DRAWER and LOCK BOX are not
+# named there; they stay as accepted input.
 standard = "PO BOX"
 forms = ["PO BOX", "P O BOX", "POBOX", "PO BX", "POB", "P O B", "POST OFFICE BOX", "POST BOX"]
-synonyms = ["DRAWER", "PO DRAWER", "CALLER", "FIRM CALLER", "LOCKBOX", "LOCK BOX"]
+synonyms = ["DRAWER", "PO DRAWER", "CALLER", "FIRM CALLER", "BIN", "LOCKBOX", "LOCK BOX"]
 
 [box]
 # The box word inside rural route and highway contract addresses ("RR 2 BOX 15").
@@ -38,8 +42,12 @@ standard = "BOX"
 forms = ["BOX", "BX"]
 
 [rural_route]
+# Pub 28 section 241: write RR ## BOX ##; do not use RURAL, NUMBER, NO or the
+# pound sign. Section 244: change RFD and RD (meaning rural or rural free
+# delivery) to RR. RD is also the ROAD suffix, so the tagger takes it as a
+# rural route only in the RD ## BOX ## position.
 standard = "RR"
-forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "RFD ROUTE", "RURAL FREE DELIVERY", "RTE", "RT", "ROUTE"]
+forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "RFD ROUTE", "RURAL FREE DELIVERY", "RD", "RTE", "RT", "ROUTE"]
 
 [highway_contract]
 # Pub 28 section 251: write HC ## BOX ##. Use the HC abbreviation; do not use
@@ -49,57 +57,107 @@ standard = "HC"
 forms = ["HC", "H C", "HCR", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE"]
 
 [general_delivery]
+# Pub 28 section 261: GENERAL DELIVERY, spelled out, no abbreviation. The
+# shortened forms are input only.
 standard = "GENERAL DELIVERY"
 forms = ["GENERAL DELIVERY", "GEN DELIVERY", "GENERAL DEL", "GEN DEL"]
 
 # Highway prefixes: a prefix followed by a route number is the street name
 # ("COUNTY ROAD 23", "HWY 2301"). The number after it is the road's, not a
-# house number or unit (auction-tracker: "8932 HWY 2301").
+# house number or unit (auction-tracker: "8932 HWY 2301"). Route numbers may
+# carry letters (60E, 1080A, 1150EE) or be letters only (STATE ROUTE MM).
+#
+# Standards are from Pub 28 section 237 and Appendix F ("Address
+# Standardization: County, State, Local Highways"): the prefix is spelled out
+# (COUNTY ROAD, STATE HIGHWAY, US HIGHWAY, INTERSTATE), except FM. Spellings
+# Appendix F shows in its "Examples in Use" column are noted per entry; the
+# others are accepted input that Appendix F does not show. Appendix F also
+# writes I10 and IH280 with no space; splitting those is the tokenizer's job.
+#
+# Prefix and route-table spellings overlap on purpose (RD, RT, RTE and ROUTE
+# are also rural route forms; RD is also the ROAD suffix). The tagger decides
+# by position: ROUTE 88 is a highway, ROUTE 2 BOX 15 a rural route.
 #
 # State-dependent abbreviations are deliberately left out of the base table
 # and belong in state packs (docs/design.md section 11): "SR" is State Road in
-# Florida and State Route elsewhere; "RR" is Ranch Road in Texas but a rural
-# route everywhere in Pub 28.
+# Florida and State Route elsewhere (Appendix F itself shows both, SR 220 ->
+# STATE ROAD 220 and SR MM -> STATE ROUTE MM); "RR" is Ranch Road in Texas but
+# a rural route everywhere in Pub 28.
 
 [[highway]]
+# Appendix F: HIGHWAY, HIWAY, HWY. The rest are C1 spellings of HIGHWAY.
 standard = "HIGHWAY"
 forms = ["HIGHWAY", "HWY", "HIGHWY", "HIWAY", "HIWY", "HWAY"]
 
 [[highway]]
+# Appendix F: COUNTY RD, COUNTY ROAD, CR, CNTY RD.
 standard = "COUNTY ROAD"
 forms = ["COUNTY ROAD", "COUNTY RD", "CNTY RD", "CO RD", "CR"]
 
 [[highway]]
+# Appendix F: COUNTY HIGHWAY, COUNTY HWY, CNTY HWY.
 standard = "COUNTY HIGHWAY"
 forms = ["COUNTY HIGHWAY", "COUNTY HWY", "CNTY HWY", "CO HWY"]
 
 [[highway]]
+# Appendix F: ST HIGHWAY, STATE HWY.
 standard = "STATE HIGHWAY"
-forms = ["STATE HIGHWAY", "STATE HWY", "ST HWY", "SH"]
+forms = ["STATE HIGHWAY", "STATE HWY", "ST HIGHWAY", "ST HWY", "SH"]
 
 [[highway]]
+# Appendix F: ST RD, STATE ROAD (and SR; see above).
 standard = "STATE ROAD"
-forms = ["STATE ROAD", "STATE RD"]
+forms = ["STATE ROAD", "STATE RD", "ST RD"]
 
 [[highway]]
+# Appendix F: ST RT, STATE RTE (and SR; see above).
 standard = "STATE ROUTE"
-forms = ["STATE ROUTE", "STATE RTE"]
+forms = ["STATE ROUTE", "STATE RTE", "ST RT", "ST RTE"]
 
 [[highway]]
+# Appendix F: US, US HWY, US HIGHWAY.
 standard = "US HIGHWAY"
 forms = ["US HIGHWAY", "US HWY", "US"]
 
 [[highway]]
+# Appendix F: I, IH, INTERSTATE, INTERSTATE HWY.
 standard = "INTERSTATE"
 forms = ["INTERSTATE", "INTERSTATE HIGHWAY", "INTERSTATE HWY", "IH", "I"]
 
 [[highway]]
+# Appendix F: FARM TO MARKET, FM, HWY FM. Standard is FM, not spelled out.
 standard = "FM"
 forms = ["FM", "FARM TO MARKET", "FARM TO MARKET ROAD", "FARM ROAD", "HWY FM"]
 
 [[highway]]
+# Appendix F: RANCH RD.
 standard = "RANCH ROAD"
 forms = ["RANCH ROAD", "RANCH RD"]
+
+[[highway]]
+# Section 237 and Appendix F: TOWNSHIP RD, TSR.
+standard = "TOWNSHIP ROAD"
+forms = ["TOWNSHIP ROAD", "TOWNSHIP RD", "TWP RD", "TSR"]
+
+[[highway]]
+# Section 237 and Appendix F: RD, ROAD ("RD 5A" -> ROAD 5A).
+standard = "ROAD"
+forms = ["ROAD", "RD"]
+
+[[highway]]
+# Appendix F: RT, RTE, ROUTE.
+standard = "ROUTE"
+forms = ["ROUTE", "RTE", "RT"]
+
+[[highway]]
+# Appendix F: EXPRESSWAY 55 stays spelled out (not the EXPY suffix form).
+standard = "EXPRESSWAY"
+forms = ["EXPRESSWAY"]
+
+[[highway]]
+# Appendix F: LOOP 410.
+standard = "LOOP"
+forms = ["LOOP"]
 
 [placeholder]
 # Whole-line stand-ins meaning "no usable street address". Matched against the
