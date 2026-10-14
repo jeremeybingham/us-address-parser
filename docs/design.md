@@ -75,7 +75,7 @@ These were the open questions, with the resolved answers. Items marked *(propose
 | 11 | Compatibility | Own schema; optional usaddress-compatible tag output. |
 | 12 | License | Dual MIT / Apache-2.0 (confirm if a paid tier is planned). |
 | 13 | Component spans | Byte ranges into the **original** input, not the cleaned text. `clean.rs` keeps a map from cleaned to original offsets. For multi-field input a span also names the field it came from. |
-| 14 | Multi-field input | `parse_fields` tags each field on its own, using the field as a strong signal (the city field is the city), instead of joining the fields into one line. Field quirks from real data are in `docs/prior-art.md`. A source that gives a street line plus a `CITY, ST ZIP` line has no matching `Fields` shape yet; settle that in item 15. |
+| 14 | Multi-field input | `parse_fields` tags each field on its own, using the field as a strong signal (the city field is the city), instead of joining the fields into one line. Field quirks from real data are in `docs/prior-art.md`. A source that gives a street line plus a `CITY, ST ZIP` line passes them as `line1` and `line2`: when city, state and ZIP are all empty, the address lines are read like one line (settled in item 15). |
 | 15 | Address shapes with no field yet | Add fields to `ParsedAddress` for highway routes (prefix kept apart from the route number), general delivery, military (PSC/CMR/UNIT box plus APO/FPO/DPO), and a second unit designator. The RESO emitter folds those it has no field for into `StreetName` or unit fields; document how in `docs/reso-mapping.md`. |
 
 ---

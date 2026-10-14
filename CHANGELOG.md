@@ -35,3 +35,20 @@
   `Component`, `SourceInfo::spans`, `SourceInfo::text`.
 - Corpus: the two held-back highway cases, and `pub28.jsonl` with 49 cases
   from Pub 28's own examples.
+- Milestone 2, parser (items 10 to 16):
+  - `clean.rs`: whitespace, accents, Unicode dashes and quotes, uppercase,
+    with a byte map back to the original input.
+  - `tokenize.rs`: tokens with original spans and comma segments; `#`,
+    parentheses, hyphens and periods; splits glued tokens (`101BRADDOCK`,
+    `TAMPA33616`, `I10`, `APT107`, `CTAPT`).
+  - `classify.rs`: token shapes and longest-match lexicon lookups.
+  - `tagger/`: rule tagger for the last line, PO Box, rural and highway
+    contract routes, general delivery, military lines, highways, streets
+    and up to two units. Rules and sources: `docs/usps-pub28-notes.md`.
+  - `assemble.rs`: tags to `ParsedAddress`, component spans, warnings.
+  - `parse_fields` tags each field on its own (decision 14); with only
+    address lines it reads them like one line.
+  - `parse_many` runs in parallel with the `rayon` feature (now a real
+    optional dependency).
+  - `Warning::NotImplemented` removed.
+  - Corpus: 134 cases, all passing (`regressions.jsonl` added).
