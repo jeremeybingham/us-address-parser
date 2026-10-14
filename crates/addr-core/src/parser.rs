@@ -55,7 +55,7 @@ impl Parser {
         }
         let mut addr = ParsedAddress::empty(input.to_string(), kind);
         addr.diagnostics.unparsed = Some(trimmed.to_string());
-        addr.diagnostics.warnings.push(Warning::NotImplemented);
+        addr.diagnostics.warn(Warning::NotImplemented);
         Ok(addr)
     }
 }

@@ -5,10 +5,11 @@ strings (or pre-split fields) into components, emits **USPS Publication 28**
 style and **RESO Data Dictionary** output, and produces database-ready
 identifiers (a stable canonical match key and a URL-safe slug).
 
-> **Status: skeleton.** The workspace, public types, and API shape exist, but
-> the parsing pipeline is not implemented yet. `Parser::parse` currently
-> returns the input as an unparsed remainder with a `NotImplemented` warning.
-> See [`docs/design.md`](docs/design.md) for the milestone plan.
+> **Status: Milestone 1 (data and types).** The public types and the USPS
+> Pub 28 lexicon tables (`Lexicons`) are in place, but the parsing pipeline is
+> not implemented yet. `Parser::parse` currently returns the input as an
+> unparsed remainder with a `NotImplemented` warning. See
+> [`docs/design.md`](docs/design.md) for the milestone plan.
 
 ## This is not an address validator
 
@@ -40,7 +41,8 @@ lexicons.
 crates/addr-core/   pure Rust library (no Python dependency)
 crates/addr-cli/    `addr` command-line tool
 crates/addr-py/     PyO3 bindings, built with maturin (placeholder)
-data/               lexicon tables (Pub 28 suffixes, units, states, ...)
+data/               lexicon tables (Pub 28 suffixes, units, states, ...),
+                    compiled into static tables by addr-core's build.rs
 tests/corpus/       labeled golden corpus (JSONL)
 docs/               design and format specs
 ```
@@ -52,6 +54,12 @@ use addr_core::Parser;
 
 let parser = Parser::new();
 let parsed = parser.parse("123 north main street apt 4, Miami FL 33101")?;
+
+// Lexicon lookups are available now:
+let lex = addr_core::Lexicons::builtin();
+assert_eq!(lex.suffix("Avenue").unwrap().value.abbr(), "AVE");
+assert_eq!(lex.state("Fla.").unwrap().value.code(), "FL");
+
 // Planned, not yet implemented:
 // parsed.to_usps(); parsed.to_reso(); parsed.key(...); parsed.slug();
 ```
