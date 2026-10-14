@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is started: the key is done, the rest is next. Progress is tracked in section 10. Planning date: 2026-10-14.
+Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is started: the key and USPS emitter are done, RESO and slug are next. Progress is tracked in section 10. Planning date: 2026-10-14.
 
 ---
 
@@ -270,7 +270,7 @@ The format, runner and first cases are in place (`tests/corpus/README.md`); the 
 
 Build in this order. Each milestone should end with passing tests.
 
-Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 134 cases, all passing; runner compares components and warnings only). Milestone 3 has begun with the key emitter (item 17 partly: `emit/key.rs`, `docs/key-format.md`); everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
+Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 134 cases, all passing; runner compares components and warnings only). Milestone 3 has begun (item 17 partly: `emit/key.rs`, `emit/usps.rs`, `docs/key-format.md`; the USPS layout rules are unverified against Pub 28, see `docs/usps-pub28-notes.md`); everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
 
 ### Milestone 0: scaffolding (done)
 

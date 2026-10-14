@@ -55,3 +55,10 @@
 - Milestone 3, canonical key (`k1`): `ParsedAddress::key(KeyOptions)` in
   `emit/key.rs`, spec in `docs/key-format.md`; corpus records can carry
   `key` and `key_unit`, with `tests/corpus/keys.jsonl` (7 cases).
+- Milestone 3, USPS emitter: `ParsedAddress::to_usps()` returns a
+  `UspsAddress` (`line1`, `line2`, city, state, ZIP, `last_line()`); corpus
+  records can carry `usps`; a corpus test checks that parsing the USPS output
+  gives the same keys. Layout rules are unverified against Pub 28 (blocked
+  host); see `docs/usps-pub28-notes.md`.
+- Parser fix found by that round trip: `# V 21` (letter and number after
+  `#`) is one unit value (`us-roundtrip-001`).

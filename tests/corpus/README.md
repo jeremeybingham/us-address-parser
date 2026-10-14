@@ -60,7 +60,10 @@ Emitter expectations are optional record keys, checked only when present
   `"none"` when the address has no key.
 - `key_unit`: the same for `KeyOptions::unit()`.
 
-USPS lines and RESO fields will be added the same way.
+- `usps`: `{"line1": ..., "line2": ..., "last_line": ...}` from
+  `to_usps()`; an omitted part must be empty.
+
+RESO fields will be added the same way.
 
 The runner rejects unknown keys, duplicate ids, unknown warning codes, and
 suffix, unit, state, directional, highway-prefix or military values that are

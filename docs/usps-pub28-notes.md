@@ -120,7 +120,27 @@ shapes in real county data (`docs/prior-art.md`) and are not USPS rules.
 
 ## Emitter rules
 
-TODO: written in Milestone 3. Rules already sourced:
+### USPS emitter (`emit/usps.rs`, `ParsedAddress::to_usps`)
+
+Output: `UspsAddress { line1, line2, city, state, zip }` plus `last_line()`
+(`CITY ST ZIP`). **Status of the layout rules below: UNVERIFIED.** They were
+written from memory of Pub 28 because `pe.usps.com` was blocked in the
+session that wrote the emitter. Check each against the live text and fill in
+the section numbers before release (Milestone 7). The rules in the second
+list ("Special forms"), which were sourced earlier, are implemented as
+written.
+
+| Rule | Source |
+|---|---|
+| Uppercase; punctuation dropped (`. , ' " ; : ( )`) except the hyphen in house numbers and ZIP+4 and the slash in fractions. | Unverified (Pub 28 chapter 2 on punctuation). |
+| Street line order: number, predirectional, name, suffix abbreviation, postdirectional, with directionals abbreviated. | Sections 231, 233.1, 234 (as in the parser table above); order unverified. |
+| Secondary unit goes on the delivery line after the street (`APT 4`); a unit with no known designator is written `# 4`; a designator with no number stands alone (`REAR`). Two units are written in input order. | Section 213 and Appendix C2 (the `#` rule is cited in the parser table); same-line placement unverified. |
+| If the delivery line plus the unit would be longer than 40 characters, the unit goes to `line2` and `line1` keeps the street. The 40-character limit is a placeholder. | Unverified. Pub 28 may also require the unit line *above* the street line on a mailpiece; `line2` is the data-field convention, not mailpiece order. |
+| Last line: `CITY ST ZIP`, one space between, ZIP+4 with a hyphen, no comma. A military post office (APO, FPO, DPO) takes the city's place. | Unverified (section 22x for the last line; 225.1 and 239 for military, already cited above). |
+| Parts the parse did not find are left out. `diagnostics` is not consulted; unparsed text is not emitted. | Library behavior, not a USPS rule. |
+| Not implemented: writing a state name inside a street name as its code (see Highways below), and ST/SAINT, FORT/FT and similar place-name abbreviations. | Left for later; the parser does not expose them. |
+
+Special forms (sourced):
 
 - Highway contract route (section 251): emit `HC <route> BOX <box>`, e.g.
   `HC 68 BOX 23A`. Drop HIGHWAY CONTRACT, ROUTE, NUMBER, NO, STAR ROUTE and

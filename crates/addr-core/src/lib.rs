@@ -28,7 +28,7 @@ mod tagger;
 mod tokenize;
 mod types;
 
-pub use emit::KeyOptions;
+pub use emit::{KeyOptions, UspsAddress};
 pub use input::Fields;
 pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind};
 pub use parser::{ParseError, Parser};

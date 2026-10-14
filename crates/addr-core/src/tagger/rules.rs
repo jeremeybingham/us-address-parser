@@ -674,17 +674,28 @@ impl Tagger<'_> {
             }
             // "# 309", "UNIT 203", "LOT H28".
             if is_unit_value(t) && last > floor {
-                if self.toks[last - 1].is_hash() {
-                    self.set(last - 1..last, Tag::Skip);
+                // "# V 21": a letter and a number after '#' are one value
+                // (the form the USPS emitter writes for a bare "DR V 21").
+                let start = if all_digits(t)
+                    && last >= floor + 2
+                    && is_letter(self.text(last - 1))
+                    && self.toks[last - 2].is_hash()
+                {
+                    last - 1
+                } else {
+                    last
+                };
+                if self.toks[start - 1].is_hash() {
+                    self.set(start - 1..start, Tag::Skip);
                     // "UNIT # 4": the designator before the '#' is this unit's.
-                    let hash = last - 1;
+                    let hash = start - 1;
                     match longest_ending(self.toks, floor, hash, |s| lex.unit(s)) {
                         Some((_, w)) => {
-                            found.push((hash - w..hash, last..j));
+                            found.push((hash - w..hash, start..j));
                             j = hash - w;
                         }
                         None => {
-                            found.push((hash..hash, last..j));
+                            found.push((hash..hash, start..j));
                             j = hash;
                         }
                     }
