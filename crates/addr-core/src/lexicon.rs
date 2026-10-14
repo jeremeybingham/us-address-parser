@@ -285,7 +285,7 @@ mod tests {
 
     #[test]
     fn table_sizes() {
-        assert_eq!(LEX.suffixes().count(), 201);
+        assert_eq!(LEX.suffixes().count(), 202);
         assert_eq!(LEX.units().count(), 24);
         assert_eq!(LEX.states().count(), 62);
         assert_eq!(MAX_FORM_WORDS, 4); // FEDERATED STATES OF MICRONESIA
@@ -299,6 +299,9 @@ mod tests {
         assert_eq!(suffix("TERR"), ("TER", MatchKind::Variant));
         assert_eq!(suffix("WY"), ("WAY", MatchKind::Variant));
         assert_eq!(suffix("TRC"), ("TRCE", MatchKind::Observed));
+        assert_eq!(suffix("CRT"), ("CT", MatchKind::Observed));
+        assert_eq!(suffix("CAUSWA"), ("CSWY", MatchKind::Variant));
+        assert_eq!(suffix("COMMONS"), ("CMNS", MatchKind::FullName));
         // Plural primaries share an abbreviation.
         assert_eq!(suffix("PARKS"), ("PARK", MatchKind::Variant));
         assert_eq!(suffix("PARKWAYS"), ("PKWY", MatchKind::Variant));
@@ -336,7 +339,12 @@ mod tests {
         assert_eq!((ste.value.abbr(), ste.kind), ("STE", MatchKind::FullName));
         assert!(ste.value.range_required());
         assert!(!LEX.unit("PH").unwrap().value.range_required());
-        assert_eq!(LEX.unit("HANGAR").unwrap().value.abbr(), "HNGR");
+        assert_eq!(LEX.unit("HANGER").unwrap().value.abbr(), "HNGR");
+        let hangar = LEX.unit("HANGAR").unwrap();
+        assert_eq!(
+            (hangar.value.abbr(), hangar.kind),
+            ("HNGR", MatchKind::Observed)
+        );
         assert_eq!(LEX.unit("UPPER").unwrap().value.abbr(), "UPPR");
         let un = LEX.unit("UN").unwrap();
         assert_eq!((un.value.abbr(), un.kind), ("UNIT", MatchKind::Observed));
@@ -386,6 +394,12 @@ mod tests {
             sp("Rural Route"),
             Some((Special::RuralRoute, MatchKind::Variant))
         );
+        // Pub 28 section 251: these are input only; HC is the standard.
+        assert_eq!(
+            sp("Highway Contract Route"),
+            Some((Special::HighwayContract, MatchKind::Variant))
+        );
+        assert_eq!(Special::HighwayContract.standard(), "HC");
         assert_eq!(
             sp("STAR ROUTE"),
             Some((Special::HighwayContract, MatchKind::Variant))
