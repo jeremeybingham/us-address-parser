@@ -1,0 +1,4 @@
+# Resolve dependencies to versions that support the workspace rust-version
+# (MSRV), so `cargo update` does not silently raise it.
+[resolver]
+incompatible-rust-versions = "fallback"

@@ -16,3 +16,6 @@ crf = []
 
 [lints]
 workspace = true
+
+[build-dependencies]
+toml = { version = "0.8", default-features = false, features = ["parse"] }
