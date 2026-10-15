@@ -1,9 +1,10 @@
 # Golden corpus
 
 Labeled addresses with their expected parse, one JSON record per line in
-`*.jsonl`. The runner is `crates/addr-core/tests/corpus.rs`:
+`*.jsonl`. The runner is the `addr_core::corpus` module (feature `corpus`), run by `crates/addr-core/tests/corpus.rs` and by `addr corpus test`:
 
 ```sh
+addr corpus test [--verbose] [--update-baseline]            # same runner, from the CLI
 cargo test -p addr-core --test corpus -- --nocapture   # accuracy report
 CORPUS_VERBOSE=1 cargo test -p addr-core --test corpus -- --nocapture   # plus field diffs
 UPDATE_CORPUS_BASELINE=1 cargo test -p addr-core --test corpus   # record passing cases
@@ -72,6 +73,19 @@ Emitter expectations are optional record keys, checked only when present
   fields; `StreetNumberNumeric` is written as its decimal text. Write expected
   values from `docs/reso-mapping.md`, not by copying the emitter's output.
 
+Most cases in `auction-tracker.jsonl`, `auction-tracker-golden.jsonl`,
+`pub28.jsonl` and `regressions.jsonl` carry `key`, `key_unit`, `slug` and
+`usps` expectations, and the ones with a state and ZIP also `reso`. They were
+generated from each case's hand-labeled `expect` by
+`tools/corpus/emit_expect.py`, a second implementation of the rules in
+`docs/key-format.md`, `docs/reso-mapping.md` and Pub 28 that never reads the
+emitters, so a disagreement shows up as a failing case. Cases are left out
+when the label itself is a judgment call: `unparsed` text, or the warnings
+`possibly_truncated`, `ambiguous_street_number`, `multiple_addresses`,
+`invalid_zip` and `ambiguous_token`. Placeholders get `none` for key and slug
+and an empty `usps`. When you add a case, run the script on the file (it adds
+only the fields that are missing) and review the diff.
+
 The runner rejects unknown keys, duplicate ids, unknown warning codes, and
 suffix, unit, state, directional, highway-prefix or military values that are
 not standard forms from the lexicon tables.
@@ -121,6 +135,17 @@ auction-tracker keeps the predirectional, name and suffix in one
 `street_name` string and has no unit type, so those are split here by hand.
 Where that file's labels depend on its Florida place list, the case is left
 out (see below).
+
+### `auction-tracker-golden.jsonl`
+
+Ids start with `atg-`. Hand-labeled from the raw `address_line1` /
+`address_line2` columns of auction-tracker's
+`packages/radar/tests/golden/v2/*.csv` (Brevard, Charlotte, Citrus, Escambia,
+Hernando, Lee, Miami-Dade, Orange; reviewed 2026-10-15). Only the input
+shapes were taken, one case per distinct shape; the CSVs' parsed columns
+were not used as expected values. Ids `atg-006` and `atg-028` are unused, and `atg-029` was added later
+(cases dropped after review: an ambiguous street-plus-ZIP round trip, and
+empty input, which is an error by design 6 rather than a parse).
 
 Not taken from auction-tracker:
 

@@ -101,9 +101,17 @@ State packs (deferred, `docs/design.md` section 11):
 - `SR` is State Road in Florida; `CR` is County Road. Kept out of the base
   highway table where they are ambiguous (`special.toml` comments).
 
-Corpus (Milestone 4): `tests/test_addresses.py` has about 50 labeled street
-lines and a dozen full two-line cases. Together with the golden CSVs under
-`tests/golden/v2/`, they are the first seed for `tests/corpus/*.jsonl`.
+Corpus (Milestone 4): `tests/test_addresses.py` has 33 labeled street lines,
+16 placeholders and a dozen full cases; all are in
+`auction-tracker.jsonl` except the ones that need a place list. The raw
+address lines in the golden CSVs under `tests/golden/v2/` (305 rows from 8
+counties) seeded `auction-tracker-golden.jsonl`; those CSVs hold the old
+parser's output, so the labels were written by hand.
+
+Open finding from that pass: `WINGATE ST 32507` parses as a street plus
+ZIP, but its USPS output (`WINGATE ST` / `32507`) re-read with a comma reads
+`WINGATE ST` as a city (`PALM BEACH, 32507` has the same shape). Only a place
+list separates them, so the case was left out of the corpus.
 
 ## dbpr_fl
 

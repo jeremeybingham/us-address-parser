@@ -62,6 +62,7 @@ auction-tracker (Florida county data):
 | Spelling | Resolves to | Table |
 |---|---|---|
 | `TRC` | TRCE (TRACE) | suffixes |
+| `LP` | LOOP | suffixes |
 | `UN` | UNIT | units |
 | `LT` | LOT | units |
 

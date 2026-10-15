@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is done: the key, USPS, RESO (Data Dictionary 2.0) and slug emitters. Progress is tracked in section 10. Planning date: 2026-10-14.
+Status: Milestones 0 to 4 done (scaffolding, data and types, parser, emitters, corpus and CLI). Emitters: the key, USPS, RESO (Data Dictionary 2.0) and slug emitters. Progress is tracked in section 10. Planning date: 2026-10-14.
 
 ---
 
@@ -304,10 +304,10 @@ Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 
 
 ### Milestone 4: corpus and CLI
 
-19. `tests/corpus/*.jsonl` (seed from existing Florida code). *First seed done before Milestone 2 (auction-tracker test cases); expand here.*
-20. `crates/addr-core/tests/corpus.rs` (golden test runner). *Done before Milestone 2; add emitter fields (USPS, RESO, key) after Milestone 3.*
-21. `crates/addr-cli/Cargo.toml`, `src/main.rs`
-22. `benches/parse.rs`
+19. `tests/corpus/*.jsonl` (seed from existing Florida code). *Done: auction-tracker test cases (`auction-tracker.jsonl`) and the raw lines of its golden CSVs (`auction-tracker-golden.jsonl`). Cases that need a place list wait for the Florida pack; the author's own Florida code is still pending (section 13, decision 1).*
+20. `crates/addr-core/tests/corpus.rs` (golden test runner). *Done. Emitter fields (key, key_unit, slug, usps, reso) are on 170 of the 193 cases, written by `tools/corpus/emit_expect.py` from the specs, not from emitter output; the emitters matched on the first run.*
+21. `crates/addr-cli/Cargo.toml`, `src/main.rs`. *Done: `addr parse` (JSON, `--pretty`, `--usps`, field options, stdin lines) and `addr parse-file` (CSV in, CSV out with `addr_`-prefixed columns). The CLI, not the core, depends on `csv` and `serde_json`. `addr corpus test [--dir DIR] [--verbose] [--update-baseline]` is done: the runner is the `addr_core::corpus` module behind the `corpus` feature (optional serde and serde_json), shared by `tests/corpus.rs` and the CLI. Exit codes: 0 ok, 2 malformed corpus, 3 regression or stale baseline.*
+22. `benches/parse.rs`. *Done: criterion benches for single-address shapes, the whole corpus (`parse` and `parse_many`) and the emitters. First numbers (quick run, 2026-10-15): about 4 to 11 µs per address, about 110K addresses/s one by one, 107K/s through `parse_many` without `rayon` and about 3x that with it. Run `cargo bench -p addr-core --bench parse` (add `--features rayon`).*
 
 ### Milestone 5: Python wrapper
 
@@ -376,7 +376,7 @@ Open questions to settle when this is picked up:
 
 ## 13. Open items for the author
 
-0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (reviewed and accepted by the author, 2026-10-15). Done since: the slug (`emit/slug.rs`). Done since: proptest no-panic/span-validity property (`tests/no_panic.rs`), which closes Milestone 3. Next: Milestone 4 (CLI, benches, emitter fields in the corpus). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (reviewed and accepted by the author, 2026-10-15). Done since: the slug (`emit/slug.rs`). Done since: proptest no-panic/span-validity property (`tests/no_panic.rs`), which closes Milestone 3. Done since: Milestone 4 (corpus expansion, `addr` CLI with `parse`, `parse-file` and `corpus test`, criterion benches, emitter expectations in the corpus). Next: Milestone 5 (Python wrapper). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
 
 Decisions recorded 2026-10-15:
 

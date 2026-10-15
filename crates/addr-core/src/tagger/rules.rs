@@ -318,6 +318,24 @@ impl Tagger<'_> {
         hi
     }
 
+    /// A ZIP ending the address line that repeats the ZIP already tagged on
+    /// the last line (`413 OLD CORRY FIELD RD B 32506` before
+    /// `PENSACOLA, FL- 32506`, Escambia). The copy is skipped. Returns the
+    /// new end of the line.
+    pub(super) fn drop_repeated_zip(&mut self, lo: usize, hi: usize) -> usize {
+        if hi < lo + 2 || zip_parts(self.text(hi - 1)).is_none() || self.toks[hi - 2].is_hash() {
+            return hi;
+        }
+        let copy = self.text(hi - 1);
+        let repeated = (0..self.toks.len())
+            .any(|i| i != hi - 1 && self.tags[i] == Tag::Zip && self.text(i) == copy);
+        if repeated {
+            self.set(hi - 1..hi, Tag::Skip);
+            return hi - 1;
+        }
+        hi
+    }
+
     // ---- delivery line -----------------------------------------------------
 
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {
