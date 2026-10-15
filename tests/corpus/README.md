@@ -73,6 +73,19 @@ Emitter expectations are optional record keys, checked only when present
   fields; `StreetNumberNumeric` is written as its decimal text. Write expected
   values from `docs/reso-mapping.md`, not by copying the emitter's output.
 
+Most cases in `auction-tracker.jsonl`, `auction-tracker-golden.jsonl`,
+`pub28.jsonl` and `regressions.jsonl` carry `key`, `key_unit`, `slug` and
+`usps` expectations, and the ones with a state and ZIP also `reso`. They were
+generated from each case's hand-labeled `expect` by
+`tools/corpus/emit_expect.py`, a second implementation of the rules in
+`docs/key-format.md`, `docs/reso-mapping.md` and Pub 28 that never reads the
+emitters, so a disagreement shows up as a failing case. Cases are left out
+when the label itself is a judgment call: `unparsed` text, or the warnings
+`possibly_truncated`, `ambiguous_street_number`, `multiple_addresses`,
+`invalid_zip` and `ambiguous_token`. Placeholders get `none` for key and slug
+and an empty `usps`. When you add a case, run the script on the file (it adds
+only the fields that are missing) and review the diff.
+
 The runner rejects unknown keys, duplicate ids, unknown warning codes, and
 suffix, unit, state, directional, highway-prefix or military values that are
 not standard forms from the lexicon tables.
