@@ -1,7 +1,7 @@
 //! JSON and flat-column views of a [`ParsedAddress`]. Read-only: the CLI
 //! formats what the parser produced and never re-parses it.
 
-use addr_core::{Highway, KeyOptions, ParsedAddress};
+use addr_core::{Highway, KeyOptions, ParsedAddress, UsaddressTag};
 use serde_json::{json, Map, Value};
 
 /// Parsed components, by `ParsedAddress` field name. Components the parse
@@ -97,6 +97,17 @@ pub fn record(a: &ParsedAddress) -> Value {
         },
         "reso": reso,
     })
+}
+
+/// The record printed by `addr parse --usaddress`: each token as
+/// `[text, label or null, start, end]`, with byte offsets into its field (or
+/// the input, for one line).
+pub fn usaddress_record(input: &str, tags: &[UsaddressTag]) -> Value {
+    let tags: Vec<Value> = tags
+        .iter()
+        .map(|t| json!([t.text, t.label, t.span.start, t.span.end]))
+        .collect();
+    json!({ "input": input, "tags": tags })
 }
 
 /// Columns `addr parse-file` appends, in order.

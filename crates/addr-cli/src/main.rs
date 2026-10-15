@@ -1,7 +1,7 @@
 //! `addr` command-line tool.
 //!
 //! ```text
-//! addr parse "<address>" [--pretty] [--usps]
+//! addr parse "<address>" [--pretty] [--usps | --usaddress]
 //! addr parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! addr parse            (no argument or "-": one address per stdin line, JSONL out)
 //! addr parse-file IN.csv --column NAME [-o OUT.csv]
@@ -18,9 +18,10 @@ use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:
-  addr parse \"<address>\" [--pretty] [--usps]
+  addr parse \"<address>\" [--pretty] [--usps | --usaddress]
   addr parse --line1 X [--line2 X] [--city X] [--state X] [--zip X] [--pretty] [--usps]
   addr parse [-]                 read one address per line from stdin
+                                 (--usaddress: tokens with usaddress labels)
   addr parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
                   [--zip NAME] [-o OUT.csv]
   addr corpus test [--dir DIR] [--verbose] [--update-baseline]
@@ -111,7 +112,7 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     let o = Opts::parse(
         args,
         &["--line1", "--line2", "--city", "--state", "--zip"],
-        &["--pretty", "--usps"],
+        &["--pretty", "--usps", "--usaddress"],
     )?;
     let parser = Parser::new();
     let fields = Fields {
@@ -146,6 +147,12 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
                     Err(e) => {
                         eprintln!("line {}: {e}", n + 1);
                         worst = ExitCode::from(2);
+                        // Keep one output line per input line for tools
+                        // that pair them up (tools/compare/).
+                        if o.has("--usaddress") {
+                            let v = json::usaddress_record(&line, &[]);
+                            writeln!(out, "{v}")?;
+                        }
                     }
                 }
             }
@@ -172,7 +179,11 @@ fn print_parsed(out: &mut impl Write, a: &ParsedAddress, o: &Opts) -> io::Result
         }
         return Ok(());
     }
-    let v = json::record(a);
+    let v = if o.has("--usaddress") {
+        json::usaddress_record(&a.source.original, &a.to_usaddress_tags())
+    } else {
+        json::record(a)
+    };
     let text = if o.has("--pretty") {
         serde_json::to_string_pretty(&v)
     } else {
