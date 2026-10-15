@@ -76,7 +76,7 @@ assert_eq!(lex.state("Fla.").unwrap().value.code(), "FL");
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo test --all-features
-cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101"
+cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101" --pretty
 ```
 
 ## License

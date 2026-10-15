@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- `addr` CLI (Milestone 4, item 21): `addr parse` prints one JSON record
+  (components, warnings, key, slug, USPS and RESO output); `--pretty`,
+  `--usps`, `--line1/--line2/--city/--state/--zip`, or one address per stdin
+  line. `addr parse-file IN.csv --column NAME [-o OUT.csv]` appends
+  `addr_`-prefixed columns. Exit codes: 0 ok, 1 bad usage, 2 unusable input.
+- `LP` is an observed spelling of LOOP (auction-tracker golden CSVs); corpus
+  case `atg-029`.
 - Milestone 4, corpus expansion: `tests/corpus/auction-tracker-golden.jsonl`
   (26 `atg-` cases) from the raw address lines in auction-tracker's
   `packages/radar/tests/golden/v2/*.csv`, hand-labeled. The tagger now skips

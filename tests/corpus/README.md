@@ -129,7 +129,7 @@ Ids start with `atg-`. Hand-labeled from the raw `address_line1` /
 `packages/radar/tests/golden/v2/*.csv` (Brevard, Charlotte, Citrus, Escambia,
 Hernando, Lee, Miami-Dade, Orange; reviewed 2026-10-15). Only the input
 shapes were taken, one case per distinct shape; the CSVs' parsed columns
-were not used as expected values. Ids `atg-006` and `atg-028` are unused
+were not used as expected values. Ids `atg-006` and `atg-028` are unused, and `atg-029` was added later
 (cases dropped after review: an ambiguous street-plus-ZIP round trip, and
 empty input, which is an error by design 6 rather than a parse).
 

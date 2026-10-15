@@ -599,6 +599,8 @@ forms = ["LDG", "LDGE", "LODG", "LODGE"]
 name = "LOOP"
 abbr = "LOOP"
 forms = ["LOOP", "LOOPS"]
+# observed: auction-tracker golden CSVs (Escambia: `MILLEE LP`)
+observed = ["LP"]
 
 [[suffix]]
 name = "MALL"

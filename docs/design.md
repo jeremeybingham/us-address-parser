@@ -306,7 +306,7 @@ Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 
 
 19. `tests/corpus/*.jsonl` (seed from existing Florida code). *Done: auction-tracker test cases (`auction-tracker.jsonl`) and the raw lines of its golden CSVs (`auction-tracker-golden.jsonl`). Cases that need a place list wait for the Florida pack; the author's own Florida code is still pending (section 13, decision 1).*
 20. `crates/addr-core/tests/corpus.rs` (golden test runner). *Done before Milestone 2; add emitter fields (USPS, RESO, key) after Milestone 3.*
-21. `crates/addr-cli/Cargo.toml`, `src/main.rs`
+21. `crates/addr-cli/Cargo.toml`, `src/main.rs`. *Done: `addr parse` (JSON, `--pretty`, `--usps`, field options, stdin lines) and `addr parse-file` (CSV in, CSV out with `addr_`-prefixed columns). The CLI, not the core, depends on `csv` and `serde_json`. `addr corpus test` is not done: the runner is still `crates/addr-core/tests/corpus.rs`, and moving it behind the subcommand is the remaining part of this item.*
 22. `benches/parse.rs`
 
 ### Milestone 5: Python wrapper
