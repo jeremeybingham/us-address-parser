@@ -1,9 +1,10 @@
 # Golden corpus
 
 Labeled addresses with their expected parse, one JSON record per line in
-`*.jsonl`. The runner is `crates/addr-core/tests/corpus.rs`:
+`*.jsonl`. The runner is the `addr_core::corpus` module (feature `corpus`), run by `crates/addr-core/tests/corpus.rs` and by `addr corpus test`:
 
 ```sh
+addr corpus test [--verbose] [--update-baseline]            # same runner, from the CLI
 cargo test -p addr-core --test corpus -- --nocapture   # accuracy report
 CORPUS_VERBOSE=1 cargo test -p addr-core --test corpus -- --nocapture   # plus field diffs
 UPDATE_CORPUS_BASELINE=1 cargo test -p addr-core --test corpus   # record passing cases

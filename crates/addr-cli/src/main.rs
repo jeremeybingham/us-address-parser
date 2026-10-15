@@ -5,13 +5,14 @@
 //! addr parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! addr parse            (no argument or "-": one address per stdin line, JSONL out)
 //! addr parse-file IN.csv --column NAME [-o OUT.csv]
+//! addr corpus test [--dir DIR] [--verbose] [--update-baseline]
 //! ```
 //!
 //! This tool parses and formats; it does not validate deliverability.
 
 mod json;
 
-use addr_core::{Fields, ParseError, ParsedAddress, Parser};
+use addr_core::{corpus, Fields, ParseError, ParsedAddress, Parser};
 use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
@@ -21,13 +22,16 @@ const USAGE: &str = "usage:
   addr parse --line1 X [--line2 X] [--city X] [--state X] [--zip X] [--pretty] [--usps]
   addr parse [-]                 read one address per line from stdin
   addr parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
-                  [--zip NAME] [-o OUT.csv]";
+                  [--zip NAME] [-o OUT.csv]
+  addr corpus test [--dir DIR] [--verbose] [--update-baseline]
+                                 run the golden corpus (default dir: tests/corpus)";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let result = match args.first().map(String::as_str) {
         Some("parse") => parse_cmd(&args[1..]),
         Some("parse-file") => parse_file_cmd(&args[1..]),
+        Some("corpus") => corpus_cmd(&args[1..]),
         _ => Err(CliError::Usage(String::new())),
     };
     match result {
@@ -257,4 +261,56 @@ fn parse_file_cmd(args: &[String]) -> Result<ExitCode, CliError> {
         eprintln!("{empty_rows} row(s) had no address text; their new columns are empty");
     }
     Ok(ExitCode::SUCCESS)
+}
+
+/// `addr corpus test`: the accuracy harness. Exit 0 when no case in the
+/// baseline regressed, 2 when the corpus is malformed or unreadable, 3 on a
+/// regression or a stale baseline.
+fn corpus_cmd(args: &[String]) -> Result<ExitCode, CliError> {
+    let [sub, rest @ ..] = args else {
+        return Err(CliError::Usage("corpus needs a subcommand (test)".into()));
+    };
+    if sub != "test" {
+        return Err(CliError::Usage(format!("unknown corpus subcommand {sub}")));
+    }
+    let o = Opts::parse(rest, &["--dir"], &["--verbose", "--update-baseline"])?;
+    if !o.positional.is_empty() {
+        return Err(CliError::Usage("corpus test takes no arguments".into()));
+    }
+    let dir = std::path::PathBuf::from(o.value("--dir").unwrap_or("tests/corpus"));
+    let loaded = corpus::load(&dir).map_err(|errors| {
+        CliError::Failed(format!("malformed corpus:\n  {}", errors.join("\n  ")))
+    })?;
+    let report = loaded.run(&Parser::new());
+    print!("{}", report.summary());
+    if o.has("--verbose") && !report.failure_details().is_empty() {
+        println!("failing cases:\n{}", report.failure_details());
+    }
+    if o.has("--update-baseline") {
+        let path = corpus::write_baseline(&dir, &report)?;
+        println!("wrote {}", path.display());
+        return Ok(ExitCode::SUCCESS);
+    }
+    let cmp = report.compare(&corpus::read_baseline(&dir));
+    if !cmp.newly_passing.is_empty() {
+        println!(
+            "{} case(s) now pass but are not in passing.txt; run with --update-baseline to record them: {:?}",
+            cmp.newly_passing.len(),
+            cmp.newly_passing
+        );
+    }
+    if !cmp.stale.is_empty() {
+        eprintln!(
+            "passing.txt lists ids that are not in the corpus: {:?}",
+            cmp.stale
+        );
+    }
+    for id in &cmp.regressed {
+        eprintln!("regression: {id}\n{}", report.failure(id).unwrap_or(""));
+    }
+    Ok(if cmp.is_failure() {
+        ExitCode::from(3)
+    } else {
+        ExitCode::SUCCESS
+    })
 }

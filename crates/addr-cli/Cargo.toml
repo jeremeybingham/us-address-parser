@@ -12,7 +12,7 @@ name = "addr"
 path = "src/main.rs"
 
 [dependencies]
-addr-core = { path = "../addr-core" }
+addr-core = { path = "../addr-core", features = ["corpus"] }
 csv = "1"
 serde_json = { version = "1", features = ["preserve_order"] }
 

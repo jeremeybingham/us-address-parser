@@ -15,6 +15,7 @@ dependencies = [
 name = "addr-core"
 version = "0.0.1"
 dependencies = [
+ "addr-core",
  "proptest",
  "rayon",
  "serde",

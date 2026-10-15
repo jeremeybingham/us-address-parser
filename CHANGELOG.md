@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Corpus runner moved into `addr_core::corpus` (feature `corpus`, optional
+  serde and serde_json; the default build is still dependency-free).
+  `crates/addr-core/tests/corpus.rs` is now a thin wrapper, and
+  `addr corpus test [--dir DIR] [--verbose] [--update-baseline]` runs the
+  same code (exit 0 ok, 2 malformed corpus, 3 regression or stale baseline).
 - `addr` CLI (Milestone 4, item 21): `addr parse` prints one JSON record
   (components, warnings, key, slug, USPS and RESO output); `--pretty`,
   `--usps`, `--line1/--line2/--city/--state/--zip`, or one address per stdin

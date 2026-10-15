@@ -97,3 +97,29 @@ fn parse_file_appends_prefixed_columns() {
     assert_eq!(lines.count(), 1);
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn corpus_test_runs_the_golden_corpus() {
+    let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/corpus");
+    let (out, err, code) = addr(&["corpus", "test", "--dir", dir], "");
+    assert_eq!(code, 0, "{out}\n{err}");
+    assert!(out.contains("whole address:"), "{out}");
+}
+
+#[test]
+fn corpus_test_reports_a_regression_and_a_malformed_corpus() {
+    let tmp = std::env::temp_dir().join(format!("addr-cli-corpus-{}", std::process::id()));
+    std::fs::create_dir_all(&tmp).expect("mkdir");
+    let case = r#"{"id": "x-1", "input": "1 MAIN ST", "expect": {"street_number": "1", "street_name": "ELM", "street_suffix": "ST"}, "warnings": ["missing_city", "missing_state", "missing_zip"]}"#;
+    std::fs::write(tmp.join("c.jsonl"), format!("{case}\n")).expect("write");
+    let dir = tmp.to_str().expect("utf-8 path");
+    // The case fails; with no baseline that is not a regression.
+    assert_eq!(addr(&["corpus", "test", "--dir", dir], "").2, 0);
+    // Listed as passing but failing: regression.
+    std::fs::write(tmp.join("passing.txt"), "x-1\n").expect("write");
+    assert_eq!(addr(&["corpus", "test", "--dir", dir], "").2, 3);
+    // Not valid JSON: malformed.
+    std::fs::write(tmp.join("c.jsonl"), "not json\n").expect("write");
+    assert_eq!(addr(&["corpus", "test", "--dir", dir], "").2, 2);
+    std::fs::remove_dir_all(&tmp).ok();
+}

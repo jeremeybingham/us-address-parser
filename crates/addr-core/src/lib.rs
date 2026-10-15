@@ -19,6 +19,8 @@
 mod assemble;
 mod classify;
 mod clean;
+#[cfg(feature = "corpus")]
+pub mod corpus;
 mod emit;
 mod input;
 pub mod lexicon;
