@@ -9,7 +9,7 @@
   `PostalCode`, `PostalCodePlus4`, `UnparsedAddress`). `fields()` gives
   Data Dictionary names; `length_overruns()` reports values over the
   suggested maximum lengths. `docs/reso-mapping.md` has the sources, the
-  folding rules for shapes with no field, and open questions for review.
+  folding rules for shapes with no field, and the author's decisions.
   Golden corpus: optional `reso` expectation and `tests/corpus/reso.jsonl`.
 - Initial workspace skeleton (Milestone 0).
 - Milestone 1, data and types:

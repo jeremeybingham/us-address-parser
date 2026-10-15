@@ -213,7 +213,7 @@ Rules to implement and test, each backed by a sourced table in `docs/usps-pub28-
 
 ### 6.2 RESO emit
 
-Map to RESO Data Dictionary address fields: `StreetNumber`, `StreetDirPrefix`, `StreetName`, `StreetSuffix`, `StreetDirSuffix`, `UnitNumber`, `City`, `StateOrProvince`, `PostalCode`, `PostalCodePlus4`. Check the current Data Dictionary version for additional fields (e.g. suffix modifier, additional street info) and record the version in `docs/reso-mapping.md`. The author has RESO experience and prior RESO Rust tooling, so review this mapping with them.
+Map to RESO Data Dictionary address fields: `StreetNumber`, `StreetDirPrefix`, `StreetName`, `StreetSuffix`, `StreetDirSuffix`, `UnitNumber`, `City`, `StateOrProvince`, `PostalCode`, `PostalCodePlus4`. Check the current Data Dictionary version for additional fields (e.g. suffix modifier, additional street info) and record the version in `docs/reso-mapping.md`. The author has RESO experience and prior RESO Rust tooling, so the mapping was reviewed and accepted on 2026-10-15 (`docs/reso-mapping.md`, "Decisions").
 
 ### 6.3 Canonical key and slug
 
@@ -232,7 +232,7 @@ City names are noisy and likely to be the field most often corrected by later tu
 
 ## 7. Python wrapper (`addr-py`)
 
-- PyO3 with maturin; **abi3 wheels** so one wheel per platform covers many Python versions. Pick the minimum Python version (suggest 3.10) when scaffolding.
+- PyO3 with maturin; **abi3 wheels** so one wheel per platform covers many Python versions. Pick the minimum Python version (decided: **3.10**).
 - Typed Rust-backed objects exposing the same fields, plus `to_dict()`. Ship type stubs (`.pyi`) and `py.typed`.
 - `parse(str)`, `parse_fields(...)`, and **`parse_many(list[str])`** which releases the GIL during Rust work.
 - Errors map to Python exceptions only for unusable input.
@@ -376,13 +376,15 @@ Open questions to settle when this is picked up:
 
 ## 13. Open items for the author
 
-0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (the open questions there still need the author's review). Done since: the slug (`emit/slug.rs`). Done since: proptest no-panic/span-validity property (`tests/no_panic.rs`), which closes Milestone 3. Next: Milestone 4 (CLI, benches, emitter fields in the corpus). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (reviewed and accepted by the author, 2026-10-15). Done since: the slug (`emit/slug.rs`). Done since: proptest no-panic/span-validity property (`tests/no_panic.rs`), which closes Milestone 3. Next: Milestone 4 (CLI, benches, emitter fields in the corpus). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
 
-1. Point Claude Code at the existing Florida parsing code so its rules and tests can seed the corpus (and decide whether it stays as a reference or is ported).
-2. Confirm the library name and crate/package names.
-3. Confirm dual MIT/Apache-2.0 licensing.
-4. Confirm the key definition (6.3, 6.4) and the minimum supported Python version.
-5. Review the RESO field mapping: the open questions in `docs/reso-mapping.md`.
+Decisions recorded 2026-10-15:
+
+1. **Florida parsing code: pending.** The author will provide it later, as a reference (not ported). It seeds the corpus when it arrives; until then the corpus is the auction-tracker cases, `pub28.jsonl` and the emitter cases.
+2. **Names: `us-address-parser`.** Publish names (crates.io and PyPI; Python import `us_address_parser`) will be `us-address-parser`; the CLI binary stays `addr`. The rename applies at Milestone 7. Until then the workspace crates keep the `addr-core`, `addr-cli` and `addr-py` names. Availability on crates.io and PyPI is not yet checked.
+3. **Licensing: confirmed.** MIT OR Apache-2.0.
+4. **Key definition: signed off.** `k1` (6.3, 6.4) is the public contract; any change needs a new version prefix. **Minimum Python version: 3.10** (abi3 wheels).
+5. **RESO mapping: reviewed.** All seven choices were accepted as implemented; see "Decisions" in `docs/reso-mapping.md`.
 
 ---
 
