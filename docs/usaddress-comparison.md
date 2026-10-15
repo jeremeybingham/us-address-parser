@@ -45,6 +45,7 @@ Test data: `tests/external/usaddress/` (MIT, pinned commit; see its README).
 | state | `StateName` |
 | ZIP, ZIP+4 | `ZipCode` |
 | attention line | `Recipient` |
+| building name | `BuildingName` |
 | unparsed text, skipped copies | no label |
 
 A `#` takes the label of the token after it, as usaddress's data does
@@ -55,7 +56,7 @@ A `#` takes the label of the token after it, as usaddress's data does
 - Tokens are compared one by one; tokens with no letter or digit (`-`, `&`)
   are not scored.
 - **Out of scope:** addresses whose gold labels include `Recipient`,
-  `BuildingName`, `LandmarkName`, `CornerOf`, `IntersectionSeparator`,
+  `LandmarkName`, `CornerOf`, `IntersectionSeparator`,
   `NotAddress`, `CountryName`, `SubaddressType`, `SubaddressIdentifier`,
   `StreetNamePreModifier` or `AddressNumberPrefix` are left out; this parser
   does not model them.
@@ -81,71 +82,99 @@ neither parser has seen (see "Next steps").
 
 ## Results (2026-10-15)
 
-Gold files, coarse score, addresses not in usaddress's training files:
+### usaddress's test files
 
-| File | Addresses | Ours: tokens | usaddress: tokens | Ours: whole address | usaddress: whole address |
-|---|---|---|---|---|---|
-| `labeled.xml` (hard cases) | 109 | 91.0% | 100.0% | 73.4% | 100.0% |
-| `simple_address_patterns.xml` | 5 | 100.0% | 100.0% | 100.0% | 100.0% |
-| `synthetic_clean_osm_data.xml` | 784 | 100.0% | 100.0% | 100.0% | 100.0% |
-| `synthetic_osm_data.xml` | 786 | 100.0% | 100.0% | 99.7% | 100.0% |
-| `us50_test_tagged.xml` | 555 | 99.7% | 100.0% | 99.1% | 100.0% |
-| **All** | 2,239 | 99.4% | 100.0% | 98.4% | 100.0% |
+Coarse score, addresses not in usaddress's training files. "Before" is the
+first run; "after" follows the rule changes listed under "Gaps found".
 
-On the 6,788 addresses usaddress trained on: ours 99.8% of tokens and 99.6%
-of addresses, usaddress 100.0% and 99.9%. 61 addresses are out of scope.
-Over all in-scope addresses (the `cargo test` figure): 99.70% of 47,260
-tokens and 99.29% of 9,027 addresses.
+| File | Addresses | Ours: whole address, before | Ours: whole address, after | usaddress |
+|---|---|---|---|---|
+| `labeled.xml` (hard cases) | 109, then 118 | 73.4% | 83.1% | 100.0% |
+| `synthetic_clean_osm_data.xml` | 784 | 100.0% | 100.0% | 100.0% |
+| `synthetic_osm_data.xml` | 786 | 99.7% | 99.7% | 100.0% |
+| `us50_test_tagged.xml` | 555 | 99.1% | 99.5% | 100.0% |
+| **All** | 2,239, then 2,248 | 98.4% | 98.9% | 100.0% |
 
-Raw files (no labels; agreement between the two parsers, coarse):
+Tokens: ours 99.4% before and 99.5% after; usaddress 100.0%. Nine more
+addresses are in scope after the change because `BuildingName` is now
+modeled. Over all in-scope addresses (the `cargo test` figure): 99.76% of
+47,351 tokens and 99.46% of 9,036 addresses.
+
+### Geocode benchmark (blind)
+
+The test split of the [geocoding address-parsing benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)
+(30,622 addresses, one line, no commas, street addresses only), run locally
+from `local-data/` because it has no license. Neither parser trained on it.
+
+| | Ours, before | Ours, after | usaddress 0.5.16 |
+|---|---|---|---|
+| Tokens (coarse) | 95.3% | 97.2% | 97.7% |
+| Whole address (coarse) | 76.1% | 85.4% | 88.2% |
+| Whole address (fine) | 71.1% | 72.0% | 77.3% |
+
+After the changes, both parsers are right on 23,587 addresses, only ours on
+2,558, only usaddress on 3,413, and neither on 1,064. By shape: with a street
+suffix, city, state and ZIP (19,507 addresses) ours is right on 92.4% and
+usaddress on 96.4%; with no city, ours 99.0% and usaddress 18.0% (usaddress
+makes a city out of street words); with no street suffix, ours 50.3% (up from
+4.8%) and usaddress 84.8%.
+
+What is left is mostly where the city starts on one line with no commas:
+the city begins with a word left in a suffix-less street (6.4% of
+addresses), a suffix word (3.3%) or a directional (2.5%). A place list fixes
+these; the Census 2024 Gazetteer (places and county subdivisions, public
+domain) covers 73.5% of the benchmark's cities.
+
+### Raw files (no labels; agreement, coarse)
 
 | File | Addresses | Same on every token | Tokens agreeing | Tokens ours left unplaced |
 |---|---|---|---|---|
 | Florida auction listings | 9,314 | 87.3% | 96.1% | 3.2% |
-| DBPR licensees, region 4 (Florida) | 15,294 | 97.8% | 99.4% | 0.3% |
-| DBPR licensees, region 11 (out of state) | 25,369 | 96.9% | 99.0% | 0.5% |
-| usaddress `unparseable.csv` | 1,322 | 11.8% | 54.4% | 6.1% |
+| DBPR licensees, region 4 (Florida) | 15,294 | 97.9% | 99.4% | 0.3% |
+| DBPR licensees, region 11 (out of state) | 25,369 | 97.0% | 99.0% | 0.5% |
+| usaddress `unparseable.csv` | 1,322 | 13.7% | 55.3% | 6.1% |
 
 Raw mode joins the columns into one line, so it does not exercise this
-parser's multi-field rules.
-
-In samples of 25 to 30 disagreeing rows, checked by hand:
-
-- **Auction file:** this parser was right in about 19 of 25. It flags
-  placeholders (`NO SITUS`, `UNASSIGNED LOCATION RE`) and drops repeated
-  ZIPs, where usaddress labels them as streets or units.
-- **Region 11:** usaddress was right in about 13 of 30, this parser in about
-  9, and neither in the rest.
+parser's multi-field rules. In hand-checked samples of disagreements, this
+parser was right in about 19 of 25 auction rows, and usaddress in about 13
+of 30 region 11 rows (ours in about 9). These samples are from the first
+run.
 
 ## Gaps found (backlog)
 
-From the 36 not-in-training gold addresses only usaddress gets right, plus
-the raw samples:
+Done on 2026-10-15 (corpus cases `rg-050` to `rg-081`; rules in
+`docs/usps-pub28-notes.md`):
 
-1. **City on one line with no comma**, when it starts with a directional or
-   holds suffix words: `... DR CHICAGO, IL`, `... PL ST LOUIS, MO`, `EL
-   MIRAGE`, `W. PALM BEACH`, `NORTH LITTLE ROCK`, `LA GRANGE PARK`,
-   `SPRINGBROOK TOWNSHIP`, `EAST PROVIDENCE RHODE ISLAND`. A place list (the
-   state-pack plan) is the real fix.
-2. **Unit absorbed by the city:** `1000 Cordova Place, # 234 Santa Fe NM`.
-3. **Highway contract spellings with ROUTE:** `HC ROUTE 72 BOX 1A`,
-   `HC R 32 BOX # E3`, `HIGHWAY CONTRACT RTE # 46`, `HWY CONTRACT ROUTE 102`.
-   Pub 28 section 251 says to drop ROUTE.
-4. **A bare box line:** `BOX 123456`, `BOX # 123456`, `ROUTE BOX # 65`.
-5. **Highway variants:** `FM 544` (with a city after it), `PR 462` (Texas
-   private road), `COUNTRY ROAD` (typo), `HGWY`, `NORTH HIGHWAY 71 BUSINESS`.
-6. **Unit before the street:** `APT 1B 626 E KILBOURN AVE`.
-7. **Unusual house numbers:** a grid number with a space (`N165 W2123`),
-   letters (`L HATHWAY AVENUE`, `T703 STATE ROUTE 66`), a letter after the
-   number (`428 B SOUTH MAIN ST`), a stray backtick (`1719\``).
-8. **Two unit numbers** (`STE 4 551`), and building names (`EAST TOWER`),
-   which are out of scope today.
-9. **Military box with parts reversed:** `BOX 2877 PSC 103`.
+- A highway route ends the street in the city split; postdirectional after
+  the route; name words after the route kept in every output.
+- A unit absorbed by the city (`..., # 234 SANTA FE`); a unit before the
+  street (`APT 1B 626 ...`); street and city in the first comma segment.
+- HC with ROUTE; `BOX <number>` alone as a PO Box; military box line
+  reversed.
+- `HGWY`; `COUNTRY ROAD` before a number; hyphenated routes (`GA-25`).
+- House numbers: `428 B SOUTH`, `T703`, `N165 W2123`; a stray backtick.
+- Letter routes after a county prefix (`COUNTY ROAD J`).
+- No-ZIP state at the end of one line; `missing_street_name`; floors as
+  numbers; a `building` field.
+
+Still open:
+
+1. **City on one line with no comma** (`ST LOUIS`, `W. PALM BEACH`,
+   `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`): needs the
+   place list (state packs).
+2. **Named buildings without a building word** (`THE GARRETT`, `THE
+   CHADWICK`, `UPTOWN SQUARE`, `FOREST COVE APARTMENTS`) stay unparsed.
+3. **Highway modifiers** (`NORTH HIGHWAY 71 BUSINESS LOWELL`): BUSINESS stays
+   in the name, so the city split can take it.
+4. **Two unit numbers** (`STE 4 551`): left unparsed, as decided.
+5. **Letters alone as house numbers** (`L HATHWAY AVENUE`): not taken, as
+   decided.
+6. **State-pack items:** SR, `PR 462`, Queens-style numbers, Puerto Rico
+   urbanizations, `LEE ROAD 2004`-style county road names, `CTY ROAD`.
 
 ## Next steps
 
-- Work through the backlog, with a golden-corpus case per fix.
-- A blind comparison needs labels neither parser has seen: hand-label a
-  random sample (100 to 200 rows) of the Florida files, or use the test split
-  of the [geocoding address-parsing benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)
-  locally (it has no license, so it must not be committed).
+- The place list (state packs) for the remaining city cases.
+- The geocode benchmark is the blind test; rerun it after each rule change
+  (`local-data/README.md`). A hand-labeled sample (100 to 200 rows) of the
+  Florida files would add a blind test on the data this library targets.

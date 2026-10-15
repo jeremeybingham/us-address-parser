@@ -128,6 +128,32 @@ shapes in real county data (`docs/prior-art.md`) and are not USPS rules.
 | Truncation: `possibly_truncated` when a line of at least 30 characters ends in something incomplete: a cut-off ZIP, a designator without its number, a cut-off designator (`UNI`; a street suffix such as `ST` or `TRL` is never one, though it starts STE or TRAILER), or a name with no suffix. | Prior art (county sites cut lines at about 30 characters). |
 | The parser does not guess: `409742ND` (4097 42ND or 40974 2ND), slash pairs (`5210/5212`), comma lists of house numbers (`31967,32037,...`, `multiple_addresses`) and anything no rule claims go to `unparsed`. | Prior art. |
 
+Added 2026-10-15 from the usaddress comparison and the geocode benchmark
+(`docs/usaddress-comparison.md`; corpus cases `rg-050` to `rg-081`). Rules
+marked "decided" were chosen by the author:
+
+| Rule | Source |
+|---|---|
+| One line with no commas: a highway route ends the street, then an optional postdirectional, a suffix after a name word (`HWY 66 FRONTAGE RD`) and a unit; the city follows (`395 COUNTY ROAD 8 LAUREL MS`). A directional with nothing after it is the postdirectional (`HIGHWAY 29 SOUTH 32533`). | Section 237; prior art (geocode benchmark). |
+| Name words after a highway route belong to the street only on the route's line or comma segment; the emitters and the key keep them (`HIGHWAY 66 FRONTAGE RD`). Words on a later line are unparsed. | Appendix F; bug fix (the word was dropped from every output). |
+| A street and city in the first comma segment are split after the street (`626 E KILBOURN AVE MILWAUKEE, WI`), unless the segment ends in a suffix or directional (`427 SOUTH LA SALLE STREET, 60605` is all street). | Prior art (usaddress test data). |
+| A unit starting the city's segment belongs to the street (`..., # 234 SANTA FE NM`). | Bug fix (usaddress test data). |
+| A unit before the street is the first unit (`APT 1B 626 E KILBOURN AVE`); a unit after the street is then the second. | Bug fix (usaddress test data). |
+| No ZIP, one line: a USPS state code or name ending the street is the state (`8517 CEDAR BARK CIR AL`). Never NE or FL (a directional and a floor). CT, KY, LA, MT, PR, WY and FM (also suffix or highway words) only right after a suffix written as an abbreviation shorter than the word (`CIR KY`; not `HIDDEN MEADOW CT` or `OAK PARK CT`). | Appendix B; decided. |
+| Hyphenated routes are split: `GA-25`, `US-385`, `CR-48`, `I-65`, when the letters are a highway prefix or a state code that is not a directional. `SR-54` stays whole (SR is left to state packs); `NE-2` stays whole. | Appendix F (written with a space); decided. |
+| A delivery line that is only `BOX` and a number is a PO Box (`BOX # 123456`). | Section 283 names CALLER, BIN, LOCKBOX and DRAWER, not plain BOX; decided. |
+| Military box line in reverse order: `BOX 2877 PSC 103` is `PSC 103 BOX 2877`. | Section 238.1. |
+| A single letter between the house number and a directional belongs to the number (`428 B SOUTH MAIN ST`). Before a name word it is an initial in the name (`820 A PHILIP RANDOLPH BLVD`, `9058 T BIRD RD`). | Decided, narrowed after real data. |
+| A letter followed by two digits or more is a house number at the start of a street (`T703 STATE ROUTE 66`); a letter alone is not. | Decided. |
+| A county grid number written in two parts is one house number, kept as written (`N165 W2123`). | Decided. |
+| After COUNTY ROAD or COUNTY HIGHWAY, a route of one or two letters (`COUNTY ROAD J`). | Appendix F (letter routes); decided. |
+| `COUNTRY ROAD` / `COUNTRY RD` before a route number is an observed typo for COUNTY ROAD (`non_standard_abbreviation`); without a number it stays a street name. `HGWY` is an observed spelling of HIGHWAY (highway prefix and HWY suffix). | Prior art (usaddress test data, DBPR data); decided. |
+| HC with ROUTE written out: `HC ROUTE`, `HC RTE`, `HC R`, `HWY CONTRACT ROUTE`, `HIGHWAY CONTRACT RTE`. | Section 251 (drop ROUTE). |
+| A stray backtick is trimmed (`1719\``). | Section 354 (punctuation removal). |
+| A house number and a unit with no street raise `missing_street_name` (`123 UNIT 1`). | Decided. |
+| Floors are numbers: an ordinal floor value is written without its ordinal suffix (`5TH FLOOR` is FL 5). | Appendix C2 (FL takes a range); decided. |
+| Building name: words ending in a `[building]` word (TOWER, BUILDING, HALL, CENTER, PLAZA, ...), at the end of the delivery lines, in their own line or comma segment or right after a unit (`SUITE 801 EAST TOWER`, line 2 `ANNEX BUILDING`), go in `building`. Not after the house number alone (`1 TRUMP TOWER` is a street). | Not a USPS rule (Pub 28 has no building line); usaddress BuildingName; decided. |
+
 ## Emitter rules
 
 ### USPS emitter (`emit/usps.rs`, `ParsedAddress::to_usps`)

@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+- Rule changes from the usaddress comparison and the geocode benchmark
+  (corpus cases `rg-050` to `rg-081`; rules in `docs/usps-pub28-notes.md`;
+  decisions 8 and 9 of 2026-10-15 in `docs/design.md`). On the blind geocode
+  benchmark, whole-address accuracy (coarse) rose from 76.1% to 85.4%
+  (usaddress: 88.2%):
+  - A highway route ends the street when finding the city on one line;
+    name words after the route are kept in the USPS, RESO and key output
+    (`HIGHWAY 66 FRONTAGE RD` lost FRONTAGE before), and words on a later
+    line are unparsed instead of hidden.
+  - Street and city in the first comma segment are split; a unit starting
+    the city's segment, or before the street, is a unit.
+  - A no-ZIP state at the end of one line; hyphenated routes (`GA-25`,
+    `US-385`, `CR-48`); `BOX <number>` alone as a PO Box; military box line
+    in reverse order; HC with ROUTE; `HGWY` and `COUNTRY ROAD` as observed
+    spellings (the highway table takes `observed` forms).
+  - House numbers: a letter before a directional (`428 B SOUTH`), letter and
+    digits (`T703`), two-part grid numbers (`N165 W2123`); letter routes
+    after a county prefix (`COUNTY ROAD J`); a stray backtick is trimmed.
+  - New `Warning::MissingStreetName` (`missing_street_name`) for a house
+    number and a unit with no street.
+  - Ordinal floors are numbers (`5TH FLOOR` is FL 5), which changes
+    unit-level keys for them.
+  - New `ParsedAddress::building` (`Component::Building`, usaddress
+    `BuildingName`) from a `[building]` word list in `data/special.toml`
+    (`Lexicons::is_building_word`); not emitted. The CLI prints it and
+    `parse-file` adds `addr_building`.
+  - `tests/usaddress_gold.rs` floors raised to 99.7% of tokens and 99.4% of
+    addresses; `BuildingName` is now in scope for the comparison.
+
 - usaddress comparison (design decision 11; Milestone 7, item 31):
   - `ParsedAddress::to_usaddress_tags()` (`UsaddressTag`): each input token
     with its usaddress label, from the component spans.
