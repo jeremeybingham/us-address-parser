@@ -3,6 +3,7 @@
 
 mod key;
 mod reso;
+mod slug;
 mod usps;
 
 pub use key::KeyOptions;

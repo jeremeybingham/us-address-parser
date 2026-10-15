@@ -61,6 +61,8 @@ Emitter expectations are optional record keys, checked only when present
   `"none"` when the address has no key.
 - `key_unit`: the same for `KeyOptions::unit()`.
 
+- `slug`: the expected `slug()` string, or `"none"`.
+
 - `usps`: `{"line1": ..., "line2": ..., "last_line": ...}` from
   `to_usps()`; an omitted part must be empty.
 

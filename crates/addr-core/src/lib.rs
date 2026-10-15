@@ -14,8 +14,7 @@
 //! assert_eq!(a.city.as_deref(), Some("MIAMI"));
 //! ```
 //!
-//! Status: parsing (Milestone 2) and the canonical key are in place; the USPS and
-//! RESO emitters are in place and the slug emitter comes next (Milestone 3). See `docs/design.md` for the plan.
+//! Status: parsing (Milestone 2) and the canonical key are in place; the USPS, RESO and slug emitters are in place (Milestone 3). See `docs/design.md` for the plan.
 
 mod assemble;
 mod classify;
