@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `benches/parse.rs` (Milestone 4, item 22): criterion benchmarks for six
+  address shapes, the whole golden corpus (`parse` and `parse_many`) and the
+  four emitters. `corpus::Corpus::inputs()` supplies the corpus strings.
 - Corpus runner moved into `addr_core::corpus` (feature `corpus`, optional
   serde and serde_json; the default build is still dependency-free).
   `crates/addr-core/tests/corpus.rs` is now a thin wrapper, and

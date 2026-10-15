@@ -34,3 +34,9 @@ toml = { version = "0.8", default-features = false, features = ["parse"] }
 # self-dev-dependency keeps a plain `cargo test` running it.
 addr-core = { path = ".", features = ["corpus"] }
 proptest = "1"
+criterion = { version = "0.5", default-features = false }
+
+[[bench]]
+name = "parse"
+path = "../../benches/parse.rs"
+harness = false

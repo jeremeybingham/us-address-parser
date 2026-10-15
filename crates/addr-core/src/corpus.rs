@@ -570,6 +570,33 @@ impl Corpus {
         self.cases.is_empty()
     }
 
+    /// Each case as the single string a one-line caller would pass: the
+    /// `input`, the `lines` joined with `", "`, or the non-empty `fields`
+    /// joined the same way. For benchmarks and bulk checks.
+    pub fn inputs(&self) -> Vec<String> {
+        self.cases
+            .iter()
+            .map(|(_, c)| {
+                if let Some(s) = &c.input {
+                    s.clone()
+                } else if let Some(l) = &c.lines {
+                    l.join(", ")
+                } else if let Some(f) = &c.fields {
+                    [&f.line1, &f.line2, &f.city, &f.state, &f.zip]
+                        .into_iter()
+                        .flatten()
+                        .filter(|s| !s.is_empty())
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                } else {
+                    String::new()
+                }
+            })
+            .filter(|s| !s.trim().is_empty())
+            .collect()
+    }
+
     /// Parse every case and compare it with its expected values.
     pub fn run(&self, parser: &Parser) -> Report {
         let mut field_ok: BTreeMap<&'static str, usize> = FIELDS.iter().map(|&f| (f, 0)).collect();
