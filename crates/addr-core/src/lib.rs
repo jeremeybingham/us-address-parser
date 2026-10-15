@@ -29,7 +29,7 @@ mod tagger;
 mod tokenize;
 mod types;
 
-pub use emit::{KeyOptions, ResoAddress, UspsAddress};
+pub use emit::{KeyOptions, ResoAddress, UsaddressTag, UspsAddress};
 pub use input::Fields;
 pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind};
 pub use parser::{ParseError, Parser};

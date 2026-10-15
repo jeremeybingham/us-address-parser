@@ -237,7 +237,7 @@ City names are noisy and likely to be the field most often corrected by later tu
 - `parse(str)`, `parse_fields(...)`, and **`parse_many(list[str])`** which releases the GIL during Rust work.
 - Errors map to Python exceptions only for unusable input.
 - No required runtime dependencies. No pandas/Polars dependency; document a short recipe instead.
-- Optional usaddress-compatible tag output (`to_usaddress_tags()`), to ease migration.
+- Optional usaddress-compatible tag output (`to_usaddress_tags()`), to ease migration. *Done (2026-10-15): `ParsedAddress::to_usaddress_tags()`, `addr parse --usaddress`; see `docs/usaddress-comparison.md`.*
 
 ---
 
@@ -325,7 +325,7 @@ Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 
 
 ### Milestone 7: hardening and release
 
-31. Fuzz targets, usaddress comparison benchmark script, `CHANGELOG.md`, crates.io and PyPI publishing workflows
+31. Fuzz targets, usaddress comparison benchmark script, `CHANGELOG.md`, crates.io and PyPI publishing workflows. *Comparison script done: `tools/compare/compare_usaddress.py`, results in `docs/usaddress-comparison.md`.*
 32. Re-check every lexicon table and the USPS emitter rules against the live Pub 28 pages (`docs/usps-pub28-notes.md`, "Verification status" and item 9 of the emitter verification list)
 
 ---
@@ -365,7 +365,7 @@ Open questions to settle when this is picked up:
 
 ## 12. Risks
 
-- **Accuracy parity with usaddress** is the main risk. Measure early on the Florida corpus; do not assume rules alone will match a trained CRF. Status: the rule parser passes all 134 hand-labeled corpus cases, but those cases shaped the rules. No held-out data or usaddress comparison exists yet; add both (a held-out set from usaddress's training data, then the comparison script) before claiming parity or deciding on Milestone 6.
+- **Accuracy parity with usaddress** is the main risk. Measure early on the Florida corpus; do not assume rules alone will match a trained CRF. Status: the rule parser passes all 134 hand-labeled corpus cases, but those cases shaped the rules. Since 2026-10-15 a usaddress comparison exists (`docs/usaddress-comparison.md`): on usaddress's own test files, addresses not in its training files, this parser matches 99.4% of tokens and 98.4% of whole addresses (usaddress: 100%), with a backlog of the gaps. Those files are usaddress's regression tests, so they show the gap to usaddress, not blind accuracy. A blind, hand-labeled sample is still needed before claiming parity or deciding on Milestone 6.
 - **Model format compatibility** between CRFsuite-trained models and the `crfs` crate must be verified before Milestone 6 work.
 - **Key stability.** The key format is a public contract once stored; get it reviewed before release.
 - **Licensing.** Confirm the data provenance of every lexicon table before publishing, and keep MIT attribution for any usaddress-derived training data.

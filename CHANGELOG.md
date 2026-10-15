@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- usaddress comparison (design decision 11; Milestone 7, item 31):
+  - `ParsedAddress::to_usaddress_tags()` (`UsaddressTag`): each input token
+    with its usaddress label, from the component spans.
+    `addr parse --usaddress` prints them as JSON.
+  - `tests/external/usaddress/`: usaddress's labeled test files (MIT,
+    pinned commit) and `in_training.txt`, the test addresses also in its
+    training data (`tools/compare/training_overlap.py`).
+  - `tools/compare/compare_usaddress.py`: runs both parsers and scores them
+    by the same rules, on labeled files (`gold`) or raw CSV and text (`raw`).
+  - `crates/addr-core/tests/usaddress_gold.rs`: fails if this parser's
+    coarse score on those files drops below the recorded floor.
+  - Results and the backlog of gaps: `docs/usaddress-comparison.md`.
+
 - Dual addresses (Pub 28 section 215; design decision 6 of 2026-10-15): a
   record with a street address and a PO Box keeps both, with the new
   `dual_address` warning. The key and `to_reso()` use the street;
