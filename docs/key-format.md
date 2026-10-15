@@ -27,7 +27,9 @@ k1:G|<state>|<zip5>
   military or Department of State line, `G` general delivery. Because the
   form is part of the key, a PO Box key can never equal a street key.
 - `S`: `<name>` is the street name; for a street named after a highway it is
-  the standard prefix plus the route (`COUNTY ROAD 23`). `<suffix>` and the
+  the standard prefix plus the route (`COUNTY ROAD 23`), after the state code
+  when the highway name holds a state (`KY STATE HIGHWAY 625`, Pub 28
+  Appendix F). `<suffix>` and the
   directionals are Pub 28 abbreviations.
 - `M`: `<kind>` is CPR, OPC, PSC, UPR or UNIT; `<post office>` is APO, FPO or
   DPO (empty when absent).
@@ -64,6 +66,10 @@ the two kinds do not mix in a join by accident. `MissingState` or
 Applied to every free-text segment (number, name, route, box, unit):
 
 1. Uppercase; drop periods and apostrophes (`O'BRIEN` and `OBRIEN` match).
+   Pub 28 lets punctuation be omitted (section 222) and lists periods and
+   apostrophes for removal (section 354). Section 232 keeps the period in a
+   name such as `39.2 RD`, and the USPS emitter does, but the key drops it,
+   so `39.2 RD` and `392 RD` share a key.
 2. Collapse whitespace to one space.
 3. Percent-encode (`%XX`, uppercase hex, UTF-8 bytes) every character outside
    `A-Z 0-9 space / -`. This keeps `|` and `%` out of segments; `clean.rs`
@@ -73,8 +79,7 @@ Spelling variants (`North`/`N`, `Street`/`ST`, `Florida`/`FL`) are resolved by
 the parser through the Pub 28 tables, not by the key. Sources for those
 tables: `docs/usps-pub28-notes.md`. The key format itself (segments, form
 letters, dropped unit type, `k1n`) is this library's own convention, not a
-USPS rule. Rule 1's punctuation dropping is not yet traced to a Pub 28
-section; do that before release.
+USPS rule.
 
 ## No key
 

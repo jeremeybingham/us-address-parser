@@ -208,8 +208,14 @@ pub struct RuralRoute {
 ///
 /// The route is the road's number, not a house number or unit. It may hold
 /// letters (`60E`, `1080A`) or be letters only (`STATE ROUTE MM`).
+///
+/// A state named in the highway name is kept apart too, as its code
+/// (Appendix F: `KENTUCKY STATE HIGHWAY 625` is `KY STATE HIGHWAY 625`). A
+/// state followed only by a route gets the HIGHWAY prefix (`KENTUCKY 440` is
+/// `KY HIGHWAY 440`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Highway {
+    pub state: Option<StateCode>,
     pub prefix: HighwayPrefix,
     pub route: String,
 }

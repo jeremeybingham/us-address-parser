@@ -23,6 +23,9 @@ struct SpecialMatch {
 /// A highway street name found in the delivery line.
 struct HighwayAt {
     pre: Range<usize>,
+    /// A state before the prefix (`KY STATE HIGHWAY 1`); empty if none.
+    state: Range<usize>,
+    /// Empty when a state stands for the prefix (`KENTUCKY 440`).
     prefix: Range<usize>,
     route: usize,
 }
@@ -509,6 +512,7 @@ impl Tagger<'_> {
             let floor = h.route + 1;
             let j = self.units(floor, floor, hi, true);
             self.set(h.pre.clone(), Tag::PreDir);
+            self.set(h.state.clone(), Tag::HighwayState);
             self.set(h.prefix.clone(), Tag::HighwayPrefix);
             self.set(h.route..h.route + 1, Tag::HighwayRoute);
             self.street_tail(floor, j);
@@ -525,7 +529,10 @@ impl Tagger<'_> {
     }
 
     /// Pub 28 section 237 and Appendix F: a highway prefix and route right
-    /// after the house number (and an optional predirectional).
+    /// after the house number (and an optional predirectional). Appendix F
+    /// also names a state before the prefix (`KY STATE HIGHWAY 1`), or before
+    /// the route alone (`KENTUCKY 440`); those are tried last, so `NE HWY 5`
+    /// keeps NE as the predirectional.
     fn highway_at(&self, i: usize, hi: usize) -> Option<HighwayAt> {
         let lex = self.lex;
         let try_at = |p: usize| {
@@ -536,17 +543,52 @@ impl Tagger<'_> {
         if let Some((prefix, route)) = try_at(i) {
             return Some(HighwayAt {
                 pre: i..i,
+                state: i..i,
                 prefix,
                 route,
             });
         }
-        let (_, w) = longest_at(self.toks, i, hi, |s| lex.directional(s))?;
-        let (prefix, route) = try_at(i + w)?;
-        Some(HighwayAt {
-            pre: i..i + w,
-            prefix,
+        if let Some((_, w)) = longest_at(self.toks, i, hi, |s| lex.directional(s)) {
+            if let Some((prefix, route)) = try_at(i + w) {
+                return Some(HighwayAt {
+                    pre: i..i + w,
+                    state: i + w..i + w,
+                    prefix,
+                    route,
+                });
+            }
+        }
+        let (_, w) = longest_at(self.toks, i, hi, |s| self.highway_state(s))?;
+        let state = i..i + w;
+        if let Some((prefix, route)) = try_at(i + w) {
+            return Some(HighwayAt {
+                pre: i..i,
+                state,
+                prefix,
+                route,
+            });
+        }
+        // Bare `KY 1207`: digits only, and not a directional or designator
+        // that happens to be a state code (`NE 5TH ST`, `FL 2`).
+        let route = i + w;
+        let word = join(&self.toks[state.clone()]);
+        let bare = route < hi
+            && all_digits(self.text(route))
+            && lex.directional(&word).is_none()
+            && lex.unit(&word).is_none();
+        bare.then_some(HighwayAt {
+            pre: i..i,
+            state,
+            prefix: route..route,
             route,
         })
+    }
+
+    /// A state code or full name (not a traditional abbreviation such as
+    /// KENT, nor a military code) inside a highway name.
+    fn highway_state(&self, s: &str) -> Option<()> {
+        let l = self.lex.state(s)?;
+        (l.kind != MatchKind::Variant && l.value.kind() != StateKind::Military).then_some(())
     }
 
     /// After a highway route: a postdirectional and a suffix, anything else

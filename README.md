@@ -10,7 +10,7 @@ identifiers (a stable canonical match key and a URL-safe slug).
 > spans into the original text and diagnostics. The rules and their sources
 > are in [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md). `ParsedAddress::key` gives the
 > canonical match key ([`docs/key-format.md`](docs/key-format.md)). `ParsedAddress::to_usps`
-> gives Pub 28 style lines (layout rules still unverified against the live
+> gives Pub 28 style lines (layout rules checked against the live Pub 28
 > text; see the notes). The RESO and slug emitters are not written yet. See
 > [`docs/design.md`](docs/design.md) for the milestone plan.
 
