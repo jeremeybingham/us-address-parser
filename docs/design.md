@@ -187,7 +187,7 @@ let parser = Parser::new();                    // default options
 let a = parser.parse("123 north main street apt 4, Miami FL 33101");
 let b = parser.parse_fields(Fields { line1, line2, city, state, zip });
 
-a.to_usps();        // UspsAddress { line1, line2, city, state, zip }
+a.to_usps();        // UspsAddress { line1, line2, city, state, zip }; to_usps_wrapped(max_line)
 a.to_reso();        // ResoAddress with RESO Data Dictionary field names
 a.key(KeyOptions { include_unit: true });   // "k1:..." stable match key
 a.slug();           // URL-safe, human-readable
@@ -270,7 +270,7 @@ The format, runner and first cases are in place (`tests/corpus/README.md`); the 
 
 Build in this order. Each milestone should end with passing tests.
 
-Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 134 cases, all passing; runner compares components and warnings only). Milestone 3 has begun (item 17 partly: `emit/key.rs`, `emit/usps.rs`, `docs/key-format.md`; the USPS layout rules are unverified against Pub 28, see `docs/usps-pub28-notes.md`); everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
+Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 159 cases, all passing; runner compares components, warnings, keys and USPS output). Milestone 3 has begun (item 17 partly: `emit/key.rs`, `emit/usps.rs`, `docs/key-format.md`; the USPS layout rules were checked against the live Pub 28 text in October 2026, see `docs/usps-pub28-notes.md`); everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
 
 ### Milestone 0: scaffolding (done)
 
@@ -326,6 +326,7 @@ Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 
 ### Milestone 7: hardening and release
 
 31. Fuzz targets, usaddress comparison benchmark script, `CHANGELOG.md`, crates.io and PyPI publishing workflows
+32. Re-check every lexicon table and the USPS emitter rules against the live Pub 28 pages (`docs/usps-pub28-notes.md`, "Verification status" and item 9 of the emitter verification list)
 
 ---
 
@@ -375,7 +376,7 @@ Open questions to settle when this is picked up:
 
 ## 13. Open items for the author
 
-0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Next: RESO emitter and `docs/reso-mapping.md` (needs the current RESO Data Dictionary version and the author's review of the field mapping), then the slug (`emit/slug.rs`), then proptest/no-panic property, then Milestone 4 (CLI, benches). Verification debt: the list "To verify against the live Pub 28 text" in `docs/usps-pub28-notes.md`; do it first if `pe.usps.com` is reachable.
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Next: RESO emitter and `docs/reso-mapping.md` (needs the current RESO Data Dictionary version and the author's review of the field mapping), then the slug (`emit/slug.rs`), then proptest/no-panic property, then Milestone 4 (CLI, benches). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
 
 1. Point Claude Code at the existing Florida parsing code so its rules and tests can seed the corpus (and decide whether it stays as a reference or is ported).
 2. Confirm the library name and crate/package names.

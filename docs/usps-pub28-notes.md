@@ -104,6 +104,8 @@ shapes in real county data (`docs/prior-art.md`) and are not USPS rules.
 | A one-letter directional right after a lone suffix word is part of the name, like any letter there (`AVENUE N`, `AVENUE G`). | Section 233.3 (letters used as alphabet indicators); prior art (`2108 AVENUE G`). |
 | Suffix: the last word before units and postdirectional, when a name is left before it. Suffix words earlier in the line stay in the name (`EAGLES POINT CIRCLE`). | Section 234; Appendix C1. |
 | Highway names: a prefix from `[[highway]]` right after the house number (or a predirectional) and followed by a route that starts with a digit. The prefix and route go in `highway`; later words are suffix, postdirectional or name (`HWY 11 BYPASS`, `US 41 SW`). `I10` and `IH280` are split by the tokenizer. | Section 237; Appendix F. |
+| A state code or full name (not a traditional abbreviation or military code) right before a highway prefix goes in `highway.state` (`CA COUNTY RD 150`, `KY ST HWY 1`). A state right before an all-digit route, with no prefix, gets the HIGHWAY prefix (`KENTUCKY 440`, `KY 1207`). Tried after the plain and predirectional forms, so `NE HWY 5` keeps NE as a directional; the bare form skips states that are also directionals or designators (`NE 5TH ST`, `FL 2`). | Appendix F and its note (a state that is the whole primary name, `OKLAHOMA AVE`, is the name). |
+| House number `N-N`: one hyphenated number (`112-10`, `289-01`), unless the second part has as many digits and is larger (`1204-1206`), which raises `multiple_addresses`. | Appendix D1, section 232; the range from prior art. |
 | Units: a designator and value (`APT 4B`), `#` and value, a designator with `#` (`UNIT # 4`), or a designator alone (`REAR`, or `UNIT` with a missing number when Appendix C2 requires a range). Up to two, the first in input order going to `unit_*`. | Section 213; Appendix C2 (designators, range column, `#` when the designator is unknown). |
 | Bare units: after a suffix (and optional postdirectional), a value with a digit or a single letter, or a letter and a number (`DR 706`, `DR B`, `DR V 21`). Not a directional letter (`PARK AVE S` is a postdirectional), not after a highway word other than ROAD, and only when a name comes before the suffix. | Prior art (Florida county data). |
 | PO Box: a `[po_box]` form or synonym, then an optional `#` and the box value. | Sections 281, 283. |
@@ -122,62 +124,82 @@ shapes in real county data (`docs/prior-art.md`) and are not USPS rules.
 
 ### USPS emitter (`emit/usps.rs`, `ParsedAddress::to_usps`)
 
-Output: `UspsAddress { line1, line2, city, state, zip }` plus `last_line()`
-(`CITY ST ZIP`). **Status of the layout rules below: UNVERIFIED.** They were
-written from memory of Pub 28 because `pe.usps.com` was blocked in the
-session that wrote the emitter. Check each against the live text and fill in
-the section numbers before release (Milestone 7). The rules in the second
-list ("Special forms"), which were sourced earlier, are implemented as
-written.
+Output: `UspsAddress { line1, line2, city, state, zip }`, plus `last_line()`
+(`CITY ST ZIP`) and `lines()` (the lines in mailpiece order). The layout
+rules below were checked against the live Pub 28 pages in October 2026
+(chapter 2 sections 21x to 23x, chapter 3 sections 34x and 35x, Appendices
+A1, D and F). Page map: 211 `28c2_001.htm`; 212 `28c2_002.htm`; 213
+`28c2_003.htm`; 221 `28c2_006.htm`; 222 `28c2_007.htm`; 223 `28c2_008.htm`;
+224 `28c2_009.htm`; 231 `28c2_012.htm`; 232 `28c2_013.htm`; 238
+`28c2_019.htm`; 239 `28c2_020.htm`; 341 `28c3_012.htm`; 343 `28c3_014.htm`;
+35 `28c3_015.htm`; 354 `28c3_019.htm`; 356 `28c3_021.htm`; A1
+`28apa_002.htm`; D1 `28apd_002.htm`; D4 `28apd_005.htm`. The examples in 238
+and 239 are images (`images/28c2_019_1.jpg`, `28c2_019_2.jpg`,
+`28c2_020_1.jpg`).
 
 | Rule | Source |
 |---|---|
-| Uppercase; punctuation dropped (`. , ' " ; : ( )`) except the hyphen in house numbers and ZIP+4 and the slash in fractions. | Unverified (Pub 28 chapter 2 on punctuation). |
-| Street line order: number, predirectional, name, suffix abbreviation, postdirectional, with directionals abbreviated. | Sections 231, 233.1, 234 (as in the parser table above); order unverified. |
-| Secondary unit goes on the delivery line after the street (`APT 4`); a unit with no known designator is written `# 4`; a designator with no number stands alone (`REAR`). Two units are written in input order. | Section 213 and Appendix C2 (the `#` rule is cited in the parser table); same-line placement unverified. |
-| If the delivery line plus the unit would be longer than 40 characters, the unit goes to `line2` and `line1` keeps the street. The 40-character limit is a placeholder. | Unverified. Pub 28 may also require the unit line *above* the street line on a mailpiece; `line2` is the data-field convention, not mailpiece order. |
-| Last line: `CITY ST ZIP`, one space between, ZIP+4 with a hyphen, no comma. A military post office (APO, FPO, DPO) takes the city's place. | Unverified (section 22x for the last line; 225.1 and 239 for military, already cited above). |
+| Uppercase. | Section 212 (uppercase preferred); A1. |
+| Punctuation dropped (`. , ' " ; : ( )`), apostrophes included (`O'BRIEN` is `OBRIEN`). Kept: the hyphen in ZIP+4, house numbers and names (`289-01 MID-ISLAND PLZ`, `112-10 BRONX RD`), the slash in fractions (`123 1/2 MAIN ST`) and a period between digits (`39.2 RD`). `&` and `@` are left as given. | Section 222 (punctuation may be omitted, except the ZIP+4 hyphen); A1 (also keeps the hyphen in the primary or secondary number); section 232 (periods, slashes and hyphens, with these examples; hyphens in names may be replaced with a space, which we do not do); section 354 (the removal list, apostrophes included; `&` and `@` are on it only as an optional compression step); Appendix D1, D4. |
+| Street line order: number, predirectional, name, suffix abbreviation, postdirectional, secondary unit, one space between. Directionals abbreviated. | Section 231; sections 233.1, 234 (as in the parser table above). |
+| Secondary unit at the end of the delivery line (`APT 4`). A unit with no known designator is written `# 4`, with a space; a known designator drops the `#` (`APT #4` is `APT 4`). A designator with no number stands alone (`REAR`). Two units are written in input order. | Section 213 (preferred location; no `#` when the designator is known); 213.2 (space after `#`); Appendix C2. |
+| No fixed line length. `to_usps()` keeps the unit on `line1`. `to_usps_wrapped(max_line)` moves the unit(s) to `line2` when `line1` would be longer than `max_line`. On a mailpiece `line2` goes immediately *above* `line1`; `lines()` returns that order. The field name follows the data-field convention (address line 2 holds the unit, as in `Fields`). | Section 35 (the database or label sets the line length); 213.3, 343.1 and 356 (a unit that does not fit goes on the line immediately above the delivery line). |
+| Last line: `CITY ST ZIP`, one space between, no comma, ZIP+4 with a hyphen. Pub 28 prefers two spaces between state and ZIP but allows one; we use one, as its own examples do. | Section 224; 222 (comma omitted, hyphen kept); examples in 238, 239 and 341. |
+| City names are written as parsed, spelled out or not. No SAINT/ST, FORT/FT or MOUNT/MT rule is applied: Pub 28 says to spell city names in full, and allows only the City State file's 13-character abbreviations, which this library does not have. | Sections 221, 223. |
+| Military: a post office (APO, FPO, DPO) takes the city's place (`APO AE 09001`); the delivery line is `<type> <number> BOX <box>`, with box leading zeros kept (`UNIT 9900 BOX 0500`). | Sections 225.1, 238.1, 239 and their examples. |
+| General delivery: `GENERAL DELIVERY`, spelled out, on the delivery line. | Section 261. |
+| Rural and highway contract route numbers are written as given. 242 and 252 say a leading zero "is not necessary", not that it must go, and the key keeps the value as given (`RR 02` and `RR 2` have different `k1` keys), so the emitter does too. Box hyphens are kept as given (243, 252.1: only the ZIP+4 file can say). | Sections 242, 243, 252, 252.1. |
+| A state name inside a highway name is written as its code (`KENTUCKY STATE HIGHWAY 625` is `KY STATE HIGHWAY 625`; `KENTUCKY 440` is `KY HIGHWAY 440`). A state name that is the whole primary name stays spelled out (`OKLAHOMA AVE`). | Appendix F and its note; section 358. See "Highways" below. |
 | Parts the parse did not find are left out. `diagnostics` is not consulted; unparsed text is not emitted. | Library behavior, not a USPS rule. |
-| Not implemented: writing a state name inside a street name as its code (see Highways below), and ST/SAINT, FORT/FT and similar place-name abbreviations. | Left for later; the parser does not expose them. |
 
-### To verify against the live Pub 28 text
+### Pub 28 verification of the emitter (October 2026)
 
-`pe.usps.com` was blocked when the USPS emitter was written (the session
-network policy denied it), so these items need a session where it is
-reachable (allow the host, or paste the page text). Page map for chapter 2 is
-in "Verification status" above; sections 21x and 22x are not yet mapped to
-page names, so start from <https://pe.usps.com/text/pub28/welcome.htm>. For
-each item: read the section, correct `emit/usps.rs` and the tests if the text
-differs, replace "Unverified" in the table above with the section number,
-and add or fix corpus cases (`usps` field) for any change.
+`pe.usps.com` was blocked when the USPS emitter was written, so its layout
+rules were listed here to check against the live text. They were checked in
+October 2026. What each check found:
 
-1. **Punctuation.** Which marks Pub 28 allows (hyphen in ZIP+4 and house
-   numbers? slash in fractions? `#`?). `plain()` in `emit/usps.rs` drops
-   `. , ' " ; : ( )` and keeps `-` and `/`. Apostrophes (`O'BRIEN`) are
-   dropped here and in the key (`docs/key-format.md`, rule 1); confirm.
-2. **Secondary unit placement.** Same line as the delivery line, or the line
-   above? What to do when it does not fit, and the real maximum line length
-   (`MAX_LINE = 40` is a placeholder). Decide whether `line2` should hold the
-   unit (data-field convention, current) and document mailpiece order.
-3. **`#` for an unknown designator.** Confirm the written form (`# 4` with a
-   space vs `#4`) and that `APT #4` should lose its `#` (current behavior:
-   `APT 4`).
-4. **Last line.** Confirm `CITY ST ZIP`, one space between, no comma, ZIP+4
-   with a hyphen, and any city-name abbreviation rules (SAINT/ST, FORT/FT,
-   MOUNT/MT, and so on). None is applied now.
-5. **State inside a street name.** Appendix F (cited under "Highways")
-   writes `KENTUCKY STATE HIGHWAY 625` as `KY STATE HIGHWAY 625`, but a state
-   name that is the whole primary name stays spelled out. Not implemented in
-   the parser or emitter.
-6. **Leading zeros.** Section 242 says a leading zero on a rural route number
-   is not needed; the emitter leaves values as given. Decide whether to strip.
-   Section 243 hyphens in box numbers: kept as given.
-7. **Military and general delivery last lines.** Re-check `APO AE 09001`
-   layout (sections 225.1, 239) and the `GENERAL DELIVERY` line.
-8. **Key punctuation rule** in `docs/key-format.md` (normalization rule 1)
-   cites no section; resolve with item 1.
-9. **Release re-check** of every lexicon table (Milestone 7), already listed
-   under "Verification status".
+1. **Punctuation.** Confirmed with two changes. Pub 28 lets punctuation be
+   omitted except the ZIP+4 hyphen (222, A1). It keeps the hyphen in
+   numbers and names, the slash in fractions, and a period in numbers such
+   as `39.2 RD` (232). The emitter used to drop that period (`392 RD`); it
+   now keeps it (corpus `p28-punct-001`). Apostrophes are on the 354
+   removal list, so `O'BRIEN` is `OBRIEN`. A second finding: hyphenated New
+   York style numbers (`112-10`, `289-01`, Appendix D1) raised
+   `multiple_addresses`; only a range with a larger second number of the
+   same length (`1204-1206`) does now.
+2. **Secondary unit placement.** The unit goes at the end of the delivery
+   line (213). When it does not fit, it goes on the line immediately above
+   (213.3, 343.1, 356). Pub 28 sets no line length (35), so the 40-character
+   placeholder is gone: `to_usps()` never wraps, `to_usps_wrapped(max_line)`
+   wraps at the caller's limit, and `UspsAddress::lines()` gives mailpiece
+   order.
+3. **`#` for an unknown designator.** Confirmed: `# 4` with a space
+   (213.2), and no `#` when the designator is known (213), so `APT #4` is
+   `APT 4`.
+4. **Last line.** Confirmed: `CITY ST ZIP` with at least one space (224;
+   two preferred between state and ZIP, one used), no comma (222), ZIP+4
+   hyphen kept. City names: spelled out in full, abbreviated only from the
+   City State file (223), so no SAINT/ST or FORT/FT rule is applied.
+5. **State inside a street name.** Implemented in the parser and both
+   emitters from Appendix F: a state code or name before a highway prefix
+   (`CA COUNTY RD 150`, `KY ST HWY 1`), or before a route number alone
+   (`KENTUCKY 440`, `KY 1207`, which take the HIGHWAY prefix), is kept as
+   `Highway::state` and written as its code. A state that is the whole
+   primary name (`OKLAHOMA AVE`) stays spelled out. Corpus
+   `p28-highway-028` to `p28-highway-037`.
+6. **Leading zeros.** Decided: keep route numbers as given (see the table
+   above). Stripping them only in the emitter would make the USPS output key
+   differently from its input; stripping them in the parser or key would
+   change `k1` keys for those inputs. Revisit with any `k2`.
+7. **Military and general delivery.** Confirmed against the 238.1 and 239
+   examples (`CPR 895 BOX 74` / `APO AE 09499-0001`,
+   `UNIT 9900 BOX 0500` / `DPO AE 09701-0500`) and section 261. The
+   corpus military and general delivery cases now check `usps`.
+8. **Key punctuation rule.** Traced: `docs/key-format.md` rule 1 now cites
+   sections 222 and 354.
+9. **Release re-check (still open, Milestone 7).** Re-check every lexicon
+   table and the emitter rules above against the live Pub 28 pages before
+   release, as listed under "Verification status". Not done in this pass.
 
 Special forms (sourced):
 
@@ -198,7 +220,7 @@ Special forms (sourced):
   address using the Post Office's street address with `# <box>` or
   `UNIT <box>` is a street address with a secondary unit, not a PO Box line.
 - General delivery (section 261): emit `GENERAL DELIVERY`, spelled out.
-- Highways (section 237, Appendix F): emit `<standard prefix> <route>`, for
+- Highways (section 237, Appendix F): emit `[<state code>] <standard prefix> <route>`, for
   example `CR 1185` becomes `COUNTY ROAD 1185`, `HWY FM 1320` becomes
   `FM 1320`, `I10` becomes `INTERSTATE 10`, `US 41 SW` becomes
   `US HIGHWAY 41 SW`. Routes may hold letters (`COUNTY HIGHWAY 60E`,

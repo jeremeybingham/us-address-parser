@@ -62,3 +62,21 @@
   host); see `docs/usps-pub28-notes.md`.
 - Parser fix found by that round trip: `# V 21` (letter and number after
   `#`) is one unit value (`us-roundtrip-001`).
+- USPS emitter checked against the live Pub 28 text (items 1 to 8 of the
+  verification list in `docs/usps-pub28-notes.md`; the release re-check of
+  the lexicon tables stays open for Milestone 7):
+  - The unit stays at the end of the delivery line (section 213); the
+    40-character placeholder limit is gone, since Pub 28 sets none (35).
+    New `to_usps_wrapped(max_line)` moves the unit to `line2`, and
+    `UspsAddress::lines()` returns mailpiece order, with `line2` above
+    `line1` (213.3, 356).
+  - A period between digits is kept (`39.2 RD`, section 232).
+  - `Highway::state`: a state named in a highway name is parsed and written
+    as its code (`KENTUCKY STATE HIGHWAY 625` is `KY STATE HIGHWAY 625`,
+    `KY 1207` is `KY HIGHWAY 1207`; Appendix F). The `k1` key name segment
+    carries the code the same way.
+  - Hyphenated house numbers such as `112-10` (Appendix D1) no longer raise
+    `multiple_addresses`; ranges such as `1204-1206` still do.
+  - Corpus: 17 new Pub 28 cases (159 in all), and `usps` checks on the
+    military, general delivery, route and PO Box cases; highway records
+    take an optional `state`.
