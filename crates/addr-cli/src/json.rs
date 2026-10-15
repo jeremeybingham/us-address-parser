@@ -1,7 +1,7 @@
 //! JSON and flat-column views of a [`ParsedAddress`]. Read-only: the CLI
 //! formats what the parser produced and never re-parses it.
 
-use addr_core::{KeyOptions, ParsedAddress};
+use addr_core::{Highway, KeyOptions, ParsedAddress};
 use serde_json::{json, Map, Value};
 
 /// Parsed components, by `ParsedAddress` field name. Components the parse
@@ -24,12 +24,7 @@ fn components(a: &ParsedAddress) -> Map<String, Value> {
         "street_dir_suffix",
         a.street_dir_suffix.map(|d| d.abbr().into()),
     );
-    put(
-        "highway",
-        a.highway
-            .as_ref()
-            .map(|h| format!("{} {}", h.prefix.standard(), h.route)),
-    );
+    put("highway", a.highway.as_ref().map(Highway::name));
     put("unit_type", a.unit_type.map(|u| u.abbr().into()));
     put("unit_number", a.unit_number.clone());
     put(

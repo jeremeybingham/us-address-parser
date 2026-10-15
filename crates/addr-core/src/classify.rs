@@ -169,11 +169,14 @@ pub(crate) fn join(run: &[Token]) -> String {
 }
 
 /// Whether `t` is a cut-off unit designator: a strict prefix, two letters
-/// or more, of a designator's abbreviation or name (`UNI`, `APAR`).
+/// or more, of a designator's abbreviation or name (`UNI`, `APAR`). A street
+/// suffix is not: `ST` and `TRL` start STE and TRAILER, but `DRY CREEK TRL`
+/// ends in its suffix.
 pub(crate) fn is_cut_designator(t: &str, lex: &Lexicons) -> bool {
     t.len() >= 2
         && t.bytes().all(|c| c.is_ascii_alphabetic())
         && lex.unit(t).is_none()
+        && lex.suffix(t).is_none()
         && lex.units().any(|u| {
             [u.abbr(), u.name()]
                 .iter()
@@ -194,6 +197,9 @@ mod tests {
         assert_eq!(house_number("12A"), Some(NumberShape::Plain));
         assert_eq!(house_number("12-A"), Some(NumberShape::Plain));
         assert_eq!(house_number("1204-1206"), Some(NumberShape::Range));
+        let lex = Lexicons::builtin();
+        assert!(is_cut_designator("UNI", &lex));
+        assert!(!is_cut_designator("TRL", &lex) && !is_cut_designator("ST", &lex));
         assert_eq!(house_number("112-10"), Some(NumberShape::Plain));
         assert_eq!(house_number("289-01"), Some(NumberShape::Plain));
         assert_eq!(house_number("42ND"), None);

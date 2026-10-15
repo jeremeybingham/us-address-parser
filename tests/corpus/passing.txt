@@ -1,5 +1,6 @@
 # Golden-corpus cases that pass. Regenerate with
 # UPDATE_CORPUS_BASELINE=1 cargo test -p addr-core --test corpus
+# or `addr corpus test --update-baseline`
 at-full-001
 at-full-002
 at-full-003
@@ -192,4 +193,19 @@ rg-013
 rg-014
 rg-015
 rg-016
+rg-017
+rg-018
+rg-019
+rg-020
+rg-021
+rg-022
+rg-023
+rg-024
+rg-025
+rg-026
+rg-027
+rg-028
+rg-029
+rg-030
+rg-031
 us-roundtrip-001

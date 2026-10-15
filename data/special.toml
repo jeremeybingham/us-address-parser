@@ -222,4 +222,6 @@ phrases = [
   "PROPERTY LOCATION IS NOT AVAIL",
   "NO ADDRESS",
   "NO ADDRESS ON TAX ROLL",
+  # DBPR license data writes "**Private Address**" for a withheld address.
+  "PRIVATE ADDRESS",
 ]

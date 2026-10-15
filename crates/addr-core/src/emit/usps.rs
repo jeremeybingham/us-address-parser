@@ -136,11 +136,7 @@ impl ParsedAddress {
     /// route (`KY STATE HIGHWAY 625`). Shared with the RESO emitter.
     pub(super) fn street_name_text(&self) -> Option<String> {
         match (&self.highway, &self.street_name) {
-            (Some(h), _) => Some(join([
-                &h.state.map(|s| s.code().to_string()),
-                &Some(h.prefix.standard().to_string()),
-                &Some(plain(&h.route)),
-            ])),
+            (Some(h), _) => Some(plain(&h.name())),
             (None, Some(n)) => Some(plain(n)),
             (None, None) => None,
         }

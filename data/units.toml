@@ -177,3 +177,12 @@ name = "UPPER"
 abbr = "UPPR"
 range_required = false
 forms = ["UPPER", "UPPR"]
+
+[[unit]]
+# Not in Appendix C2. Pub 28 section 285 (Private Mailbox Addresses): mail to
+# a commercial mail receiving agency uses PMB or # before the private mailbox
+# number (https://pe.usps.com/text/pub28/28c2_040.htm).
+name = "PRIVATE MAILBOX"
+abbr = "PMB"
+range_required = true
+forms = ["PRIVATE MAILBOX", "PMB"]

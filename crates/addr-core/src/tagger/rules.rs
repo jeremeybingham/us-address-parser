@@ -6,8 +6,8 @@ use std::ops::Range;
 use super::{Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
-    is_letter, is_route_value, is_slash_pair, is_unit_value, join, longest_at, longest_ending,
-    zip_parts, NumberShape,
+    is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value, join, longest_at,
+    longest_ending, zip_parts, NumberShape,
 };
 use crate::lexicon::{MatchKind, Special};
 use crate::types::{StateKind, Warning};
@@ -102,6 +102,18 @@ impl Tagger<'_> {
                 if later_seg || self.city_after_street(lo, end - w).is_some() {
                     state = Some(end - w..end);
                 }
+            }
+        }
+        // "12 SIMON CT 32505": on one line with no commas, a state that is
+        // also a street suffix, with no city before it, is the suffix.
+        if let Some(r) = state.clone() {
+            let text = join(&toks[r.clone()]);
+            let one_line = toks[r.start].seg == toks[lo].seg;
+            if one_line
+                && self.lex.suffix(&text).is_some()
+                && self.city_after_street(lo, r.start).is_none()
+            {
+                state = None;
             }
         }
         if let Some(r) = &state {
@@ -242,6 +254,17 @@ impl Tagger<'_> {
             if self.lex.suffix(&tail[0].text).is_some() {
                 continue;
             }
+            // "SUITE A" before "ARCHER": a value after a designator or '#'
+            // is the unit's.
+            let before = &self.toks[hi - k - 1];
+            if before.is_hash() || self.lex.unit(&before.text).is_some() {
+                continue;
+            }
+            // One cut-off word needs two letters or more; a lone letter is
+            // more likely a unit ("DR B") than a copy of "BRADENTON".
+            if k == 1 && tail[0].text.len() < 2 && tail[0].text != words[0] {
+                continue;
+            }
             let matches = tail.iter().enumerate().all(|(n, t)| {
                 if n + 1 == k {
                     words[n].starts_with(t.text.as_str())
@@ -334,6 +357,28 @@ impl Tagger<'_> {
             return hi - 1;
         }
         hi
+    }
+
+    /// A state ending the address line that repeats the state already
+    /// tagged from its field (`4486 W OAKLAWN ST LECANTO FL` with state
+    /// `FL`). The copy is skipped, so the city copy before it can be too.
+    /// Returns the new end of the line.
+    pub(super) fn drop_repeated_state(&mut self, lo: usize, hi: usize) -> usize {
+        let code = |s: &str| self.lex.state(s).map(|l| l.value.code());
+        let field: Vec<_> = (0..self.toks.len())
+            .filter(|&i| self.tags[i] == Tag::State)
+            .map(|i| self.toks[i].clone())
+            .collect();
+        let Some(tagged) = code(&join(&field)) else {
+            return hi;
+        };
+        match longest_ending(self.toks, lo + 1, hi, |s| self.state_ok(s, false)) {
+            Some((_, w)) if code(&join(&self.toks[hi - w..hi])) == Some(tagged) => {
+                self.set(hi - w..hi, Tag::Skip);
+                hi - w
+            }
+            _ => hi,
+        }
     }
 
     // ---- delivery line -----------------------------------------------------
@@ -500,7 +545,18 @@ impl Tagger<'_> {
             self.set(lo..hi, Tag::Unparsed);
             return;
         }
-        if is_slash_pair(t0) {
+        // "31967,32037,32067, PUNTA GORDA": a list of house numbers, each in
+        // its own comma segment.
+        let numbers = (lo..hi)
+            .take_while(|&k| {
+                all_digits(self.text(k)) && (k == lo || self.toks[k].seg != self.toks[k - 1].seg)
+            })
+            .count();
+        if numbers >= 2 {
+            self.warn(Warning::MultipleAddresses);
+            self.set(lo..lo + numbers, Tag::Unparsed);
+            i += numbers;
+        } else if is_slash_pair(t0) {
             // "5210/5212 BRISTO ST"
             self.warn(Warning::MultipleAddresses);
             self.set(i..i + 1, Tag::Unparsed);
@@ -586,14 +642,13 @@ impl Tagger<'_> {
                 route,
             });
         }
-        // Bare `KY 1207`: digits only, and not a directional or designator
-        // that happens to be a state code (`NE 5TH ST`, `FL 2`).
+        // Bare `KY 1207`: digits only, and not a directional that happens to
+        // be a state code (`NE 5TH ST`). A state code that is also a
+        // designator counts too (`5100 FL 40 SUITE 100`): this is the start of
+        // the street, and read as a floor it would leave no street name.
         let route = i + w;
         let word = join(&self.toks[state.clone()]);
-        let bare = route < hi
-            && all_digits(self.text(route))
-            && lex.directional(&word).is_none()
-            && lex.unit(&word).is_none();
+        let bare = route < hi && all_digits(self.text(route)) && lex.directional(&word).is_none();
         bare.then_some(HighwayAt {
             pre: i..i,
             state,
@@ -764,6 +819,15 @@ impl Tagger<'_> {
                 if let Some((_, w)) = longest_ending(self.toks, floor, last, |s| lex.unit(s)) {
                     found.push((last - w..last, last..j));
                     j = last - w;
+                    continue;
+                }
+            }
+            // An ordinal before the designator: "3RD FLOOR".
+            if let Some((_, w)) = longest_ending(self.toks, floor + 1, j, |s| lex.unit(s)) {
+                let v = j - w - 1;
+                if v > name_lo + 1 && is_ordinal(self.text(v)) {
+                    found.push((j - w..j, v..v + 1));
+                    j = v;
                     continue;
                 }
             }

@@ -15,7 +15,9 @@ use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 
-use crate::{Directional, Fields, KeyOptions, Lexicons, MatchKind, ParsedAddress, Parser, Warning};
+use crate::{
+    Directional, Fields, Highway, KeyOptions, Lexicons, MatchKind, ParsedAddress, Parser, Warning,
+};
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -287,13 +289,7 @@ fn actual_values(a: &ParsedAddress) -> Values {
         "street_dir_suffix",
         a.street_dir_suffix.map(|d| d.abbr().to_string()),
     );
-    v.insert(
-        "highway",
-        a.highway.as_ref().map(|h| match h.state {
-            Some(s) => format!("{} {} {}", s.code(), h.prefix.standard(), h.route),
-            None => format!("{} {}", h.prefix.standard(), h.route),
-        }),
-    );
+    v.insert("highway", a.highway.as_ref().map(Highway::name));
     v.insert("unit_type", a.unit_type.map(|u| u.abbr().to_string()));
     v.insert("unit_number", a.unit_number.clone());
     v.insert(

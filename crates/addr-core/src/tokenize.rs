@@ -151,9 +151,15 @@ impl Piece<'_> {
             self.emit("-".to_string(), a, b, paren);
             return;
         }
+        // A line of only asterisks stays, so it reads as a placeholder.
+        if raw.bytes().all(|c| c == b'*') {
+            self.emit("*".to_string(), a, b, paren);
+            return;
+        }
         // Trim wrapping punctuation from the text, but keep the whole piece
         // in the span when it is a single token.
-        let trim: &[char] = &['(', ')', '-', ':', '"', '\'', '.', '[', ']'];
+        // Asterisks too: Pub 28 section 354 drops them (`**Private Address**`).
+        let trim: &[char] = &['(', ')', '-', ':', '"', '\'', '.', '[', ']', '*'];
         let lead = raw.len() - raw.trim_start_matches(trim).len();
         let inner = raw.trim_matches(trim);
         if inner.is_empty() {

@@ -220,6 +220,17 @@ pub struct Highway {
     pub route: String,
 }
 
+impl Highway {
+    /// The standard name: state code (if any), prefix and route, as in
+    /// `KY STATE HIGHWAY 625` or `COUNTY ROAD 23`.
+    pub fn name(&self) -> String {
+        match self.state {
+            Some(s) => format!("{} {} {}", s.code(), self.prefix.standard(), self.route),
+            None => format!("{} {}", self.prefix.standard(), self.route),
+        }
+    }
+}
+
 /// Military delivery-line address type. Source: Pub 28 section 238.1,
 /// `data/special.toml` `[[military]]`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
