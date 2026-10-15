@@ -406,6 +406,16 @@ impl Tagger<'_> {
                 lo = d + 1;
             }
         }
+        // "PO BOX 12442 PO BOX 12442": the same line written twice.
+        let n = hi - lo;
+        if n >= 2 && n % 2 == 0 {
+            let half = n / 2;
+            let twice = (0..half).all(|k| self.text(lo + k) == self.text(lo + half + k));
+            if twice {
+                self.set(lo + half..hi, Tag::Skip);
+                return self.delivery(lo, lo + half);
+            }
+        }
         if lo >= hi || self.special_line(lo, hi) {
             return;
         }
@@ -596,9 +606,20 @@ impl Tagger<'_> {
         let j = self.units(i, i, hi, true);
         // The name and suffix come from the first line; whatever is left of
         // a later line ("..., BLDG 5 ROOM") is not part of the name.
-        let line_end = (i..j)
+        let mut line_end = (i..j)
             .find(|&k| self.toks[k].seg != self.toks[i].seg)
             .unwrap_or(j);
+        // "2272 GOODWOOD BLVD., SE": a postdirectional after a comma.
+        let rest = line_end..j;
+        if !rest.is_empty()
+            && self.toks[rest.clone()]
+                .iter()
+                .all(|t| t.seg == self.toks[rest.start].seg)
+            && longest_at(self.toks, rest.start, j, |s| self.lex.directional(s))
+                .is_some_and(|(_, w)| w == rest.len())
+        {
+            line_end = j;
+        }
         self.street_body(i, line_end, hi.min(line_end));
     }
 
@@ -822,10 +843,22 @@ impl Tagger<'_> {
                     continue;
                 }
             }
+            // A later line or comma segment that is only a number: "403" as
+            // line 2 of `2309 1ST AVE NO`. A unit with no known designator.
+            // A name of two words or more must come first: `1921 NW` / `46`
+            // is a street cut across lines, not NW with unit 46.
+            let alone = last > name_lo + 1
+                && self.toks[last].seg != self.toks[last - 1].seg
+                && (last + 1 == self.toks.len() || self.toks[last + 1].seg != self.toks[last].seg);
+            if found.is_empty() && j == hi && alone && all_digits(t) {
+                found.push((last..last, last..j));
+                j = last;
+                continue;
+            }
             // An ordinal before the designator: "3RD FLOOR".
             if let Some((_, w)) = longest_ending(self.toks, floor + 1, j, |s| lex.unit(s)) {
                 let v = j - w - 1;
-                if v > name_lo + 1 && is_ordinal(self.text(v)) {
+                if v > name_lo && is_ordinal(self.text(v)) {
                     found.push((j - w..j, v..v + 1));
                     j = v;
                     continue;

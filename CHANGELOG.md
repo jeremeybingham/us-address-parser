@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Parser fixes from the DBPR out-of-state license file (corpus cases
+  `rg-032` to `rg-039`):
+  - County grid house numbers (`22W410`, `W338S9739`, `S1749`) are house
+    numbers, not street names.
+  - A postdirectional after a comma belongs to the street
+    (`GOODWOOD BLVD., SE`).
+  - `5TH FLOOR` after a one-word street name (`115 BROADWAY`) is a floor.
+  - A line 2 that is only a number is a unit with no designator, when a
+    street name comes first.
+  - A delivery line written twice is read once.
+
 - Parser fixes from two real Florida files (auction listings and DBPR
   license addresses; corpus cases `rg-017` to `rg-031`):
   - A street suffix ending the line is not a cut-off designator, though

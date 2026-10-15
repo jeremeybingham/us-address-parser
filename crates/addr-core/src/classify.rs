@@ -54,6 +54,9 @@ pub(crate) enum NumberShape {
 }
 
 pub(crate) fn house_number(t: &str) -> Option<NumberShape> {
+    if is_grid_number(t) {
+        return Some(NumberShape::Plain);
+    }
     let d = t.bytes().take_while(u8::is_ascii_digit).count();
     if d == 0 {
         return None;
@@ -78,6 +81,28 @@ pub(crate) fn house_number(t: &str) -> Option<NumberShape> {
     }
     (after.len() == 1 && after.bytes().all(|c| c.is_ascii_alphabetic()))
         .then_some(NumberShape::Plain)
+}
+
+/// A county grid number: `22W410`, `5S710` (DuPage County, IL),
+/// `W338S9739`, `S1749` (Waukesha and Sauk counties, WI). Digits and one
+/// or two compass letters, each letter followed by digits.
+pub(crate) fn is_grid_number(t: &str) -> bool {
+    let b = t.as_bytes();
+    let dir = |c: u8| matches!(c, b'N' | b'S' | b'E' | b'W');
+    let mut k = b.iter().take_while(|c| c.is_ascii_digit()).count();
+    let mut letters = 0;
+    while k < b.len() {
+        if !dir(b[k]) {
+            return false;
+        }
+        let d = b[k + 1..].iter().take_while(|c| c.is_ascii_digit()).count();
+        if d == 0 {
+            return false;
+        }
+        letters += 1;
+        k += 1 + d;
+    }
+    (1..=2).contains(&letters) && b.len() >= 4
 }
 
 /// `1/2`, `3/4`: the fraction in `123 1/2`.
@@ -202,6 +227,10 @@ mod tests {
         assert!(!is_cut_designator("TRL", &lex) && !is_cut_designator("ST", &lex));
         assert_eq!(house_number("112-10"), Some(NumberShape::Plain));
         assert_eq!(house_number("289-01"), Some(NumberShape::Plain));
+        for g in ["22W410", "5S710", "W338S9739", "S1749", "0N428"] {
+            assert_eq!(house_number(g), Some(NumberShape::Plain), "{g}");
+        }
+        assert!(!is_grid_number("N1") && !is_grid_number("I10") && !is_grid_number("12A"));
         assert_eq!(house_number("42ND"), None);
         assert!(is_ordinal("42ND") && !is_glued_ordinal("42ND"));
         assert!(is_glued_ordinal("409742ND"));
