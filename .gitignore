@@ -9,3 +9,6 @@ __pycache__/
 dist/
 /crates/addr-py/python/addr/*.so
 .DS_Store
+
+# Local test data: unlicensed or private, never committed (local-data/README.md).
+/local-data/
