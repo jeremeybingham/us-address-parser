@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Dual addresses (Pub 28 section 215; design decision 6 of 2026-10-15): a
+  record with a street address and a PO Box keeps both, with the new
+  `dual_address` warning. The key and `to_reso()` use the street;
+  `to_usps()` (and so the slug) writes the PO Box alone. Corpus cases
+  `rg-040` to `rg-045`; the USPS round-trip test skips these records.
+- `ParsedAddress::attention` (section 214): ATTN, ATTENTION, C/O and CARE OF
+  lines, from `data/special.toml` `[attention]` (`Special::Attention`). Not
+  emitted. The CLI prints it and `parse-file` adds an `addr_attention`
+  column. Corpus cases `rg-046` to `rg-049`; corpus records take an
+  `attention` field. New `Component::Attention` span.
+
 - Parser fixes from the DBPR out-of-state license file (corpus cases
   `rg-032` to `rg-039`):
   - County grid house numbers (`22W410`, `W338S9739`, `S1749`) are house

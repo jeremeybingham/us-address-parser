@@ -53,6 +53,8 @@ pub enum Special {
     HighwayContract,
     /// GENERAL DELIVERY.
     GeneralDelivery,
+    /// An attention or care-of word: ATTN, C/O.
+    Attention,
 }
 
 impl Special {
@@ -64,6 +66,7 @@ impl Special {
             Special::RuralRoute => "RR",
             Special::HighwayContract => "HC",
             Special::GeneralDelivery => "GENERAL DELIVERY",
+            Special::Attention => "ATTN",
         }
     }
 }

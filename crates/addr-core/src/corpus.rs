@@ -85,6 +85,7 @@ struct Expect {
     general_delivery: bool,
     military: Option<ExpectMilitary>,
     military_post_office: Option<String>,
+    attention: Option<String>,
     city: Option<String>,
     state: Option<String>,
     zip5: Option<String>,
@@ -123,7 +124,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 26] = [
+const FIELDS: [&str; 27] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -139,6 +140,7 @@ const FIELDS: [&str; 26] = [
     "general_delivery",
     "military",
     "military_post_office",
+    "attention",
     "city",
     "state",
     "zip5",
@@ -243,6 +245,7 @@ fn expected_values(c: &Case) -> Values {
             .map(|m| route_str(&m.kind, &m.number, m.box_number.as_deref())),
     );
     v.insert("military_post_office", e.military_post_office.clone());
+    v.insert("attention", e.attention.clone());
     v.insert("city", e.city.clone());
     v.insert("state", e.state.clone());
     v.insert("zip5", e.zip5.clone());
@@ -315,6 +318,7 @@ fn actual_values(a: &ParsedAddress) -> Values {
         "military_post_office",
         a.military_post_office.map(|m| m.abbr().to_string()),
     );
+    v.insert("attention", a.attention.clone());
     v.insert("city", a.city.clone());
     v.insert("state", a.state.map(|s| s.code().to_string()));
     v.insert("zip5", a.zip5.clone());
@@ -645,6 +649,11 @@ impl Corpus {
             let Some(a) = parse_case(parser, c) else {
                 continue;
             };
+            // A dual address's USPS output is its PO Box alone (Pub 28
+            // section 215), while its key is the street's.
+            if a.diagnostics.has(&Warning::DualAddress) {
+                continue;
+            }
             let lines = a.to_usps().lines();
             if lines.is_empty() {
                 continue;

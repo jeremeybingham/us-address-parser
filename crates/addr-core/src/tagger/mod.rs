@@ -44,6 +44,8 @@ pub(crate) enum Tag {
     UnitNumber(u8),
     PoBox,
     PoBoxNumber,
+    /// An attention or care-of line (Pub 28 section 214).
+    Attention,
     /// RR or HC word.
     Route,
     RouteNumber,

@@ -384,6 +384,7 @@ impl Tagger<'_> {
     // ---- delivery line -----------------------------------------------------
 
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {
+        let (lo, hi) = self.attention(lo, hi);
         if lo >= hi || self.placeholder(lo, hi) {
             return;
         }
@@ -416,10 +417,111 @@ impl Tagger<'_> {
                 return self.delivery(lo, lo + half);
             }
         }
-        if lo >= hi || self.special_line(lo, hi) {
+        if lo >= hi || self.dual(lo, hi) || self.special_line(lo, hi) {
             return;
         }
         self.street(lo, hi);
+    }
+
+    /// Pub 28 section 214: an attention or care-of line (`ATTN LAW DEPT`,
+    /// `C/O YMF`), from the ATTN or C/O word to the end of its line or comma
+    /// segment, at the start or the end of the delivery lines. Returns the
+    /// range left for the address.
+    fn attention(&mut self, lo: usize, hi: usize) -> (usize, usize) {
+        let lex = self.lex;
+        let word = |k: usize| {
+            longest_at(self.toks, k, hi, |s| {
+                lex.special(s).filter(|l| l.value == Special::Attention)
+            })
+            .map(|(_, w)| w)
+        };
+        let Some((k, w)) = (lo..hi).find_map(|k| word(k).map(|w| (k, w))) else {
+            return (lo, hi);
+        };
+        // "C/O 2775 NW 49TH AVE": the address itself follows; only the word
+        // is dropped.
+        if k + w < hi && house_number(self.text(k + w)).is_some() {
+            self.set(k..k + w, Tag::Skip);
+            return if k == lo { (k + w, hi) } else { (lo, hi) };
+        }
+        let end = (k..hi)
+            .find(|&e| self.toks[e].seg != self.toks[k].seg)
+            .unwrap_or(hi);
+        if end == hi {
+            // "PO BOX 23181 C/O YMF", or line 2 "ATTN: RYAN ADAIR".
+            self.set(k..hi, Tag::Attention);
+            (lo, k)
+        } else if k == lo {
+            // Line 1 "C/O BRADY SULLIVAN PROPERTIES", the street on line 2.
+            self.set(lo..end, Tag::Attention);
+            (end, hi)
+        } else {
+            (lo, hi)
+        }
+    }
+
+    /// Pub 28 section 215: a street address and a PO Box in one record.
+    /// Both are tagged and [`Warning::DualAddress`] is raised. The box may
+    /// come first (`PO BOX 286` / `23320 NE HWY 315`) or after the street
+    /// (`9418 CUBA RD` / `P.O. BOX 100`, `... AVE PO BOX 365`); the street
+    /// needs a house number. A bare `BOX 88` counts only when it starts a
+    /// later line or comma segment.
+    /// Returns whether the line was one.
+    fn dual(&mut self, lo: usize, hi: usize) -> bool {
+        if let Some(m) = self.box_line(lo, hi, false) {
+            let rest = m.end;
+            if rest >= hi || self.starts_unit(rest, hi) {
+                return false;
+            }
+            // The street needs its house number: `PO BOX 3163` / `GRAND
+            // CENTRAL STATION` is a box with a postal station, not a street.
+            if !(rest + 1 < hi && house_number(self.text(rest)).is_some()) {
+                return false;
+            }
+            for (r, tag) in m.tags {
+                self.set(r, tag);
+            }
+            self.street(rest, hi);
+            self.warn(Warning::DualAddress);
+            return true;
+        }
+        if hi < lo + 3 || house_number(self.text(lo)).is_none() {
+            return false;
+        }
+        for k in lo + 2..hi {
+            let starts_segment = self.toks[k].seg != self.toks[k - 1].seg;
+            let Some(m) = self.box_line(k, hi, starts_segment) else {
+                continue;
+            };
+            for (r, tag) in m.tags {
+                self.set(r, tag);
+            }
+            self.units(m.end, m.end, hi, false);
+            self.street(lo, k);
+            self.warn(Warning::DualAddress);
+            return true;
+        }
+        false
+    }
+
+    /// A PO Box (`PO BOX 12`, `DRAWER 9`, or with `bare` a plain `BOX 88`)
+    /// and its value at `k`, without tagging.
+    fn box_line(&self, k: usize, hi: usize, bare: bool) -> Option<SpecialMatch> {
+        let (l, w) = longest_at(self.toks, k, hi, |s| self.lex.special(s))?;
+        if !(l.value == Special::PoBox || bare && l.value == Special::Box) {
+            return None;
+        }
+        let (v, hash) = self.value_at(k + w, hi)?;
+        let mut tags = vec![(k..k + w, Tag::PoBox)];
+        if hash {
+            tags.push((v - 1..v, Tag::Skip));
+        }
+        tags.push((v..v + 1, Tag::PoBoxNumber));
+        Some(SpecialMatch {
+            tags,
+            end: v + 1,
+            units: true,
+        })
     }
 
     fn placeholder(&mut self, lo: usize, hi: usize) -> bool {
@@ -513,7 +615,7 @@ impl Tagger<'_> {
                         }
                     }
                 }
-                Special::Box => {}
+                Special::Box | Special::Attention => {}
             }
         }
 

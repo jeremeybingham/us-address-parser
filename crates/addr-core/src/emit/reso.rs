@@ -113,9 +113,15 @@ impl ParsedAddress {
         let usps = self.to_usps();
         let street_number = self.street_number.as_deref().map(plain);
 
-        let street_name = self
-            .special_delivery_line()
-            .or_else(|| self.street_name_text());
+        // A dual address (Pub 28 section 215) gives the street: RESO fields
+        // describe the property. The USPS output writes the PO Box.
+        let dual = self.is_dual();
+        let street_name = if dual {
+            self.street_name_text()
+        } else {
+            self.special_delivery_line()
+                .or_else(|| self.street_name_text())
+        };
 
         let unit_number = join([
             &unit_text(self.unit_type, self.unit_number.as_deref()),
@@ -123,7 +129,13 @@ impl ParsedAddress {
         ]);
 
         let last = join([&usps.state, &usps.zip]);
-        let unparsed_address = [usps.line1.clone(), usps.city.clone(), Some(last)]
+        let line1 = if dual {
+            self.street_line()
+                .map(|s| join([&Some(s), &Some(self.units_text())]))
+        } else {
+            usps.line1.clone()
+        };
+        let unparsed_address = [line1, usps.city.clone(), Some(last)]
             .into_iter()
             .flatten()
             .filter(|p| !p.is_empty())

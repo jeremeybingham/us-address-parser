@@ -33,7 +33,13 @@ k1:G|<state>|<zip5>
 - `M`: `<kind>` is CPR, OPC, PSC, UPR or UNIT; `<post office>` is APO, FPO or
   DPO (empty when absent).
 - `<state>` is the USPS code. `<zip5>` is five digits.
-- **Not in the key:** city, ZIP+4, unit type, anything in `diagnostics`.
+- **Dual addresses:** a record with a street address and a PO Box (Pub 28
+  section 215, `dual_address` warning) uses form `S`, from the street; the
+  box is not in the key. Decided by the author, 2026-10-15. Before that rule
+  such records kept whichever address came first and left the other
+  unparsed, so their keys could be `P` or `S`.
+- **Not in the key:** city, ZIP+4, unit type, the attention line, anything in
+  `diagnostics`.
   - City is noisy and the field most likely to be corrected later; leaving it
     out keeps stored keys stable (design 6.4).
   - ZIP+4 varies within one building.
@@ -101,6 +107,9 @@ formatting improves. Never store it as an identifier; use the key.
   gives `apt-4`.
 - Missing parts are left out (`123-main-st`). `None` for a placeholder or an
   address with no lines.
+- A dual address (street and PO Box) follows the USPS output, so its slug
+  names the PO Box (`po-box-100-hayes-va-23072`) while its key uses the
+  street.
 - Example: `123 N. Main Street, Apt 4, Miami FL 33101` gives
   `123-n-main-st-apt-4-miami-fl-33101`.
 
