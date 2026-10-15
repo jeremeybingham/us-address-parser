@@ -46,6 +46,8 @@ pub(crate) enum Tag {
     PoBoxNumber,
     /// An attention or care-of line (Pub 28 section 214).
     Attention,
+    /// A building name (`EAST TOWER`).
+    Building,
     /// RR or HC word.
     Route,
     RouteNumber,
@@ -135,6 +137,14 @@ impl<'a> Tagger<'a> {
             || has(&self.tags, Tag::HighwayRoute);
         if street_like && !has(&self.tags, Tag::StreetNumber) && !self.zero_number {
             self.warn(Warning::MissingStreetNumber);
+        }
+        // "123 UNIT 1": a house number and a unit, no street.
+        let unit = self
+            .tags
+            .iter()
+            .any(|t| matches!(t, Tag::UnitType(_) | Tag::UnitNumber(_)));
+        if unit && !street_like && has(&self.tags, Tag::StreetNumber) {
+            self.warn(Warning::MissingStreetName);
         }
         if has(&self.tags, Tag::Unparsed) {
             self.warn(Warning::UnparsedRemainder);

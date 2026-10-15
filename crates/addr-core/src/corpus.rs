@@ -86,6 +86,7 @@ struct Expect {
     military: Option<ExpectMilitary>,
     military_post_office: Option<String>,
     attention: Option<String>,
+    building: Option<String>,
     city: Option<String>,
     state: Option<String>,
     zip5: Option<String>,
@@ -124,7 +125,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 27] = [
+const FIELDS: [&str; 28] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -141,6 +142,7 @@ const FIELDS: [&str; 27] = [
     "military",
     "military_post_office",
     "attention",
+    "building",
     "city",
     "state",
     "zip5",
@@ -246,6 +248,7 @@ fn expected_values(c: &Case) -> Values {
     );
     v.insert("military_post_office", e.military_post_office.clone());
     v.insert("attention", e.attention.clone());
+    v.insert("building", e.building.clone());
     v.insert("city", e.city.clone());
     v.insert("state", e.state.clone());
     v.insert("zip5", e.zip5.clone());
@@ -319,6 +322,7 @@ fn actual_values(a: &ParsedAddress) -> Values {
         a.military_post_office.map(|m| m.abbr().to_string()),
     );
     v.insert("attention", a.attention.clone());
+    v.insert("building", a.building.clone());
     v.insert("city", a.city.clone());
     v.insert("state", a.state.map(|s| s.code().to_string()));
     v.insert("zip5", a.zip5.clone());

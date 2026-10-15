@@ -335,6 +335,7 @@ pub enum Component {
     Military,
     MilitaryPostOffice,
     Attention,
+    Building,
     City,
     State,
     Zip5,
@@ -404,6 +405,8 @@ pub enum Warning {
     Placeholder,
     /// A street with no house number.
     MissingStreetNumber,
+    /// A house number and a unit with no street (`123 UNIT 1`).
+    MissingStreetName,
     /// House number 0, usually vacant land. Treated as no number.
     ZeroStreetNumber,
     /// The number runs into a numbered street, so the split is a guess:
@@ -434,11 +437,12 @@ pub enum Warning {
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 16] = [
+    pub const ALL: [Warning; 17] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
         Warning::MissingStreetNumber,
+        Warning::MissingStreetName,
         Warning::ZeroStreetNumber,
         Warning::AmbiguousStreetNumber,
         Warning::MultipleAddresses,
@@ -461,6 +465,7 @@ impl Warning {
             Warning::AmbiguousToken => "ambiguous_token",
             Warning::Placeholder => "placeholder",
             Warning::MissingStreetNumber => "missing_street_number",
+            Warning::MissingStreetName => "missing_street_name",
             Warning::ZeroStreetNumber => "zero_street_number",
             Warning::AmbiguousStreetNumber => "ambiguous_street_number",
             Warning::MultipleAddresses => "multiple_addresses",
@@ -555,6 +560,9 @@ pub struct ParsedAddress {
     /// `C/O HERITAGE MGMT LLC`). Pub 28 section 214 places it above the
     /// recipient, so it is not part of any emitted address.
     pub attention: Option<String>,
+    /// A building name after the street or its unit (`EAST TOWER`,
+    /// `ANNEX BUILDING`), as written. Not part of any emitted address.
+    pub building: Option<String>,
     pub city: Option<String>,
     pub state: Option<StateCode>,
     pub zip5: Option<String>,
@@ -595,6 +603,7 @@ impl ParsedAddress {
             military: None,
             military_post_office: None,
             attention: None,
+            building: None,
             city: None,
             state: None,
             zip5: None,

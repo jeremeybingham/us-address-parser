@@ -27,10 +27,10 @@ import sys
 import xml.etree.ElementTree as ET
 
 # Gold labels for things this parser does not model (design non-goals:
-# recipients, buildings, landmarks, intersections). Addresses that use them
-# are scored apart.
+# recipients, landmarks, intersections). Addresses that use them are scored
+# apart. BuildingName is in scope since ParsedAddress::building.
 OUT_OF_SCOPE = {
-    "Recipient", "BuildingName", "LandmarkName", "CornerOf",
+    "Recipient", "LandmarkName", "CornerOf",
     "IntersectionSeparator", "NotAddress", "CountryName", "SubaddressType",
     "SubaddressIdentifier", "StreetNamePreModifier", "AddressNumberPrefix",
 }

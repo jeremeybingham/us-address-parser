@@ -218,6 +218,12 @@ impl Lexicons {
     /// "0 UNKNOWN", "00 UNASSIGNED LOCATION RE"), or has no letters or digits
     /// at all ("-"). A leading run of zeros is ignored, and an
     /// "UNASSIGNED LOCATION" line may end in a short trailing code.
+    /// A word that ends a building name (`TOWER` in `EAST TOWER`).
+    /// Source: `data/special.toml` `[building]`.
+    pub fn is_building_word(&self, s: &str) -> bool {
+        find_str(tables::BUILDING_WORDS, &normalize_key(s))
+    }
+
     pub fn is_placeholder(&self, s: &str) -> bool {
         let key = normalize_key(s);
         if !key.chars().any(char::is_alphanumeric) {

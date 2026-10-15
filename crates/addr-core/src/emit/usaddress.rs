@@ -43,7 +43,8 @@ impl ParsedAddress {
     /// `USPSBoxID`; rural, highway contract and military box lines
     /// `USPSBoxGroupType` / `USPSBoxGroupID` / `USPSBoxType` / `USPSBoxID`;
     /// general delivery `USPSBoxType`; city and APO/FPO/DPO `PlaceName`;
-    /// state `StateName`; ZIP `ZipCode`; attention line `Recipient`. A `#`
+    /// state `StateName`; ZIP `ZipCode`; attention line `Recipient`; building
+    /// `BuildingName`. A `#`
     /// takes the label of the value after it, as in usaddress's own data.
     pub fn to_usaddress_tags(&self) -> Vec<UsaddressTag> {
         let mut tags = Vec::new();
@@ -79,10 +80,23 @@ impl ParsedAddress {
         same.sort_by_key(|s| (s.field.map(field_index), s.start));
         let i = same.iter().position(|s| **s == hit.span).unwrap_or(0);
         let n = same.len();
-        let box_line = |i: usize| match i {
-            0 => "USPSBoxGroupType",
-            1 => "USPSBoxGroupID",
-            _ => "USPSBoxID",
+        // A route or military line: the kind word (RR, HC, PSC, ...), the
+        // number after it, then the box. Found by the kind word, not by
+        // position, so `BOX 2877 PSC 103` is labeled right too.
+        let lex = Lexicons::builtin();
+        let is_kind = |s: &Span| {
+            self.source.text(s).is_some_and(|t| {
+                lex.military(t).is_some()
+                    || lex.special(t).is_some_and(|l| {
+                        matches!(l.value, Special::RuralRoute | Special::HighwayContract)
+                    })
+            })
+        };
+        let box_line = || match same.iter().position(|s| is_kind(s)) {
+            Some(k) if i == k => "USPSBoxGroupType",
+            Some(k) if i == k + 1 => "USPSBoxGroupID",
+            Some(_) => "USPSBoxID",
+            None => "USPSBoxID",
         };
         Some(match hit.component {
             Component::StreetNumber => "AddressNumber",
@@ -96,12 +110,13 @@ impl ParsedAddress {
             Component::UnitNumber | Component::SecondUnitNumber => "OccupancyIdentifier",
             Component::PoBox if i + 1 == n => "USPSBoxID",
             Component::PoBox => "USPSBoxType",
-            Component::RuralRoute | Component::Military => box_line(i),
+            Component::RuralRoute | Component::Military => box_line(),
             Component::GeneralDelivery => "USPSBoxType",
             Component::MilitaryPostOffice | Component::City => "PlaceName",
             Component::State => "StateName",
             Component::Zip5 | Component::Zip4 => "ZipCode",
             Component::Attention => "Recipient",
+            Component::Building => "BuildingName",
             Component::Unparsed => return None,
         })
     }

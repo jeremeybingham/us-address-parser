@@ -55,7 +55,11 @@ forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "R
 # HIGHWAY CONTRACT, ROUTE, NUMBER, NO, STAR ROUTE or the pound sign. Those
 # words are accepted here as input only; the emitter writes HC.
 standard = "HC"
-forms = ["HC", "H C", "HCR", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE"]
+forms = ["HC", "H C", "HCR", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE",
+  # With ROUTE written out, which section 251 says to drop (usaddress test
+  # data: HC ROUTE 72, HC R 32, HIGHWAY CONTRACT RTE 46, HWY CONTRACT ROUTE 102).
+  "HC ROUTE", "HC RTE", "HC RT", "HC R", "HCR ROUTE",
+  "HIGHWAY CONTRACT RTE", "HIGHWAY CONTRACT RT", "HWY CONTRACT ROUTE", "HWY CONTRACT RTE"]
 
 [general_delivery]
 # Pub 28 section 261: GENERAL DELIVERY, spelled out, no abbreviation. The
@@ -97,11 +101,16 @@ forms = ["ATTN", "ATTENTION", "C/O", "CARE OF"]
 # Appendix F: HIGHWAY, HIWAY, HWY. The rest are C1 spellings of HIGHWAY.
 standard = "HIGHWAY"
 forms = ["HIGHWAY", "HWY", "HIGHWY", "HIWAY", "HIWY", "HWAY"]
+# Not in Pub 28; seen in usaddress's test data (12631 IMPERIAL HGWY).
+observed = ["HGWY"]
 
 [[highway]]
 # Appendix F: COUNTY RD, COUNTY ROAD, CR, CNTY RD.
 standard = "COUNTY ROAD"
 forms = ["COUNTY ROAD", "COUNTY RD", "CNTY RD", "CO RD", "CR"]
+# A typo for COUNTY ROAD, taken only before a route number (10 COUNTRY ROAD
+# 3668 in usaddress's test data); COUNTRY ROAD alone stays a street name.
+observed = ["COUNTRY ROAD", "COUNTRY RD"]
 
 [[highway]]
 # Appendix F: COUNTY HIGHWAY, COUNTY HWY, CNTY HWY.
@@ -234,3 +243,10 @@ phrases = [
   # DBPR license data writes "**Private Address**" for a withheld address.
   "PRIVATE ADDRESS",
 ]
+
+[building]
+# Words that end a building name (EAST TOWER, ANNEX BUILDING, MEDICAL PLAZA).
+# Not a USPS rule: Pub 28 has no building line. Taken from usaddress's
+# BuildingName labels and DBPR license data. The tagger takes a name ending in
+# one of these only after the street or its unit (see docs/usps-pub28-notes.md).
+words = ["ANNEX", "BUILDING", "CENTER", "CENTRE", "COMPLEX", "HALL", "PAVILION", "PLAZA", "TOWER", "TOWERS", "WING"]

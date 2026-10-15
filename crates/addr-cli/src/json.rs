@@ -62,6 +62,7 @@ fn components(a: &ParsedAddress) -> Map<String, Value> {
         a.military_post_office.map(|m| m.abbr().into()),
     );
     put("attention", a.attention.clone());
+    put("building", a.building.clone());
     put("city", a.city.clone());
     put("state", a.state.map(|s| s.to_string()));
     put("zip5", a.zip5.clone());
@@ -111,7 +112,7 @@ pub fn usaddress_record(input: &str, tags: &[UsaddressTag]) -> Value {
 }
 
 /// Columns `addr parse-file` appends, in order.
-pub const COLUMNS: [&str; 23] = [
+pub const COLUMNS: [&str; 24] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -128,6 +129,7 @@ pub const COLUMNS: [&str; 23] = [
     "rural_route",
     "military",
     "attention",
+    "building",
     "usps_line1",
     "usps_last_line",
     "key",

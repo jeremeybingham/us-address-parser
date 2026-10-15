@@ -471,6 +471,8 @@ observed = ["HEIGHT", "HGTS"]
 name = "HIGHWAY"
 abbr = "HWY"
 forms = ["HIGHWAY", "HIGHWY", "HIWAY", "HIWY", "HWAY", "HWY"]
+# Not in C1; seen in usaddress's test data (12631 IMPERIAL HGWY).
+observed = ["HGWY"]
 
 [[suffix]]
 name = "HILL"
