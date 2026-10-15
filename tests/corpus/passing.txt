@@ -142,6 +142,13 @@ p28-rr-005
 p28-unit-001
 p28-unit-002
 p28-unit-003
+reso-001
+reso-002
+reso-003
+reso-004
+reso-005
+reso-006
+reso-007
 rg-001
 rg-002
 rg-003
