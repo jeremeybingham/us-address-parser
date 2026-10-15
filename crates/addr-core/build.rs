@@ -395,6 +395,9 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<()> {
             };
             hw.add(f, format!("({i}, MatchKind::{k})"), &hctx, mw)?;
         }
+        for f in key_list(r, "observed", &hctx, false)? {
+            hw.add(&f, format!("({i}, MatchKind::Observed)"), &hctx, mw)?;
+        }
     }
     writeln!(
         out,
@@ -434,6 +437,15 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<()> {
     writeln!(
         out,
         "pub(crate) static PLACEHOLDERS: &[&str] = &{phrases:?};\n"
+    )
+    .ok();
+
+    let bctx = format!("{ctx} [building]");
+    let mut words = key_list(table(t, "building", ctx)?, "words", &bctx, true)?;
+    words.sort();
+    writeln!(
+        out,
+        "pub(crate) static BUILDING_WORDS: &[&str] = &{words:?};\n"
     )
     .ok();
     Ok(())

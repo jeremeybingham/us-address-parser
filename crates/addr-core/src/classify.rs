@@ -54,7 +54,7 @@ pub(crate) enum NumberShape {
 }
 
 pub(crate) fn house_number(t: &str) -> Option<NumberShape> {
-    if is_grid_number(t) {
+    if is_grid_number(t) || is_lettered_number(t) {
         return Some(NumberShape::Plain);
     }
     let d = t.bytes().take_while(u8::is_ascii_digit).count();
@@ -103,6 +103,13 @@ pub(crate) fn is_grid_number(t: &str) -> bool {
         k += 1 + d;
     }
     (1..=2).contains(&letters) && b.len() >= 4
+}
+
+/// A letter and two digits or more: `T703` (Ohio township numbering),
+/// `A13`. Only read as a house number at the start of a street.
+pub(crate) fn is_lettered_number(t: &str) -> bool {
+    let b = t.as_bytes();
+    b.len() >= 3 && b[0].is_ascii_alphabetic() && b[1..].iter().all(u8::is_ascii_digit)
 }
 
 /// `1/2`, `3/4`: the fraction in `123 1/2`.
@@ -231,6 +238,8 @@ mod tests {
             assert_eq!(house_number(g), Some(NumberShape::Plain), "{g}");
         }
         assert!(!is_grid_number("N1") && !is_grid_number("I10") && !is_grid_number("12A"));
+        assert_eq!(house_number("T703"), Some(NumberShape::Plain));
+        assert!(!is_lettered_number("A1") && !is_lettered_number("AB12"));
         assert_eq!(house_number("42ND"), None);
         assert!(is_ordinal("42ND") && !is_glued_ordinal("42ND"));
         assert!(is_glued_ordinal("409742ND"));

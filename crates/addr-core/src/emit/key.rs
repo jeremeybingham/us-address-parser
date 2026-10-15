@@ -69,7 +69,11 @@ impl ParsedAddress {
             'G'
         } else if self.street_name.is_some() || self.highway.is_some() {
             let name = match &self.highway {
-                Some(h) => h.name(),
+                // Name words after the route stay: `HIGHWAY 66 FRONTAGE`.
+                Some(h) => match &self.street_name {
+                    Some(n) => format!("{} {n}", h.name()),
+                    None => h.name(),
+                },
                 None => self.street_name.clone().unwrap_or_default(),
             };
             segs.extend([

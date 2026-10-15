@@ -6,7 +6,7 @@
 //! each token is. Spelling choices that Pub 28 does not list
 //! (`MatchKind::Observed`) raise `NonStandardAbbreviation`.
 
-use crate::classify::{join, zip_parts};
+use crate::classify::{is_ordinal, join, zip_parts};
 use crate::lexicon::{Lexicons, MatchKind, Special};
 use crate::tagger::{Tag, Tagged};
 use crate::tokenize::Token;
@@ -47,6 +47,8 @@ pub(crate) fn assemble(
     let mut highway_prefix = None;
     let mut route_kind = None;
     let mut military_kind = None;
+    // `BOX 2877 PSC 103`: a box number before its military line.
+    let mut military_box = None;
     for (tag, run) in runs {
         let text = join(run);
         let span = run_span(run);
@@ -101,7 +103,11 @@ pub(crate) fn assemble(
                 record(addr, Component::Highway);
             }
             Tag::HighwayPrefix => {
-                highway_prefix = lex.highway(&text).map(|l| l.value);
+                let l = lex.highway(&text);
+                if let Some(l) = &l {
+                    observed(addr, l.kind);
+                }
+                highway_prefix = l.map(|l| l.value);
                 record(addr, Component::Highway);
             }
             Tag::HighwayRoute => {
@@ -146,6 +152,10 @@ pub(crate) fn assemble(
                 set_once(&mut addr.attention, text);
                 record(addr, Component::Attention);
             }
+            Tag::Building => {
+                set_once(&mut addr.building, text);
+                record(addr, Component::Building);
+            }
             Tag::PoBoxNumber => {
                 set_once(&mut addr.po_box, text);
                 record(addr, Component::PoBox);
@@ -187,7 +197,7 @@ pub(crate) fn assemble(
                     addr.military.get_or_insert(MilitaryBox {
                         kind,
                         number: text,
-                        box_number: None,
+                        box_number: military_box.take(),
                     });
                     record(addr, Component::Military);
                 }
@@ -195,8 +205,10 @@ pub(crate) fn assemble(
             Tag::MilitaryBoxNumber => {
                 if let Some(m) = &mut addr.military {
                     m.box_number.get_or_insert(text);
-                    record(addr, Component::Military);
+                } else {
+                    military_box = Some(text);
                 }
+                record(addr, Component::Military);
             }
             Tag::MilitaryPostOffice => {
                 if let Some(l) = lex.military_post_office(&text) {
@@ -229,6 +241,18 @@ pub(crate) fn assemble(
 
     if !unparsed.is_empty() {
         addr.diagnostics.unparsed = Some(unparsed.join(" "));
+    }
+    // A floor is a number (Appendix C2: FL takes a range): `5TH FLOOR` is
+    // FL 5.
+    for (t, n) in [
+        (addr.unit_type, &mut addr.unit_number),
+        (addr.second_unit_type, &mut addr.second_unit_number),
+    ] {
+        if let (Some(t), Some(v)) = (t, n.as_mut()) {
+            if t.abbr() == "FL" && is_ordinal(v) {
+                v.truncate(v.trim_end_matches(|c: char| c.is_ascii_alphabetic()).len());
+            }
+        }
     }
     if addr.city.is_none() && addr.military_post_office.is_none() {
         addr.diagnostics.warn(Warning::MissingCity);

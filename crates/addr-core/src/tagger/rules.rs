@@ -6,8 +6,8 @@ use std::ops::Range;
 use super::{Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
-    is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value, join, longest_at,
-    longest_ending, zip_parts, NumberShape,
+    is_grid_number, is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value, join,
+    longest_at, longest_ending, zip_parts, NumberShape,
 };
 use crate::lexicon::{MatchKind, Special};
 use crate::types::{StateKind, Warning};
@@ -99,7 +99,10 @@ impl Tagger<'_> {
                 // or ending a single line after a city ("... ST MIAMI FL",
                 // not "... ST FL", where FL may be a floor).
                 let later_seg = seg_start > lo;
-                if later_seg || self.city_after_street(lo, end - w).is_some() {
+                if later_seg
+                    || self.city_after_street(lo, end - w).is_some()
+                    || self.state_alone(lo, end - w, end)
+                {
                     state = Some(end - w..end);
                 }
             }
@@ -109,8 +112,12 @@ impl Tagger<'_> {
         if let Some(r) = state.clone() {
             let text = join(&toks[r.clone()]);
             let one_line = toks[r.start].seg == toks[lo].seg;
+            // "8517 CEDAR BARK CIR KY": after an abbreviated suffix it is
+            // the state.
+            let after_suffix = r.start > lo && self.abbreviated_suffix(r.start - 1);
             if one_line
                 && self.lex.suffix(&text).is_some()
+                && !after_suffix
                 && self.city_after_street(lo, r.start).is_none()
             {
                 state = None;
@@ -154,11 +161,28 @@ impl Tagger<'_> {
             // The last line starts its segment: the city is the segment before.
             let cs = self.seg_start(prev).max(lo);
             let first_seg = toks[cs].seg == toks[lo].seg;
-            (!first_seg || self.looks_like_city(cs, ll_start)).then_some(cs..ll_start)
+            if !first_seg || self.looks_like_city(cs, ll_start) {
+                Some(cs..ll_start)
+            } else {
+                // "626 E KILBOURN AVE MILWAUKEE, WI 53202": the street and
+                // the city share the first segment. A segment ending in a
+                // suffix or directional is all street (`427 SOUTH LA SALLE
+                // STREET, 60605`).
+                let last = self.text(prev);
+                let street_end =
+                    self.lex.suffix(last).is_some() || self.lex.directional(last).is_some();
+                if street_end {
+                    None
+                } else {
+                    self.city_after_street(cs, ll_start).map(|c| c..ll_start)
+                }
+            }
         } else {
             let cs = self.seg_start(prev).max(lo);
             if toks[cs].seg != toks[lo].seg {
-                Some(cs..ll_start)
+                // "..., # 234 SANTA FE NM": a unit starting the city's
+                // segment belongs to the street.
+                Some(self.after_unit(cs, ll_start)..ll_start)
             } else {
                 // One line with no commas: the city follows the street.
                 self.city_after_street(lo, ll_start).map(|c| c..ll_start)
@@ -178,6 +202,56 @@ impl Tagger<'_> {
     fn state_ok(&self, s: &str, loose: bool) -> Option<()> {
         let l = self.lex.state(s)?;
         (loose || l.kind != MatchKind::Variant).then_some(())
+    }
+
+    /// "8517 CEDAR BARK CIR AL": with no ZIP and no city, a USPS state code
+    /// or name (`s..e`) ending a one-line street. Never NE or FL (also a
+    /// directional and a floor). A code that is also a suffix or highway word
+    /// (CT, KY, LA, MT, PR, WY, FM) only right after a suffix written as its
+    /// abbreviation (`CIR KY`, not `HIDDEN MEADOW CT`).
+    fn state_alone(&self, lo: usize, s: usize, e: usize) -> bool {
+        if s < lo + 2 {
+            return false;
+        }
+        let text = join(&self.toks[s..e]);
+        let Some(l) = self.lex.state(&text) else {
+            return false;
+        };
+        if l.kind == MatchKind::Variant
+            || l.value.kind() == StateKind::Military
+            || self.lex.directional(&text).is_some()
+            || self.lex.unit(&text).is_some()
+        {
+            return false;
+        }
+        let other_word = self.lex.suffix(&text).is_some() || self.lex.highway(&text).is_some();
+        !other_word || self.abbreviated_suffix(s - 1)
+    }
+
+    /// Whether token `k` is a street suffix written as its Pub 28
+    /// abbreviation, shorter than the word (`CIR`; not `CIRCLE`, `MEADOW`,
+    /// or `PARK`, whose abbreviation is the word itself).
+    fn abbreviated_suffix(&self, k: usize) -> bool {
+        let t = self.text(k);
+        self.lex
+            .suffix(t)
+            .is_some_and(|l| l.value.abbr() == t && l.value.name() != t)
+    }
+
+    /// The token after a unit (`# 234`, `STE 5`) starting at `k`, or `k` when
+    /// there is no unit there or nothing would be left before `hi`.
+    fn after_unit(&self, k: usize, hi: usize) -> usize {
+        let end = if self.toks[k].is_hash() {
+            self.value_at(k, hi).map(|(v, _)| v + 1)
+        } else {
+            longest_at(self.toks, k, hi, |s| self.lex.unit(s))
+                .and_then(|(_, w)| self.value_at(k + w, hi))
+                .map(|(v, _)| v + 1)
+        };
+        match end {
+            Some(e) if e < hi => e,
+            _ => k,
+        }
     }
 
     /// Whether the first segment, when it is all that comes before the last
@@ -207,11 +281,23 @@ impl Tagger<'_> {
         if let Some(m) = self.match_special(lo, hi) {
             return (m.end < hi).then_some(m.end);
         }
+        let is_suffix = |k: usize| self.lex.suffix(self.text(k)).is_some();
+        let first_number = house_number(self.text(lo)).is_some();
+        // "3739 COUNTY ROAD 8 LAUREL": a highway route ends the street
+        // (section 237), or a suffix after a name past the route
+        // ("HWY 66 FRONTAGE RD TULSA").
+        let mut start = if first_number { lo + 1 } else { lo };
+        if start < hi && is_fraction(self.text(start)) {
+            start += 1;
+        }
+        if let Some(h) = self.highway_at(start, hi) {
+            let c = h.route + 1;
+            let p = (c + 1..hi).find(|&k| is_suffix(k) && k + 1 < hi && !is_suffix(k + 1));
+            return self.after_street(p.map_or(c, |p| p + 1), hi);
+        }
         // The street ends at a suffix with a name before it. Prefer the
         // first one followed by a word that is not also a suffix
         // ("12 LAKE SHORE DR CHICAGO"), else the last one.
-        let is_suffix = |k: usize| self.lex.suffix(self.text(k)).is_some();
-        let first_number = house_number(self.text(lo)).is_some();
         let min = if first_number { lo + 2 } else { lo + 1 };
         let suffix = (min..hi)
             .find(|&k| is_suffix(k) && k + 1 < hi && !is_suffix(k + 1))
@@ -220,8 +306,16 @@ impl Tagger<'_> {
             let digits = self.toks[lo..hi].iter().any(|t| has_digit(&t.text));
             return (!digits).then_some(lo);
         };
-        let mut c = p + 1;
-        if c + 1 < hi && self.lex.directional(self.text(c)).is_some() {
+        self.after_street(p + 1, hi)
+    }
+
+    /// Where the city starts once the street's name ends before `c`: after
+    /// a postdirectional and a unit.
+    fn after_street(&self, c: usize, hi: usize) -> Option<usize> {
+        let mut c = c;
+        if c < hi && self.lex.directional(self.text(c)).is_some() {
+            // A directional with nothing after it is the postdirectional
+            // (`HIGHWAY 29 SOUTH 32533`), not a city.
             c += 1;
         }
         if c + 1 < hi
@@ -417,10 +511,42 @@ impl Tagger<'_> {
                 return self.delivery(lo, lo + half);
             }
         }
+        let hi = self.building(lo, hi);
         if lo >= hi || self.dual(lo, hi) || self.special_line(lo, hi) {
             return;
         }
         self.street(lo, hi);
+    }
+
+    /// A building name at the end of the delivery lines, after the street
+    /// or its unit: words ending in a `[building]` word, in their own line
+    /// or comma segment (`..., EAST TOWER`, line 2 `ANNEX BUILDING`) or
+    /// right after a unit (`SUITE 801 EAST TOWER`). Returns the new end.
+    fn building(&mut self, lo: usize, hi: usize) -> usize {
+        if hi < lo + 3 || !self.lex.is_building_word(self.text(hi - 1)) {
+            return hi;
+        }
+        let seg = self.toks[hi - 1].seg;
+        let mut k = hi - 1;
+        while k > lo && self.toks[k - 1].seg == seg {
+            let t = self.text(k - 1);
+            if has_digit(t) || self.toks[k - 1].is_hash() || self.lex.unit(t).is_some() {
+                break;
+            }
+            k -= 1;
+        }
+        if hi - k < 2 || k == lo {
+            return hi;
+        }
+        let starts_segment = self.toks[k - 1].seg != seg;
+        let after_unit = has_digit(self.text(k - 1))
+            && k >= lo + 2
+            && (self.toks[k - 2].is_hash() || self.lex.unit(self.text(k - 2)).is_some());
+        if !(starts_segment || after_unit) {
+            return hi;
+        }
+        self.set(k..hi, Tag::Building);
+        k
     }
 
     /// Pub 28 section 214: an attention or care-of line (`ATTN LAW DEPT`,
@@ -615,7 +741,37 @@ impl Tagger<'_> {
                         }
                     }
                 }
-                Special::Box | Special::Attention => {}
+                Special::Box => {
+                    if let Some((v, hash)) = self.value_at(lo + w, hi) {
+                        // Section 238.1 writes PSC 103 BOX 2877; the reverse
+                        // (`BOX 2877 PSC 103`) is read the same way.
+                        if let Some((_, mw)) = longest_at(self.toks, v + 1, hi, |s| lex.military(s))
+                        {
+                            if let Some((num, nhash)) = self.value_at(v + 1 + mw, hi) {
+                                tags.push((lo..lo + w, Tag::Skip));
+                                value(&mut tags, v, hash, Tag::MilitaryBoxNumber);
+                                tags.push((v + 1..v + 1 + mw, Tag::MilitaryKind));
+                                value(&mut tags, num, nhash, Tag::MilitaryNumber);
+                                return Some(SpecialMatch {
+                                    tags,
+                                    end: num + 1,
+                                    units: false,
+                                });
+                            }
+                        }
+                        // `BOX 123456` alone on the line is a PO Box.
+                        if v + 1 == hi {
+                            tags.push((lo..lo + w, Tag::PoBox));
+                            value(&mut tags, v, hash, Tag::PoBoxNumber);
+                            return Some(SpecialMatch {
+                                tags,
+                                end: hi,
+                                units: false,
+                            });
+                        }
+                    }
+                }
+                Special::Attention => {}
             }
         }
 
@@ -649,6 +805,44 @@ impl Tagger<'_> {
     /// A street address: number, highway or name, suffix, directionals and
     /// up to two units.
     fn street(&mut self, lo: usize, hi: usize) {
+        // "APT 1B 626 E KILBOURN AVE": a unit before the street. A unit
+        // found after the street becomes the second one.
+        let Some(start) = self.leading_unit(lo, hi) else {
+            return self.street_from(lo, hi);
+        };
+        self.street_from(start, hi);
+        for t in &mut self.tags[start..hi] {
+            match *t {
+                Tag::UnitType(0) => *t = Tag::UnitType(1),
+                Tag::UnitNumber(0) => *t = Tag::UnitNumber(1),
+                _ => {}
+            }
+        }
+    }
+
+    /// A unit (`APT 1B`, `# 5`) at `lo` followed by a house number: tags it
+    /// and returns where the street starts.
+    fn leading_unit(&mut self, lo: usize, hi: usize) -> Option<usize> {
+        let (ty, k) = if self.toks[lo].is_hash() {
+            (lo..lo, lo)
+        } else {
+            let (_, w) = longest_at(self.toks, lo, hi, |s| self.lex.unit(s))?;
+            (lo..lo + w, lo + w)
+        };
+        let (v, hash) = self.value_at(k, hi)?;
+        let start = v + 1;
+        if start + 1 >= hi || house_number(self.text(start)).is_none() {
+            return None;
+        }
+        self.set(ty, Tag::UnitType(0));
+        if hash {
+            self.set(v - 1..v, Tag::Skip);
+        }
+        self.set(v..v + 1, Tag::UnitNumber(0));
+        Some(start)
+    }
+
+    fn street_from(&mut self, lo: usize, hi: usize) {
         let mut i = lo;
         let t0 = self.text(i);
         if is_glued_ordinal(t0) {
@@ -688,6 +882,14 @@ impl Tagger<'_> {
             if i < hi && is_fraction(self.text(i)) {
                 self.set(i..i + 1, Tag::StreetNumber);
                 i += 1;
+            } else if i < hi && is_grid_number(t0) && is_grid_number(self.text(i)) {
+                // "N165 W2123": a grid number written in two parts.
+                self.set(i..i + 1, Tag::StreetNumber);
+                i += 1;
+            } else if i + 1 < hi && self.number_letter(i) {
+                // "428 B SOUTH MAIN ST": the letter belongs to the number.
+                self.set(i..i + 1, Tag::StreetNumber);
+                i += 1;
             }
         }
         if i >= hi {
@@ -701,7 +903,11 @@ impl Tagger<'_> {
             self.set(h.state.clone(), Tag::HighwayState);
             self.set(h.prefix.clone(), Tag::HighwayPrefix);
             self.set(h.route..h.route + 1, Tag::HighwayRoute);
-            self.street_tail(floor, j);
+            // Words after the route are the street's only on the route's
+            // line or comma segment; the rest is left unparsed.
+            let seg = self.toks[h.route].seg;
+            let line_end = (floor..j).find(|&k| self.toks[k].seg != seg).unwrap_or(j);
+            self.street_tail(floor, line_end);
             return;
         }
 
@@ -725,6 +931,17 @@ impl Tagger<'_> {
         self.street_body(i, line_end, hi.min(line_end));
     }
 
+    /// Whether the single letter at `k` belongs to the house number before
+    /// it (`428 B SOUTH MAIN ST`): not a directional itself (`123 N MAIN`),
+    /// and followed by a directional. A name word after it would make the
+    /// letter an initial (`820 A PHILIP RANDOLPH BLVD`, `9058 T BIRD RD`).
+    fn number_letter(&self, k: usize) -> bool {
+        let t = self.text(k);
+        is_letter(t)
+            && self.lex.directional(t).is_none()
+            && self.lex.directional(self.text(k + 1)).is_some()
+    }
+
     /// Pub 28 section 237 and Appendix F: a highway prefix and route right
     /// after the house number (and an optional predirectional). Appendix F
     /// also names a state before the prefix (`KY STATE HIGHWAY 1`), or before
@@ -733,9 +950,16 @@ impl Tagger<'_> {
     fn highway_at(&self, i: usize, hi: usize) -> Option<HighwayAt> {
         let lex = self.lex;
         let try_at = |p: usize| {
-            let (_, w) = longest_at(self.toks, p, hi, |s| lex.highway(s))?;
+            let (l, w) = longest_at(self.toks, p, hi, |s| lex.highway(s))?;
             let route = p + w;
-            (route < hi && is_route_value(self.text(route))).then_some((p..p + w, route))
+            // Appendix F allows letter routes (`STATE ROUTE MM`); taken only
+            // after a county prefix (`COUNTY ROAD J`), where a letter is
+            // otherwise easy to read as a unit.
+            let county = matches!(l.value.standard(), "COUNTY ROAD" | "COUNTY HIGHWAY");
+            let letters = |t: &str| t.len() <= 2 && t.bytes().all(|c| c.is_ascii_alphabetic());
+            let ok = route < hi
+                && (is_route_value(self.text(route)) || county && letters(self.text(route)));
+            ok.then_some((p..p + w, route))
         };
         if let Some((prefix, route)) = try_at(i) {
             return Some(HighwayAt {

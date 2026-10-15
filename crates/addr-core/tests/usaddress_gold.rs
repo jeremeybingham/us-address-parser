@@ -11,14 +11,14 @@ use std::path::Path;
 
 use addr_core::Parser;
 
-/// Recorded scores (2026-10-15), rounded down. Raise them when the parser
-/// improves; never lower them to make a change pass.
-const TOKEN_FLOOR: f64 = 99.6;
-const ADDRESS_FLOOR: f64 = 99.2;
+/// Recorded scores (2026-10-15, after the benchmark rule fixes; 99.76% and
+/// 99.46%), rounded down. Raise them when the parser improves; never lower
+/// them to make a change pass.
+const TOKEN_FLOOR: f64 = 99.7;
+const ADDRESS_FLOOR: f64 = 99.4;
 
-const OUT_OF_SCOPE: [&str; 11] = [
+const OUT_OF_SCOPE: [&str; 10] = [
     "Recipient",
-    "BuildingName",
     "LandmarkName",
     "CornerOf",
     "IntersectionSeparator",

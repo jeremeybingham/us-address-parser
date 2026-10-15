@@ -55,6 +55,7 @@ The Data Dictionary has no field for these, so they are folded into
 | Second unit designator | not applicable | appended to `UnitNumber`: `APT 4 LOT 18` |
 | Dual address: street and PO Box (Pub 28 section 215) | the street's name; the box is not emitted | street fields and units from the street; `UnparsedAddress` uses the street line (decision 8) |
 | Attention or care-of line (`ATTN ...`, `C/O ...`, section 214) | not applicable | not emitted |
+| Building name (`EAST TOWER`) | not applicable | not emitted |
 
 The text is the same as the USPS emitter's delivery line (Pub 28 sections
 237, 238.1, 239, 241 to 261), so the two outputs agree. The PO Box and route

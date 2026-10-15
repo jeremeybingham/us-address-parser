@@ -25,7 +25,7 @@
 
 use crate::classify::{is_ordinal, ORDINAL_SUFFIXES};
 use crate::clean::Cleaned;
-use crate::lexicon::Lexicons;
+use crate::lexicon::{Lexicons, MatchKind};
 use crate::types::{FieldName, Span};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -158,8 +158,9 @@ impl Piece<'_> {
         }
         // Trim wrapping punctuation from the text, but keep the whole piece
         // in the span when it is a single token.
-        // Asterisks too: Pub 28 section 354 drops them (`**Private Address**`).
-        let trim: &[char] = &['(', ')', '-', ':', '"', '\'', '.', '[', ']', '*'];
+        // Asterisks too: Pub 28 section 354 drops them (`**Private Address**`),
+        // and a stray backtick (`1719\``).
+        let trim: &[char] = &['(', ')', '-', ':', '"', '\'', '.', '[', ']', '*', '`'];
         let lead = raw.len() - raw.trim_start_matches(trim).len();
         let inner = raw.trim_matches(trim);
         if inner.is_empty() {
@@ -210,6 +211,15 @@ impl Piece<'_> {
             && !self.cleaned.text[pa..pb].contains('#');
         let (sa, sb) = if whole { (pa, pb) } else { (s2, e2) };
 
+        // A hyphenated route: `GA-25`, `US-385`, `CR-48`, `I-65` (Appendix F
+        // writes these with a space). Only after a highway prefix or a state
+        // code that is not also a directional (`NE-2` stays whole); SR is
+        // left to state packs.
+        if let Some(cut) = route_hyphen(t, lex) {
+            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+            self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
+            return;
+        }
         if t.bytes().all(|c| c.is_ascii_alphanumeric()) {
             if let Some(cut) = glue_split(t, next_numeric, lex) {
                 self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
@@ -239,6 +249,24 @@ fn normalize(t: &str) -> String {
         }
     }
     out
+}
+
+/// The hyphen's index in a hyphenated route such as `GA-25`, if `t` is one.
+fn route_hyphen(t: &str, lex: &Lexicons) -> Option<usize> {
+    let (letters, route) = t.split_once('-')?;
+    let ok_letters = !letters.is_empty()
+        && letters.len() <= 3
+        && letters.bytes().all(|c| c.is_ascii_alphabetic());
+    let ok_route = route.bytes().next().is_some_and(|c| c.is_ascii_digit())
+        && route.bytes().all(|c| c.is_ascii_alphanumeric());
+    if !(ok_letters && ok_route) {
+        return None;
+    }
+    let state = lex
+        .state(letters)
+        .is_some_and(|l| l.kind != MatchKind::Variant)
+        && lex.directional(letters).is_none();
+    (lex.highway(letters).is_some() || state).then_some(letters.len())
 }
 
 /// Where to split a glued alphanumeric token, if anywhere.

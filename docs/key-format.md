@@ -28,7 +28,8 @@ k1:G|<state>|<zip5>
 - `S`: `<name>` is the street name; for a street named after a highway it is
   the standard prefix plus the route (`COUNTY ROAD 23`), after the state code
   when the highway name holds a state (`KY STATE HIGHWAY 625`, Pub 28
-  Appendix F). `<suffix>` and the
+  Appendix F), and followed by any name words after the route
+  (`HIGHWAY 66 FRONTAGE`; until 2026-10-15 those words were dropped). `<suffix>` and the
   directionals are Pub 28 abbreviations.
 - `M`: `<kind>` is CPR, OPC, PSC, UPR or UNIT; `<post office>` is APO, FPO or
   DPO (empty when absent).
@@ -38,7 +39,10 @@ k1:G|<state>|<zip5>
   box is not in the key. Decided by the author, 2026-10-15. Before that rule
   such records kept whichever address came first and left the other
   unparsed, so their keys could be `P` or `S`.
-- **Not in the key:** city, ZIP+4, unit type, the attention line, anything in
+- **Floors:** a floor unit's value is a number (`5TH FLOOR` gives `5`), so
+  unit-level keys for ordinal floors changed on 2026-10-15.
+- **Not in the key:** city, ZIP+4, unit type, the attention line, the
+  building name, anything in
   `diagnostics`.
   - City is noisy and the field most likely to be corrected later; leaving it
     out keeps stored keys stable (design 6.4).

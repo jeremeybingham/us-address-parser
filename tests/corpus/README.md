@@ -49,6 +49,7 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
   - `military`: `{"kind": "PSC", "number": "1650", "box": "10"}`
   - `military_post_office`: `"APO"`, `"FPO"` or `"DPO"`
   - `general_delivery`: `true` (absent means false)
+  - `building`: the building name as tokens joined (`"EAST TOWER"`)
   - `attention`: the attention or care-of line as tokens joined
     (`"ATTN LAW DEPT"`, `"C/O YMF"`)
   - a dual address (street and PO Box) fills both the street fields and

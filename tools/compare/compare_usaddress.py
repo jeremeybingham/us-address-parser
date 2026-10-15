@@ -27,10 +27,10 @@ import sys
 import xml.etree.ElementTree as ET
 
 # Gold labels for things this parser does not model (design non-goals:
-# recipients, buildings, landmarks, intersections). Addresses that use them
-# are scored apart.
+# recipients, landmarks, intersections). Addresses that use them are scored
+# apart. BuildingName is in scope since ParsedAddress::building.
 OUT_OF_SCOPE = {
-    "Recipient", "BuildingName", "LandmarkName", "CornerOf",
+    "Recipient", "LandmarkName", "CornerOf",
     "IntersectionSeparator", "NotAddress", "CountryName", "SubaddressType",
     "SubaddressIdentifier", "StreetNamePreModifier", "AddressNumberPrefix",
 }
@@ -223,9 +223,19 @@ def gold_cmd(args):
         "# usaddress comparison: labeled test files", "",
         "Scores are on the coarse labels (street parts folded into StreetName) unless marked fine.",
         "Rules: docs/usaddress-comparison.md.", "",
-        "**These files are usaddress's own regression tests** (its CI asserts these labels),",
-        "so usaddress is expected to score near 100% on them, held out from training or not.",
-        "Read the gap as where this parser differs from usaddress, not as an accuracy contest.", "",
+    ]
+    if seen:
+        report += [
+            "**These files are usaddress's own regression tests** (its CI asserts these labels),",
+            "so usaddress is expected to score near 100% on them, held out from training or not.",
+            "Read the gap as where this parser differs from usaddress, not as an accuracy contest.", "",
+        ]
+    else:
+        report += [
+            "**Blind test:** no training-overlap list was found beside these files, so every",
+            "address counts as unseen by both parsers.", "",
+        ]
+    report += [
         "| File | Addresses | Out of scope | In usaddress training files | Not in training files |",
         "|---|---|---|---|---|",
     ]
@@ -236,8 +246,9 @@ def gold_cmd(args):
         if c["held_out"]:
             report.append(row(name, c, f["held_out"], c["held_out"]))
     report.append(row("**All not in training**", all_counts, totals["held_out"], all_counts["held_out"]))
-    report += ["", "## Seen in usaddress's training data", "", head, rule]
-    report.append(row("**All seen**", all_counts, totals["seen"], all_counts["seen"]))
+    if all_counts["seen"]:
+        report += ["", "## Seen in usaddress's training data", "", head, rule]
+        report.append(row("**All seen**", all_counts, totals["seen"], all_counts["seen"]))
     report += ["", "## By gold label (not in training files, coarse)", "",
                "| Label | Tokens | Ours | usaddress |", "|---|---|---|---|"]
     for label, c in sorted(per_label.items(), key=lambda kv: -kv[1]["n"]):
