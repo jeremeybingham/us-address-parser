@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- RESO emitter (Milestone 3): `ParsedAddress::to_reso()` returns a
+  `ResoAddress` with the RESO Data Dictionary 2.0 Property address fields
+  (`StreetNumber`, `StreetNumberNumeric`, `StreetDirPrefix`, `StreetName`,
+  `StreetSuffix`, `StreetDirSuffix`, `UnitNumber`, `City`, `StateOrProvince`,
+  `PostalCode`, `PostalCodePlus4`, `UnparsedAddress`). `fields()` gives
+  Data Dictionary names; `length_overruns()` reports values over the
+  suggested maximum lengths. `docs/reso-mapping.md` has the sources, the
+  folding rules for shapes with no field, and open questions for review.
+  Golden corpus: optional `reso` expectation and `tests/corpus/reso.jsonl`.
 - Initial workspace skeleton (Milestone 0).
 - Milestone 1, data and types:
   - Populated `data/*.toml` from USPS Pub 28 (Appendix B, C1, C2 and

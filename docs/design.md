@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is started: the key and USPS emitter are done, RESO and slug are next. Progress is tracked in section 10. Planning date: 2026-10-14.
+Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is started: the key, USPS and RESO (Data Dictionary 2.0) emitters are done, slug is next. Progress is tracked in section 10. Planning date: 2026-10-14.
 
 ---
 
@@ -376,13 +376,13 @@ Open questions to settle when this is picked up:
 
 ## 13. Open items for the author
 
-0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Next: RESO emitter and `docs/reso-mapping.md` (needs the current RESO Data Dictionary version and the author's review of the field mapping), then the slug (`emit/slug.rs`), then proptest/no-panic property, then Milestone 4 (CLI, benches). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (the open questions there still need the author's review). Next: the slug (`emit/slug.rs`), then proptest/no-panic property, then Milestone 4 (CLI, benches). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
 
 1. Point Claude Code at the existing Florida parsing code so its rules and tests can seed the corpus (and decide whether it stays as a reference or is ported).
 2. Confirm the library name and crate/package names.
 3. Confirm dual MIT/Apache-2.0 licensing.
 4. Confirm the key definition (6.3, 6.4) and the minimum supported Python version.
-5. Review the RESO field mapping.
+5. Review the RESO field mapping: the open questions in `docs/reso-mapping.md`.
 
 ---
 

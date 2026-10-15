@@ -11,7 +11,8 @@ identifiers (a stable canonical match key and a URL-safe slug).
 > are in [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md). `ParsedAddress::key` gives the
 > canonical match key ([`docs/key-format.md`](docs/key-format.md)). `ParsedAddress::to_usps`
 > gives Pub 28 style lines (layout rules checked against the live Pub 28
-> text; see the notes). The RESO and slug emitters are not written yet. See
+> text; see the notes). `ParsedAddress::to_reso` gives RESO Data Dictionary 2.0 address fields
+> ([`docs/reso-mapping.md`](docs/reso-mapping.md)). The slug emitter is not written yet. See
 > [`docs/design.md`](docs/design.md) for the milestone plan.
 
 ## This is not an address validator
@@ -65,8 +66,8 @@ let lex = addr_core::Lexicons::builtin();
 assert_eq!(lex.suffix("Avenue").unwrap().value.abbr(), "AVE");
 assert_eq!(lex.state("Fla.").unwrap().value.code(), "FL");
 
-// Planned, not yet implemented:
-// parsed.to_usps(); parsed.to_reso(); parsed.key(...); parsed.slug();
+// parsed.to_usps(); parsed.to_reso(); parsed.key(...);
+// Planned, not yet implemented: parsed.slug();
 ```
 
 ## Development

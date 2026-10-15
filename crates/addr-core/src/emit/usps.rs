@@ -93,41 +93,57 @@ impl ParsedAddress {
     }
 
     fn primary_line(&self) -> Option<String> {
-        let line = if let Some(po) = &self.po_box {
-            format!("PO BOX {}", plain(po))
-        } else if let Some(r) = &self.rural_route {
-            let mut s = format!("{} {}", r.kind.abbr(), plain(&r.route));
-            if let Some(b) = &r.box_number {
-                s = format!("{s} BOX {}", plain(b));
-            }
-            s
-        } else if let Some(m) = &self.military {
-            let mut s = format!("{} {}", m.kind.abbr(), plain(&m.number));
-            if let Some(b) = &m.box_number {
-                s = format!("{s} BOX {}", plain(b));
-            }
-            s
-        } else if self.general_delivery {
-            "GENERAL DELIVERY".to_string()
+        let line = if let Some(special) = self.special_delivery_line() {
+            special
         } else {
-            let name = match (&self.highway, &self.street_name) {
-                (Some(h), _) => Some(join([
-                    &h.state.map(|s| s.code().to_string()),
-                    &Some(h.prefix.standard().to_string()),
-                    &Some(plain(&h.route)),
-                ])),
-                (None, Some(n)) => Some(plain(n)),
-                (None, None) => None,
-            };
             join([
                 &self.street_number.as_deref().map(plain),
                 &self.street_dir_prefix.map(|d| d.abbr().to_string()),
-                &name,
+                &self.street_name_text(),
                 &self.street_suffix.map(|s| s.abbr().to_string()),
                 &self.street_dir_suffix.map(|d| d.abbr().to_string()),
             ])
         };
         (!line.is_empty()).then_some(line)
+    }
+
+    /// The delivery line of a form with no street: PO Box, rural or highway
+    /// contract route, military box, general delivery. Shared with the RESO
+    /// emitter, which folds it into `StreetName`.
+    pub(super) fn special_delivery_line(&self) -> Option<String> {
+        if let Some(po) = &self.po_box {
+            Some(format!("PO BOX {}", plain(po)))
+        } else if let Some(r) = &self.rural_route {
+            let mut s = format!("{} {}", r.kind.abbr(), plain(&r.route));
+            if let Some(b) = &r.box_number {
+                s = format!("{s} BOX {}", plain(b));
+            }
+            Some(s)
+        } else if let Some(m) = &self.military {
+            let mut s = format!("{} {}", m.kind.abbr(), plain(&m.number));
+            if let Some(b) = &m.box_number {
+                s = format!("{s} BOX {}", plain(b));
+            }
+            Some(s)
+        } else if self.general_delivery {
+            Some("GENERAL DELIVERY".to_string())
+        } else {
+            None
+        }
+    }
+
+    /// The street name, or for a highway address the state code, prefix and
+    /// route (`KY STATE HIGHWAY 625`). Shared with the RESO emitter.
+    pub(super) fn street_name_text(&self) -> Option<String> {
+        match (&self.highway, &self.street_name) {
+            (Some(h), _) => Some(join([
+                &h.state.map(|s| s.code().to_string()),
+                &Some(h.prefix.standard().to_string()),
+                &Some(plain(&h.route)),
+            ])),
+            (None, Some(n)) => Some(plain(n)),
+            (None, None) => None,
+        }
     }
 }
 
@@ -147,7 +163,7 @@ fn unit_text(t: Option<UnitType>, number: Option<&str>) -> Option<String> {
 /// hyphen (`289-01`, `MID-ISLAND`), the slash in fractions (`1/2`) and a
 /// period between digits (`39.2 RD`, section 232); uppercase; collapse
 /// whitespace.
-fn plain(s: &str) -> String {
+pub(super) fn plain(s: &str) -> String {
     let chars: Vec<char> = s.chars().collect();
     let digit = |k: Option<&char>| k.is_some_and(char::is_ascii_digit);
     let kept: String = chars
@@ -163,7 +179,7 @@ fn plain(s: &str) -> String {
     kept.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-fn join<'a>(parts: impl IntoIterator<Item = &'a Option<String>>) -> String {
+pub(super) fn join<'a>(parts: impl IntoIterator<Item = &'a Option<String>>) -> String {
     parts
         .into_iter()
         .filter_map(|p| p.as_deref())

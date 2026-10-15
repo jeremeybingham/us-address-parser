@@ -36,6 +36,9 @@ struct Case {
     key_unit: Option<String>,
     /// Expected `to_usps()` output; absent means not checked.
     usps: Option<ExpectUsps>,
+    /// Expected `to_reso()` fields by Data Dictionary name; a field not
+    /// listed must be empty. Absent means not checked.
+    reso: Option<BTreeMap<String, String>>,
     #[serde(default)]
     #[allow(dead_code)]
     note: Option<String>,
@@ -118,7 +121,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 24] = [
+const FIELDS: [&str; 25] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -143,10 +146,27 @@ const FIELDS: [&str; 24] = [
     "key",
     "key_unit",
     "usps",
+    "reso",
 ];
 
 /// Fields checked only for the cases that give them.
-const OPTIONAL_FIELDS: [&str; 3] = ["key", "key_unit", "usps"];
+const OPTIONAL_FIELDS: [&str; 4] = ["key", "key_unit", "usps", "reso"];
+
+/// Data Dictionary 2.0 names a case's `reso` object may use.
+const RESO_FIELDS: [&str; 12] = [
+    "StreetNumber",
+    "StreetNumberNumeric",
+    "StreetDirPrefix",
+    "StreetName",
+    "StreetSuffix",
+    "StreetDirSuffix",
+    "UnitNumber",
+    "City",
+    "StateOrProvince",
+    "PostalCode",
+    "PostalCodePlus4",
+    "UnparsedAddress",
+];
 
 type Values = BTreeMap<&'static str, Option<String>>;
 
@@ -173,6 +193,17 @@ fn warnings_str<'a>(codes: impl IntoIterator<Item = &'a str>) -> Option<String> 
 fn usps_str(l1: &Option<String>, l2: &Option<String>, last: &Option<String>) -> String {
     let f = |o: &Option<String>| o.clone().unwrap_or_default();
     format!("[{}] [{}] [{}]", f(l1), f(l2), f(last))
+}
+
+/// `Name=value` pairs sorted by name, so the order a case lists them in
+/// does not matter.
+fn reso_str<'a>(pairs: impl IntoIterator<Item = (&'a str, &'a str)>) -> String {
+    let sorted: BTreeMap<&str, &str> = pairs.into_iter().collect();
+    sorted
+        .iter()
+        .map(|(k, v)| format!("{k}={v}"))
+        .collect::<Vec<_>>()
+        .join("; ")
 }
 
 fn expected_values(c: &Case) -> Values {
@@ -226,6 +257,12 @@ fn expected_values(c: &Case) -> Values {
     }
     if let Some(u) = &c.usps {
         v.insert("usps", Some(usps_str(&u.line1, &u.line2, &u.last_line)));
+    }
+    if let Some(r) = &c.reso {
+        v.insert(
+            "reso",
+            Some(reso_str(r.iter().map(|(k, v)| (k.as_str(), v.as_str())))),
+        );
     }
     v
 }
@@ -299,6 +336,11 @@ fn actual_values(a: &ParsedAddress) -> Values {
             &u.line2,
             &(!last.is_empty()).then_some(last),
         )),
+    );
+    let reso = a.to_reso().fields();
+    v.insert(
+        "reso",
+        Some(reso_str(reso.iter().map(|(k, v)| (*k, v.as_str())))),
     );
     v
 }
@@ -405,6 +447,11 @@ fn validate(cases: &[(String, Case)], errors: &mut Vec<String>) {
                 errors.push(format!("{at}: unknown warning code {w:?}"));
             }
         }
+        for k in c.reso.iter().flat_map(BTreeMap::keys) {
+            if !RESO_FIELDS.contains(&k.as_str()) {
+                errors.push(format!("{at}: unknown RESO field {k:?}"));
+            }
+        }
     }
 }
 
@@ -445,6 +492,7 @@ fn run(parser: &Parser, c: &Case) -> Values {
             v.insert("key", Some("none".to_string()));
             v.insert("key_unit", Some("none".to_string()));
             v.insert("usps", Some(usps_str(&None, &None, &None)));
+            v.insert("reso", Some(String::new()));
             v.insert("unparsed", Some("<error>".to_string()));
             v
         }

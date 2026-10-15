@@ -64,7 +64,11 @@ Emitter expectations are optional record keys, checked only when present
 - `usps`: `{"line1": ..., "line2": ..., "last_line": ...}` from
   `to_usps()`; an omitted part must be empty.
 
-RESO fields will be added the same way.
+- `reso`: an object of Data Dictionary 2.0 field names to the expected
+  `to_reso()` values (`{"StreetName": "MAIN", "City": "MIAMI"}`). A field not
+  listed must be empty. Names are checked against the Data Dictionary address
+  fields; `StreetNumberNumeric` is written as its decimal text. Write expected
+  values from `docs/reso-mapping.md`, not by copying the emitter's output.
 
 The runner rejects unknown keys, duplicate ids, unknown warning codes, and
 suffix, unit, state, directional, highway-prefix or military values that are
