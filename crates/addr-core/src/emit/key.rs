@@ -42,7 +42,10 @@ impl ParsedAddress {
         }
 
         let mut segs: Vec<String> = Vec::new();
-        let form = if let Some(po) = &self.po_box {
+        // A dual address (street and PO Box, Pub 28 section 215) keys on the
+        // street.
+        let po_box = self.po_box.as_ref().filter(|_| !self.has_street());
+        let form = if let Some(po) = po_box {
             segs.push(esc(po));
             'P'
         } else if let Some(r) = &self.rural_route {
@@ -66,10 +69,7 @@ impl ParsedAddress {
             'G'
         } else if self.street_name.is_some() || self.highway.is_some() {
             let name = match &self.highway {
-                Some(h) => match h.state {
-                    Some(s) => format!("{} {} {}", s.code(), h.prefix.standard(), h.route),
-                    None => format!("{} {}", h.prefix.standard(), h.route),
-                },
+                Some(h) => h.name(),
                 None => self.street_name.clone().unwrap_or_default(),
             };
             segs.extend([

@@ -44,6 +44,8 @@ pub(crate) enum Tag {
     UnitNumber(u8),
     PoBox,
     PoBoxNumber,
+    /// An attention or care-of line (Pub 28 section 214).
+    Attention,
     /// RR or HC word.
     Route,
     RouteNumber,
@@ -183,8 +185,20 @@ pub(crate) fn tag_fields(
         get(FieldName::State),
         get(FieldName::Zip),
     );
-    let line = l1.start.min(l2.start)..l1.end.max(l2.end);
+    let mut line = l1.start.min(l2.start)..l1.end.max(l2.end);
     let mut t = Tagger::new(toks, lex, lens);
+    // Line 2 that repeats the end of line 1 (`9453 LUTOO LANE` / `LUTOO
+    // LANE`, DBPR data) is a copy.
+    if !l2.is_empty() && l2.start == l1.end && l2.len() <= l1.len() {
+        let same = toks[l2.clone()]
+            .iter()
+            .zip(&toks[l1.end - l2.len()..l1.end])
+            .all(|(a, b)| a.text == b.text);
+        if same {
+            t.set(l2.clone(), Tag::Skip);
+            line = l1.clone();
+        }
+    }
     if city.is_empty() && state.is_empty() && zip.is_empty() {
         // Everything is on the address lines: read them like one line.
         let (street_end, c) = t.last_line_in(line.start, line.end);
@@ -202,6 +216,7 @@ pub(crate) fn tag_fields(
     } else {
         end = t.drop_repeated_zip(line.start, end);
     }
+    let end = t.drop_repeated_state(line.start, end);
     let end = t.drop_city_copy(line.start, end, city_range);
     t.delivery(line.start, end);
     t.finish()

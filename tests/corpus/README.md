@@ -49,6 +49,10 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
   - `military`: `{"kind": "PSC", "number": "1650", "box": "10"}`
   - `military_post_office`: `"APO"`, `"FPO"` or `"DPO"`
   - `general_delivery`: `true` (absent means false)
+  - `attention`: the attention or care-of line as tokens joined
+    (`"ATTN LAW DEPT"`, `"C/O YMF"`)
+  - a dual address (street and PO Box) fills both the street fields and
+    `po_box`, with the `dual_address` warning
   - `second_unit_type`, `second_unit_number`: a second unit after the
     first, in input order
 - `warnings`: `Warning::code()` strings. Compared as a set, exactly: missing

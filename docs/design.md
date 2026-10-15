@@ -385,6 +385,8 @@ Decisions recorded 2026-10-15:
 3. **Licensing: confirmed.** MIT OR Apache-2.0.
 4. **Key definition: signed off.** `k1` (6.3, 6.4) is the public contract; any change needs a new version prefix. **Minimum Python version: 3.10** (abi3 wheels).
 5. **RESO mapping: reviewed.** All seven choices were accepted as implemented; see "Decisions" in `docs/reso-mapping.md`.
+6. **Dual addresses (Pub 28 section 215): hold both.** A record with a street address and a PO Box keeps both in `ParsedAddress` (street fields and `po_box`, warning `dual_address`). The key and the RESO output use the street; the USPS output writes the PO Box alone, as section 215 prefers. Rejected: keeping one and leaving the other unparsed, and returning two addresses (an API change for every caller).
+7. **Attention lines: a field.** `ParsedAddress::attention` holds an ATTN or C/O line (section 214). No emitter writes it.
 
 ---
 

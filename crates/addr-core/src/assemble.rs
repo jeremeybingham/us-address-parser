@@ -142,6 +142,10 @@ pub(crate) fn assemble(
                 }
             }
             Tag::PoBox => record(addr, Component::PoBox),
+            Tag::Attention => {
+                set_once(&mut addr.attention, text);
+                record(addr, Component::Attention);
+            }
             Tag::PoBoxNumber => {
                 set_once(&mut addr.po_box, text);
                 record(addr, Component::PoBox);

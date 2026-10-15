@@ -53,6 +53,8 @@ pub enum Special {
     HighwayContract,
     /// GENERAL DELIVERY.
     GeneralDelivery,
+    /// An attention or care-of word: ATTN, C/O.
+    Attention,
 }
 
 impl Special {
@@ -64,6 +66,7 @@ impl Special {
             Special::RuralRoute => "RR",
             Special::HighwayContract => "HC",
             Special::GeneralDelivery => "GENERAL DELIVERY",
+            Special::Attention => "ATTN",
         }
     }
 }
@@ -302,7 +305,7 @@ mod tests {
     #[test]
     fn table_sizes() {
         assert_eq!(LEX.suffixes().count(), 202);
-        assert_eq!(LEX.units().count(), 24);
+        assert_eq!(LEX.units().count(), 25); // Appendix C2 plus PMB (section 285)
         assert_eq!(LEX.states().count(), 62);
         assert_eq!(MAX_FORM_WORDS, 4); // FEDERATED STATES OF MICRONESIA
     }

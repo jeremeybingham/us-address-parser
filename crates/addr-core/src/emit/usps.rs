@@ -61,10 +61,13 @@ impl ParsedAddress {
     }
 
     fn usps(&self, max_line: Option<usize>) -> UspsAddress {
-        let units = join([
-            &unit_text(self.unit_type, self.unit_number.as_deref()),
-            &unit_text(self.second_unit_type, self.second_unit_number.as_deref()),
-        ]);
+        // A dual address is written as its PO Box alone (Pub 28 section 215);
+        // the units belong to the street.
+        let units = if self.is_dual() {
+            String::new()
+        } else {
+            self.units_text()
+        };
         let primary = self.primary_line();
         let (line1, line2) = match (primary, units.is_empty()) {
             (p, true) => (p, None),
@@ -93,18 +96,28 @@ impl ParsedAddress {
     }
 
     fn primary_line(&self) -> Option<String> {
-        let line = if let Some(special) = self.special_delivery_line() {
-            special
-        } else {
-            join([
-                &self.street_number.as_deref().map(plain),
-                &self.street_dir_prefix.map(|d| d.abbr().to_string()),
-                &self.street_name_text(),
-                &self.street_suffix.map(|s| s.abbr().to_string()),
-                &self.street_dir_suffix.map(|d| d.abbr().to_string()),
-            ])
-        };
+        self.special_delivery_line().or_else(|| self.street_line())
+    }
+
+    /// Number, directionals, name and suffix, without units. Shared with the
+    /// RESO emitter, which writes a dual address's street.
+    pub(super) fn street_line(&self) -> Option<String> {
+        let line = join([
+            &self.street_number.as_deref().map(plain),
+            &self.street_dir_prefix.map(|d| d.abbr().to_string()),
+            &self.street_name_text(),
+            &self.street_suffix.map(|s| s.abbr().to_string()),
+            &self.street_dir_suffix.map(|d| d.abbr().to_string()),
+        ]);
         (!line.is_empty()).then_some(line)
+    }
+
+    /// Both units in Pub 28 form (`APT 4 # 2`), or empty.
+    pub(super) fn units_text(&self) -> String {
+        join([
+            &unit_text(self.unit_type, self.unit_number.as_deref()),
+            &unit_text(self.second_unit_type, self.second_unit_number.as_deref()),
+        ])
     }
 
     /// The delivery line of a form with no street: PO Box, rural or highway
@@ -136,11 +149,7 @@ impl ParsedAddress {
     /// route (`KY STATE HIGHWAY 625`). Shared with the RESO emitter.
     pub(super) fn street_name_text(&self) -> Option<String> {
         match (&self.highway, &self.street_name) {
-            (Some(h), _) => Some(join([
-                &h.state.map(|s| s.code().to_string()),
-                &Some(h.prefix.standard().to_string()),
-                &Some(plain(&h.route)),
-            ])),
+            (Some(h), _) => Some(plain(&h.name())),
             (None, Some(n)) => Some(plain(n)),
             (None, None) => None,
         }

@@ -220,6 +220,17 @@ pub struct Highway {
     pub route: String,
 }
 
+impl Highway {
+    /// The standard name: state code (if any), prefix and route, as in
+    /// `KY STATE HIGHWAY 625` or `COUNTY ROAD 23`.
+    pub fn name(&self) -> String {
+        match self.state {
+            Some(s) => format!("{} {} {}", s.code(), self.prefix.standard(), self.route),
+            None => format!("{} {}", self.prefix.standard(), self.route),
+        }
+    }
+}
+
 /// Military delivery-line address type. Source: Pub 28 section 238.1,
 /// `data/special.toml` `[[military]]`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -323,6 +334,7 @@ pub enum Component {
     GeneralDelivery,
     Military,
     MilitaryPostOffice,
+    Attention,
     City,
     State,
     Zip5,
@@ -399,6 +411,9 @@ pub enum Warning {
     AmbiguousStreetNumber,
     /// Several addresses in one input ("5210/5212 BRISTO ST").
     MultipleAddresses,
+    /// A street address and a PO Box in one record (Pub 28 section 215).
+    /// Both are kept; see [`ParsedAddress::po_box`].
+    DualAddress,
     /// The input looks cut off at a field-length limit.
     PossiblyTruncated,
     /// A unit designator with nothing after it, for a designator that
@@ -419,7 +434,7 @@ pub enum Warning {
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 15] = [
+    pub const ALL: [Warning; 16] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -427,6 +442,7 @@ impl Warning {
         Warning::ZeroStreetNumber,
         Warning::AmbiguousStreetNumber,
         Warning::MultipleAddresses,
+        Warning::DualAddress,
         Warning::PossiblyTruncated,
         Warning::MissingUnitNumber,
         Warning::NonStandardAbbreviation,
@@ -448,6 +464,7 @@ impl Warning {
             Warning::ZeroStreetNumber => "zero_street_number",
             Warning::AmbiguousStreetNumber => "ambiguous_street_number",
             Warning::MultipleAddresses => "multiple_addresses",
+            Warning::DualAddress => "dual_address",
             Warning::PossiblyTruncated => "possibly_truncated",
             Warning::MissingUnitNumber => "missing_unit_number",
             Warning::NonStandardAbbreviation => "non_standard_abbreviation",
@@ -523,6 +540,9 @@ pub struct ParsedAddress {
     /// unit then lot, and so on, in input order.
     pub second_unit_type: Option<UnitType>,
     pub second_unit_number: Option<String>,
+    /// PO Box number. A record can hold a street address too (a dual
+    /// address, Pub 28 section 215, with [`Warning::DualAddress`]): the key
+    /// and RESO output use the street, the USPS output the box.
     pub po_box: Option<String>,
     pub rural_route: Option<RuralRoute>,
     /// The delivery line is GENERAL DELIVERY (Pub 28 section 261).
@@ -531,12 +551,29 @@ pub struct ParsedAddress {
     pub military: Option<MilitaryBox>,
     /// APO, FPO or DPO in the city position. When set, `city` is empty.
     pub military_post_office: Option<MilitaryPostOffice>,
+    /// An attention or care-of line, as written (`ATTN LAW DEPT`,
+    /// `C/O HERITAGE MGMT LLC`). Pub 28 section 214 places it above the
+    /// recipient, so it is not part of any emitted address.
+    pub attention: Option<String>,
     pub city: Option<String>,
     pub state: Option<StateCode>,
     pub zip5: Option<String>,
     pub zip4: Option<String>,
     pub diagnostics: Diagnostics,
     pub source: SourceInfo,
+}
+
+impl ParsedAddress {
+    /// Whether the record has a street address (a street name or highway).
+    pub(crate) fn has_street(&self) -> bool {
+        self.street_name.is_some() || self.highway.is_some()
+    }
+
+    /// Whether the record holds a street address and a PO Box (Pub 28
+    /// section 215).
+    pub(crate) fn is_dual(&self) -> bool {
+        self.po_box.is_some() && self.has_street()
+    }
 }
 
 impl ParsedAddress {
@@ -557,6 +594,7 @@ impl ParsedAddress {
             general_delivery: false,
             military: None,
             military_post_office: None,
+            attention: None,
             city: None,
             state: None,
             zip5: None,

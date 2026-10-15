@@ -1,12 +1,13 @@
 # special.toml
 #
 # Non-street address forms (PO Box, rural route, highway contract route,
-# general delivery), highway-name prefixes, and placeholder text.
+# general delivery), attention words, highway-name prefixes, and placeholder
+# text.
 #
 # Sources:
-#   USPS Publication 28, chapter 2: sections 24x (rural route), 25x (highway
-#   contract route), 26x (general delivery) and 28x (Post Office Box); section
-#   237 and Appendix F (highway street names).
+#   USPS Publication 28, chapter 2: sections 214 (attention line), 24x
+#   (rural route), 25x (highway contract route), 26x (general delivery) and
+#   28x (Post Office Box); section 237 and Appendix F (highway street names).
 #     https://pe.usps.com/text/pub28/
 #   Placeholder phrases are NOT a USPS rule: they are stand-in text seen in
 #   county assessor and clerk data, collected in auction-tracker
@@ -61,6 +62,14 @@ forms = ["HC", "H C", "HCR", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY 
 # shortened forms are input only.
 standard = "GENERAL DELIVERY"
 forms = ["GENERAL DELIVERY", "GEN DELIVERY", "GENERAL DEL", "GEN DEL"]
+
+[attention]
+# Pub 28 section 214, Attention Line: placed above the recipient line, with
+# ATTN before the name (https://pe.usps.com/text/pub28/28c2_004.htm). C/O
+# (care of) lines are handled the same way; that is not a Pub 28 term, but
+# DBPR license data uses both in the address lines.
+standard = "ATTN"
+forms = ["ATTN", "ATTENTION", "C/O", "CARE OF"]
 
 # Highway prefixes: a prefix followed by a route number is the street name
 # ("COUNTY ROAD 23", "HWY 2301"). The number after it is the road's, not a
@@ -222,4 +231,6 @@ phrases = [
   "PROPERTY LOCATION IS NOT AVAIL",
   "NO ADDRESS",
   "NO ADDRESS ON TAX ROLL",
+  # DBPR license data writes "**Private Address**" for a withheld address.
+  "PRIVATE ADDRESS",
 ]

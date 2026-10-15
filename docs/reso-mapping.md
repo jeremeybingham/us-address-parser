@@ -53,6 +53,8 @@ The Data Dictionary has no field for these, so they are folded into
 | General delivery | `GENERAL DELIVERY` | |
 | APO / FPO / DPO | not applicable | `City` = `APO`, `FPO` or `DPO`; `StateOrProvince` = `AA`, `AE` or `AP` |
 | Second unit designator | not applicable | appended to `UnitNumber`: `APT 4 LOT 18` |
+| Dual address: street and PO Box (Pub 28 section 215) | the street's name; the box is not emitted | street fields and units from the street; `UnparsedAddress` uses the street line (decision 8) |
+| Attention or care-of line (`ATTN ...`, `C/O ...`, section 214) | not applicable | not emitted |
 
 The text is the same as the USPS emitter's delivery line (Pub 28 sections
 237, 238.1, 239, 241 to 261), so the two outputs agree. The PO Box and route
@@ -93,6 +95,12 @@ implemented.
 6. **`Country`.** Left empty. No option to set it.
 7. **Text not placed.** `Diagnostics::unparsed` is not emitted in the RESO
    output; it stays available in the diagnostics.
+8. **Dual addresses.** A record with a street address and a PO Box (Pub 28
+   section 215) gives the street in every RESO field, because RESO address
+   fields describe the property; the PO Box is left out. The USPS output
+   writes the box instead (section 215 prefers it on the mailpiece), so the
+   two outputs differ for these records. Decided by the author, 2026-10-15
+   (the key uses the street too).
 
 ## Verification status
 

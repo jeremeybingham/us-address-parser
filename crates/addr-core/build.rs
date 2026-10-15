@@ -344,6 +344,7 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<()> {
         ("rural_route", "RuralRoute"),
         ("highway_contract", "HighwayContract"),
         ("general_delivery", "GeneralDelivery"),
+        ("attention", "Attention"),
     ] {
         let tctx = format!("{ctx} [{key}]");
         let tb = table(t, key, ctx)?;

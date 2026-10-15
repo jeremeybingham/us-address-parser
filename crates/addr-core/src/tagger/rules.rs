@@ -6,8 +6,8 @@ use std::ops::Range;
 use super::{Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
-    is_letter, is_route_value, is_slash_pair, is_unit_value, join, longest_at, longest_ending,
-    zip_parts, NumberShape,
+    is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value, join, longest_at,
+    longest_ending, zip_parts, NumberShape,
 };
 use crate::lexicon::{MatchKind, Special};
 use crate::types::{StateKind, Warning};
@@ -102,6 +102,18 @@ impl Tagger<'_> {
                 if later_seg || self.city_after_street(lo, end - w).is_some() {
                     state = Some(end - w..end);
                 }
+            }
+        }
+        // "12 SIMON CT 32505": on one line with no commas, a state that is
+        // also a street suffix, with no city before it, is the suffix.
+        if let Some(r) = state.clone() {
+            let text = join(&toks[r.clone()]);
+            let one_line = toks[r.start].seg == toks[lo].seg;
+            if one_line
+                && self.lex.suffix(&text).is_some()
+                && self.city_after_street(lo, r.start).is_none()
+            {
+                state = None;
             }
         }
         if let Some(r) = &state {
@@ -242,6 +254,17 @@ impl Tagger<'_> {
             if self.lex.suffix(&tail[0].text).is_some() {
                 continue;
             }
+            // "SUITE A" before "ARCHER": a value after a designator or '#'
+            // is the unit's.
+            let before = &self.toks[hi - k - 1];
+            if before.is_hash() || self.lex.unit(&before.text).is_some() {
+                continue;
+            }
+            // One cut-off word needs two letters or more; a lone letter is
+            // more likely a unit ("DR B") than a copy of "BRADENTON".
+            if k == 1 && tail[0].text.len() < 2 && tail[0].text != words[0] {
+                continue;
+            }
             let matches = tail.iter().enumerate().all(|(n, t)| {
                 if n + 1 == k {
                     words[n].starts_with(t.text.as_str())
@@ -336,9 +359,32 @@ impl Tagger<'_> {
         hi
     }
 
+    /// A state ending the address line that repeats the state already
+    /// tagged from its field (`4486 W OAKLAWN ST LECANTO FL` with state
+    /// `FL`). The copy is skipped, so the city copy before it can be too.
+    /// Returns the new end of the line.
+    pub(super) fn drop_repeated_state(&mut self, lo: usize, hi: usize) -> usize {
+        let code = |s: &str| self.lex.state(s).map(|l| l.value.code());
+        let field: Vec<_> = (0..self.toks.len())
+            .filter(|&i| self.tags[i] == Tag::State)
+            .map(|i| self.toks[i].clone())
+            .collect();
+        let Some(tagged) = code(&join(&field)) else {
+            return hi;
+        };
+        match longest_ending(self.toks, lo + 1, hi, |s| self.state_ok(s, false)) {
+            Some((_, w)) if code(&join(&self.toks[hi - w..hi])) == Some(tagged) => {
+                self.set(hi - w..hi, Tag::Skip);
+                hi - w
+            }
+            _ => hi,
+        }
+    }
+
     // ---- delivery line -----------------------------------------------------
 
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {
+        let (lo, hi) = self.attention(lo, hi);
         if lo >= hi || self.placeholder(lo, hi) {
             return;
         }
@@ -361,10 +407,121 @@ impl Tagger<'_> {
                 lo = d + 1;
             }
         }
-        if lo >= hi || self.special_line(lo, hi) {
+        // "PO BOX 12442 PO BOX 12442": the same line written twice.
+        let n = hi - lo;
+        if n >= 2 && n % 2 == 0 {
+            let half = n / 2;
+            let twice = (0..half).all(|k| self.text(lo + k) == self.text(lo + half + k));
+            if twice {
+                self.set(lo + half..hi, Tag::Skip);
+                return self.delivery(lo, lo + half);
+            }
+        }
+        if lo >= hi || self.dual(lo, hi) || self.special_line(lo, hi) {
             return;
         }
         self.street(lo, hi);
+    }
+
+    /// Pub 28 section 214: an attention or care-of line (`ATTN LAW DEPT`,
+    /// `C/O YMF`), from the ATTN or C/O word to the end of its line or comma
+    /// segment, at the start or the end of the delivery lines. Returns the
+    /// range left for the address.
+    fn attention(&mut self, lo: usize, hi: usize) -> (usize, usize) {
+        let lex = self.lex;
+        let word = |k: usize| {
+            longest_at(self.toks, k, hi, |s| {
+                lex.special(s).filter(|l| l.value == Special::Attention)
+            })
+            .map(|(_, w)| w)
+        };
+        let Some((k, w)) = (lo..hi).find_map(|k| word(k).map(|w| (k, w))) else {
+            return (lo, hi);
+        };
+        // "C/O 2775 NW 49TH AVE": the address itself follows; only the word
+        // is dropped.
+        if k + w < hi && house_number(self.text(k + w)).is_some() {
+            self.set(k..k + w, Tag::Skip);
+            return if k == lo { (k + w, hi) } else { (lo, hi) };
+        }
+        let end = (k..hi)
+            .find(|&e| self.toks[e].seg != self.toks[k].seg)
+            .unwrap_or(hi);
+        if end == hi {
+            // "PO BOX 23181 C/O YMF", or line 2 "ATTN: RYAN ADAIR".
+            self.set(k..hi, Tag::Attention);
+            (lo, k)
+        } else if k == lo {
+            // Line 1 "C/O BRADY SULLIVAN PROPERTIES", the street on line 2.
+            self.set(lo..end, Tag::Attention);
+            (end, hi)
+        } else {
+            (lo, hi)
+        }
+    }
+
+    /// Pub 28 section 215: a street address and a PO Box in one record.
+    /// Both are tagged and [`Warning::DualAddress`] is raised. The box may
+    /// come first (`PO BOX 286` / `23320 NE HWY 315`) or after the street
+    /// (`9418 CUBA RD` / `P.O. BOX 100`, `... AVE PO BOX 365`); the street
+    /// needs a house number. A bare `BOX 88` counts only when it starts a
+    /// later line or comma segment.
+    /// Returns whether the line was one.
+    fn dual(&mut self, lo: usize, hi: usize) -> bool {
+        if let Some(m) = self.box_line(lo, hi, false) {
+            let rest = m.end;
+            if rest >= hi || self.starts_unit(rest, hi) {
+                return false;
+            }
+            // The street needs its house number: `PO BOX 3163` / `GRAND
+            // CENTRAL STATION` is a box with a postal station, not a street.
+            if !(rest + 1 < hi && house_number(self.text(rest)).is_some()) {
+                return false;
+            }
+            for (r, tag) in m.tags {
+                self.set(r, tag);
+            }
+            self.street(rest, hi);
+            self.warn(Warning::DualAddress);
+            return true;
+        }
+        if hi < lo + 3 || house_number(self.text(lo)).is_none() {
+            return false;
+        }
+        for k in lo + 2..hi {
+            let starts_segment = self.toks[k].seg != self.toks[k - 1].seg;
+            let Some(m) = self.box_line(k, hi, starts_segment) else {
+                continue;
+            };
+            for (r, tag) in m.tags {
+                self.set(r, tag);
+            }
+            self.units(m.end, m.end, hi, false);
+            self.street(lo, k);
+            self.warn(Warning::DualAddress);
+            return true;
+        }
+        false
+    }
+
+    /// A PO Box (`PO BOX 12`, `DRAWER 9`, or with `bare` a plain `BOX 88`)
+    /// and its value at `k`, without tagging.
+    fn box_line(&self, k: usize, hi: usize, bare: bool) -> Option<SpecialMatch> {
+        let (l, w) = longest_at(self.toks, k, hi, |s| self.lex.special(s))?;
+        if !(l.value == Special::PoBox || bare && l.value == Special::Box) {
+            return None;
+        }
+        let (v, hash) = self.value_at(k + w, hi)?;
+        let mut tags = vec![(k..k + w, Tag::PoBox)];
+        if hash {
+            tags.push((v - 1..v, Tag::Skip));
+        }
+        tags.push((v..v + 1, Tag::PoBoxNumber));
+        Some(SpecialMatch {
+            tags,
+            end: v + 1,
+            units: true,
+        })
     }
 
     fn placeholder(&mut self, lo: usize, hi: usize) -> bool {
@@ -458,7 +615,7 @@ impl Tagger<'_> {
                         }
                     }
                 }
-                Special::Box => {}
+                Special::Box | Special::Attention => {}
             }
         }
 
@@ -500,7 +657,18 @@ impl Tagger<'_> {
             self.set(lo..hi, Tag::Unparsed);
             return;
         }
-        if is_slash_pair(t0) {
+        // "31967,32037,32067, PUNTA GORDA": a list of house numbers, each in
+        // its own comma segment.
+        let numbers = (lo..hi)
+            .take_while(|&k| {
+                all_digits(self.text(k)) && (k == lo || self.toks[k].seg != self.toks[k - 1].seg)
+            })
+            .count();
+        if numbers >= 2 {
+            self.warn(Warning::MultipleAddresses);
+            self.set(lo..lo + numbers, Tag::Unparsed);
+            i += numbers;
+        } else if is_slash_pair(t0) {
             // "5210/5212 BRISTO ST"
             self.warn(Warning::MultipleAddresses);
             self.set(i..i + 1, Tag::Unparsed);
@@ -540,9 +708,20 @@ impl Tagger<'_> {
         let j = self.units(i, i, hi, true);
         // The name and suffix come from the first line; whatever is left of
         // a later line ("..., BLDG 5 ROOM") is not part of the name.
-        let line_end = (i..j)
+        let mut line_end = (i..j)
             .find(|&k| self.toks[k].seg != self.toks[i].seg)
             .unwrap_or(j);
+        // "2272 GOODWOOD BLVD., SE": a postdirectional after a comma.
+        let rest = line_end..j;
+        if !rest.is_empty()
+            && self.toks[rest.clone()]
+                .iter()
+                .all(|t| t.seg == self.toks[rest.start].seg)
+            && longest_at(self.toks, rest.start, j, |s| self.lex.directional(s))
+                .is_some_and(|(_, w)| w == rest.len())
+        {
+            line_end = j;
+        }
         self.street_body(i, line_end, hi.min(line_end));
     }
 
@@ -586,14 +765,13 @@ impl Tagger<'_> {
                 route,
             });
         }
-        // Bare `KY 1207`: digits only, and not a directional or designator
-        // that happens to be a state code (`NE 5TH ST`, `FL 2`).
+        // Bare `KY 1207`: digits only, and not a directional that happens to
+        // be a state code (`NE 5TH ST`). A state code that is also a
+        // designator counts too (`5100 FL 40 SUITE 100`): this is the start of
+        // the street, and read as a floor it would leave no street name.
         let route = i + w;
         let word = join(&self.toks[state.clone()]);
-        let bare = route < hi
-            && all_digits(self.text(route))
-            && lex.directional(&word).is_none()
-            && lex.unit(&word).is_none();
+        let bare = route < hi && all_digits(self.text(route)) && lex.directional(&word).is_none();
         bare.then_some(HighwayAt {
             pre: i..i,
             state,
@@ -764,6 +942,27 @@ impl Tagger<'_> {
                 if let Some((_, w)) = longest_ending(self.toks, floor, last, |s| lex.unit(s)) {
                     found.push((last - w..last, last..j));
                     j = last - w;
+                    continue;
+                }
+            }
+            // A later line or comma segment that is only a number: "403" as
+            // line 2 of `2309 1ST AVE NO`. A unit with no known designator.
+            // A name of two words or more must come first: `1921 NW` / `46`
+            // is a street cut across lines, not NW with unit 46.
+            let alone = last > name_lo + 1
+                && self.toks[last].seg != self.toks[last - 1].seg
+                && (last + 1 == self.toks.len() || self.toks[last + 1].seg != self.toks[last].seg);
+            if found.is_empty() && j == hi && alone && all_digits(t) {
+                found.push((last..last, last..j));
+                j = last;
+                continue;
+            }
+            // An ordinal before the designator: "3RD FLOOR".
+            if let Some((_, w)) = longest_ending(self.toks, floor + 1, j, |s| lex.unit(s)) {
+                let v = j - w - 1;
+                if v > name_lo && is_ordinal(self.text(v)) {
+                    found.push((j - w..j, v..v + 1));
+                    j = v;
                     continue;
                 }
             }
