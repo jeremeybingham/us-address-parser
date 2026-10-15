@@ -35,6 +35,8 @@ pub(crate) enum Tag {
     Name,
     Suffix,
     PostDir,
+    /// A state named before a highway prefix or route (Appendix F).
+    HighwayState,
     HighwayPrefix,
     HighwayRoute,
     /// Unit designator; 0 for the first unit, 1 for the second.
@@ -128,7 +130,7 @@ impl<'a> Tagger<'a> {
         let has = |tags: &[Tag], tag: Tag| tags.contains(&tag);
         let street_like = has(&self.tags, Tag::Name)
             || has(&self.tags, Tag::Suffix)
-            || has(&self.tags, Tag::HighwayPrefix);
+            || has(&self.tags, Tag::HighwayRoute);
         if street_like && !has(&self.tags, Tag::StreetNumber) && !self.zero_number {
             self.warn(Warning::MissingStreetNumber);
         }

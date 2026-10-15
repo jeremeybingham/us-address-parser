@@ -43,6 +43,7 @@ pub(crate) fn assemble(
     }
 
     let mut unparsed: Vec<String> = Vec::new();
+    let mut highway_state = None;
     let mut highway_prefix = None;
     let mut route_kind = None;
     let mut military_kind = None;
@@ -95,13 +96,24 @@ pub(crate) fn assemble(
                     record(addr, Component::StreetDirSuffix);
                 }
             }
+            Tag::HighwayState => {
+                highway_state = lex.state(&text).map(|l| l.value);
+                record(addr, Component::Highway);
+            }
             Tag::HighwayPrefix => {
                 highway_prefix = lex.highway(&text).map(|l| l.value);
                 record(addr, Component::Highway);
             }
             Tag::HighwayRoute => {
-                if let Some(prefix) = highway_prefix.take() {
+                let state = highway_state.take();
+                // Appendix F: a state with only a route is a HIGHWAY
+                // (`KENTUCKY 440` is `KY HIGHWAY 440`).
+                let prefix = highway_prefix
+                    .take()
+                    .or_else(|| state.and_then(|_| lex.highway("HIGHWAY")).map(|l| l.value));
+                if let Some(prefix) = prefix {
                     addr.highway.get_or_insert(Highway {
+                        state,
                         prefix,
                         route: text,
                     });

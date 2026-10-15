@@ -100,6 +100,8 @@ struct ExpectRoute {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ExpectHighway {
+    /// State code named in the highway name (`KY STATE HIGHWAY 1`).
+    state: Option<String>,
     /// Standard prefix: "COUNTY ROAD", "HIGHWAY", "FM".
     prefix: String,
     route: String,
@@ -183,9 +185,10 @@ fn expected_values(c: &Case) -> Values {
     v.insert("street_dir_suffix", e.street_dir_suffix.clone());
     v.insert(
         "highway",
-        e.highway
-            .as_ref()
-            .map(|h| format!("{} {}", h.prefix, h.route)),
+        e.highway.as_ref().map(|h| match &h.state {
+            Some(s) => format!("{s} {} {}", h.prefix, h.route),
+            None => format!("{} {}", h.prefix, h.route),
+        }),
     );
     v.insert("unit_type", e.unit_type.clone());
     v.insert("unit_number", e.unit_number.clone());
@@ -245,9 +248,10 @@ fn actual_values(a: &ParsedAddress) -> Values {
     );
     v.insert(
         "highway",
-        a.highway
-            .as_ref()
-            .map(|h| format!("{} {}", h.prefix.standard(), h.route)),
+        a.highway.as_ref().map(|h| match h.state {
+            Some(s) => format!("{} {} {}", s.code(), h.prefix.standard(), h.route),
+            None => format!("{} {}", h.prefix.standard(), h.route),
+        }),
     );
     v.insert("unit_type", a.unit_type.map(|u| u.abbr().to_string()));
     v.insert("unit_number", a.unit_number.clone());
@@ -379,6 +383,11 @@ fn validate(cases: &[(String, Case)], errors: &mut Vec<String>) {
                     "{at}: highway prefix {:?} is not a standard prefix",
                     h.prefix
                 ));
+            }
+            if let Some(s) = &h.state {
+                if !states.contains(s.as_str()) {
+                    errors.push(format!("{at}: highway state {s:?} is not a state code"));
+                }
             }
         }
         if let Some(m) = &e.military {
@@ -581,14 +590,7 @@ fn usps_output_round_trips_to_the_same_key() {
         let Some(a) = parse_case(&parser, c) else {
             continue;
         };
-        let u = a.to_usps();
-        let mut lines = Vec::new();
-        lines.extend(u.line2.clone());
-        lines.extend(u.line1.clone());
-        let last = u.last_line();
-        if !last.is_empty() {
-            lines.push(last);
-        }
+        let lines = a.to_usps().lines();
         if lines.is_empty() {
             continue;
         }

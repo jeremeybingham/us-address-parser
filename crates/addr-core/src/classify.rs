@@ -67,7 +67,14 @@ pub(crate) fn house_number(t: &str) -> Option<NumberShape> {
     }
     let after = rest.strip_prefix('-')?;
     if all_digits(after) {
-        return Some(NumberShape::Range);
+        // `1204-1206` is a range; `112-10` and `289-01` are one hyphenated
+        // address (Pub 28 Appendix D1, section 232).
+        let range = after.len() == d && after > &t[..d];
+        return Some(if range {
+            NumberShape::Range
+        } else {
+            NumberShape::Plain
+        });
     }
     (after.len() == 1 && after.bytes().all(|c| c.is_ascii_alphabetic()))
         .then_some(NumberShape::Plain)
@@ -187,6 +194,8 @@ mod tests {
         assert_eq!(house_number("12A"), Some(NumberShape::Plain));
         assert_eq!(house_number("12-A"), Some(NumberShape::Plain));
         assert_eq!(house_number("1204-1206"), Some(NumberShape::Range));
+        assert_eq!(house_number("112-10"), Some(NumberShape::Plain));
+        assert_eq!(house_number("289-01"), Some(NumberShape::Plain));
         assert_eq!(house_number("42ND"), None);
         assert!(is_ordinal("42ND") && !is_glued_ordinal("42ND"));
         assert!(is_glued_ordinal("409742ND"));
