@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is done: the key, USPS, RESO (Data Dictionary 2.0) and slug emitters. Progress is tracked in section 10. Planning date: 2026-10-14.
+Status: Milestones 0 to 4 done (scaffolding, data and types, parser, emitters, corpus and CLI). Emitters: the key, USPS, RESO (Data Dictionary 2.0) and slug emitters. Progress is tracked in section 10. Planning date: 2026-10-14.
 
 ---
 
@@ -376,7 +376,7 @@ Open questions to settle when this is picked up:
 
 ## 13. Open items for the author
 
-0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (reviewed and accepted by the author, 2026-10-15). Done since: the slug (`emit/slug.rs`). Done since: proptest no-panic/span-validity property (`tests/no_panic.rs`), which closes Milestone 3. Next: Milestone 4 (CLI, benches, emitter fields in the corpus). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (reviewed and accepted by the author, 2026-10-15). Done since: the slug (`emit/slug.rs`). Done since: proptest no-panic/span-validity property (`tests/no_panic.rs`), which closes Milestone 3. Done since: Milestone 4 (corpus expansion, `addr` CLI with `parse`, `parse-file` and `corpus test`, criterion benches, emitter expectations in the corpus). Next: Milestone 5 (Python wrapper). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
 
 Decisions recorded 2026-10-15:
 
