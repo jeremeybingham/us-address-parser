@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Milestone 4, corpus expansion: `tests/corpus/auction-tracker-golden.jsonl`
+  (26 `atg-` cases) from the raw address lines in auction-tracker's
+  `packages/radar/tests/golden/v2/*.csv`, hand-labeled. The tagger now skips
+  a ZIP ending the address line that repeats the ZIP on the last line
+  (`413 OLD CORRY FIELD RD B 32506` before `PENSACOLA, FL- 32506`).
 - RESO emitter (Milestone 3): `ParsedAddress::to_reso()` returns a
   `ResoAddress` with the RESO Data Dictionary 2.0 Property address fields
   (`StreetNumber`, `StreetNumberNumeric`, `StreetDirPrefix`, `StreetName`,

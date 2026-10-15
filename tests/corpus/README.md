@@ -122,6 +122,17 @@ auction-tracker keeps the predirectional, name and suffix in one
 Where that file's labels depend on its Florida place list, the case is left
 out (see below).
 
+### `auction-tracker-golden.jsonl`
+
+Ids start with `atg-`. Hand-labeled from the raw `address_line1` /
+`address_line2` columns of auction-tracker's
+`packages/radar/tests/golden/v2/*.csv` (Brevard, Charlotte, Citrus, Escambia,
+Hernando, Lee, Miami-Dade, Orange; reviewed 2026-10-15). Only the input
+shapes were taken, one case per distinct shape; the CSVs' parsed columns
+were not used as expected values. Ids `atg-006` and `atg-028` are unused
+(cases dropped after review: an ambiguous street-plus-ZIP round trip, and
+empty input, which is an error by design 6 rather than a parse).
+
 Not taken from auction-tracker:
 
 - `tests/golden/v2/*.csv`. These are auction-tracker's own parser output,
