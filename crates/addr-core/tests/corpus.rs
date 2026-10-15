@@ -34,6 +34,8 @@ struct Case {
     key: Option<String>,
     /// Unit-level key (`KeyOptions::unit()`); same conventions as `key`.
     key_unit: Option<String>,
+    /// Expected `slug()`, or `"none"`; absent means not checked.
+    slug: Option<String>,
     /// Expected `to_usps()` output; absent means not checked.
     usps: Option<ExpectUsps>,
     /// Expected `to_reso()` fields by Data Dictionary name; a field not
@@ -121,7 +123,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 25] = [
+const FIELDS: [&str; 26] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -145,12 +147,13 @@ const FIELDS: [&str; 25] = [
     "warnings",
     "key",
     "key_unit",
+    "slug",
     "usps",
     "reso",
 ];
 
 /// Fields checked only for the cases that give them.
-const OPTIONAL_FIELDS: [&str; 4] = ["key", "key_unit", "usps", "reso"];
+const OPTIONAL_FIELDS: [&str; 5] = ["key", "key_unit", "slug", "usps", "reso"];
 
 /// Data Dictionary 2.0 names a case's `reso` object may use.
 const RESO_FIELDS: [&str; 12] = [
@@ -255,6 +258,9 @@ fn expected_values(c: &Case) -> Values {
     if let Some(k) = &c.key_unit {
         v.insert("key_unit", Some(k.clone()));
     }
+    if let Some(k) = &c.slug {
+        v.insert("slug", Some(k.clone()));
+    }
     if let Some(u) = &c.usps {
         v.insert("usps", Some(usps_str(&u.line1, &u.line2, &u.last_line)));
     }
@@ -327,6 +333,7 @@ fn actual_values(a: &ParsedAddress) -> Values {
     let key = |o| Some(a.key(o).unwrap_or_else(|| "none".to_string()));
     v.insert("key", key(KeyOptions::property()));
     v.insert("key_unit", key(KeyOptions::unit()));
+    v.insert("slug", Some(a.slug().unwrap_or_else(|| "none".to_string())));
     let u = a.to_usps();
     let last = u.last_line();
     v.insert(
@@ -491,6 +498,7 @@ fn run(parser: &Parser, c: &Case) -> Values {
             let mut v: Values = FIELDS.iter().map(|&f| (f, None)).collect();
             v.insert("key", Some("none".to_string()));
             v.insert("key_unit", Some("none".to_string()));
+            v.insert("slug", Some("none".to_string()));
             v.insert("usps", Some(usps_str(&None, &None, &None)));
             v.insert("reso", Some(String::new()));
             v.insert("unparsed", Some("<error>".to_string()));

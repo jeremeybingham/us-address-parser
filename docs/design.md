@@ -2,7 +2,7 @@
 
 A Rust-core US address parsing library with a Python wrapper. This document summarizes the planning conversation, records decisions, and lists the initial files to build. It is written to be dropped into a fresh repo and handed to Claude Code.
 
-Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is started: the key, USPS and RESO (Data Dictionary 2.0) emitters are done, slug is next. Progress is tracked in section 10. Planning date: 2026-10-14.
+Status: Milestones 0 to 2 done (scaffolding, data and types, parser); the golden-corpus format, runner and first cases from Milestone 4 were brought forward. Milestone 3 (emitters) is done: the key, USPS, RESO (Data Dictionary 2.0) and slug emitters. Progress is tracked in section 10. Planning date: 2026-10-14.
 
 ---
 
@@ -224,9 +224,9 @@ Two distinct outputs:
 
 Unit handling: `KeyOptions { include_unit: bool }`, because property-level and unit-level matching are different needs. Make it explicit in the type, with no hidden default surprises; document the default.
 
-### 6.4 Key stability *(proposed, confirm)*
+### 6.4 Key stability *(confirmed)*
 
-City names are noisy and likely to be the field most often corrected by later tuning, so building the key from street components + ZIP5 + state (excluding city) keeps stored keys stable when city handling improves. Trade-off: addresses with missing ZIP get weaker keys; the key should record that (for example a distinct prefix or a marker) and a diagnostics warning should fire.
+City names are noisy and likely to be the field most often corrected by later tuning, so building the key from street components + ZIP5 + state (excluding city) keeps stored keys stable when city handling improves. Trade-off: addresses with missing ZIP get weaker keys; the key records that with the `k1n:` prefix and a diagnostics warning fires (`docs/key-format.md`). The slug is display-only and does include the city.
 
 ---
 
@@ -270,7 +270,7 @@ The format, runner and first cases are in place (`tests/corpus/README.md`); the 
 
 Build in this order. Each milestone should end with passing tests.
 
-Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 159 cases, all passing; runner compares components, warnings, keys and USPS output). Milestone 3 has begun (item 17 partly: `emit/key.rs`, `emit/usps.rs`, `docs/key-format.md`; the USPS layout rules were checked against the live Pub 28 text in October 2026, see `docs/usps-pub28-notes.md`); everything else is not started. `docs/key-format.md` and `docs/reso-mapping.md` are still stubs, and `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
+Progress (2026-10-14): Milestones 0, 1 and 2 are complete. Milestone 4 items 19 and 20 are partly done (corpus: 159 cases, all passing; runner compares components, warnings, keys and USPS output). Milestone 3 is complete (item 17: `emit/key.rs`, `emit/usps.rs`, `emit/reso.rs`, `emit/slug.rs`, `docs/key-format.md`; the USPS layout rules were checked against the live Pub 28 text in October 2026, see `docs/usps-pub28-notes.md`); everything else is not started. `addr-cli` is a skeleton with only `parse`. The corpus is hand-labeled and the parser was tuned against it, so 100% says little about unseen data; see the Risks section.
 
 ### Milestone 0: scaffolding (done)
 
@@ -376,7 +376,7 @@ Open questions to settle when this is picked up:
 
 ## 13. Open items for the author
 
-0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (the open questions there still need the author's review). Next: the slug (`emit/slug.rs`), then proptest/no-panic property, then Milestone 4 (CLI, benches). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (the open questions there still need the author's review). Done since: the slug (`emit/slug.rs`). Next: proptest/no-panic property, then Milestone 4 (CLI, benches). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
 
 1. Point Claude Code at the existing Florida parsing code so its rules and tests can seed the corpus (and decide whether it stays as a reference or is ported).
 2. Confirm the library name and crate/package names.

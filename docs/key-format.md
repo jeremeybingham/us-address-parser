@@ -1,7 +1,6 @@
 # Canonical key and slug spec (version k1)
 
-The slug is not written yet (Milestone 3, item 17). This page specifies the
-**key**.
+This page specifies the **key** (below) and the **slug** (last section).
 
 The key is a **public contract**. Stored keys must keep meaning the same
 thing, so any change to what an input produces needs a new version prefix
@@ -87,7 +86,26 @@ USPS rule.
 route, military line or general delivery, or a placeholder such as `NO SITUS`
 (`Placeholder` warning).
 
+## Slug
+
+`slug()` is a URL-safe, human-readable label. Unlike the key it is **not a
+contract**: it is not unique, not versioned, and may change when parsing or
+formatting improves. Never store it as an identifier; use the key.
+
+- Built from the Pub 28 style output (`to_usps()`): delivery line with its
+  unit, city, state, ZIP5. ZIP+4 is left out. Unlike the key, the city and
+  the unit type are included, because a slug is for people to read.
+- Lowercase ASCII letters and digits; every other run of characters becomes
+  one hyphen, with none at either end. Apostrophes are dropped (`O'BRIEN` ->
+  `obrien`) and `#` reads as `unit`, so `#4` gives `unit-4` while `Apt 4`
+  gives `apt-4`.
+- Missing parts are left out (`123-main-st`). `None` for a placeholder or an
+  address with no lines.
+- Example: `123 N. Main Street, Apt 4, Miami FL 33101` gives
+  `123-n-main-st-apt-4-miami-fl-33101`.
+
 ## Tests
 
-`tests/corpus/keys.jsonl` pins exact key strings (`key` and `key_unit`
-fields); unit tests in `crates/addr-core/src/emit/key.rs` cover the rules.
+`tests/corpus/keys.jsonl` pins exact key and slug strings (`key`, `key_unit`
+and `slug` fields); unit tests in `crates/addr-core/src/emit/key.rs` and
+`slug.rs` cover the rules.
