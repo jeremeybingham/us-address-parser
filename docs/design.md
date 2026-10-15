@@ -369,14 +369,14 @@ Open questions to settle when this is picked up:
 - **Model format compatibility** between CRFsuite-trained models and the `crfs` crate must be verified before Milestone 6 work.
 - **Key stability.** The key format is a public contract once stored; get it reviewed before release.
 - **Licensing.** Confirm the data provenance of every lexicon table before publishing, and keep MIT attribution for any usaddress-derived training data.
-- **Missing safety nets.** No proptest, fuzz targets or benchmarks exist yet, though the parser is written and the never-panic rule is only covered by one unit test. Add a proptest no-panic/span-validity property alongside Milestone 3.
+- **Missing safety nets.** The never-panic rule and span validity are now covered by proptest properties (`crates/addr-core/tests/no_panic.rs`: arbitrary and address-shaped strings, multi-field input, every emitter, `parse_many` consistency). Fuzz targets and benchmarks do not exist yet (Milestones 4 and 7).
 - **Python boundary overhead** for single-address calls; recommend `parse_many` in docs.
 
 ---
 
 ## 13. Open items for the author
 
-0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (the open questions there still need the author's review). Done since: the slug (`emit/slug.rs`). Next: proptest/no-panic property, then Milestone 4 (CLI, benches). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
+0. **Pick-up point (end of session 1).** Done: Milestones 0 to 2, the key emitter, the USPS emitter. Done since: RESO emitter and `docs/reso-mapping.md` against Data Dictionary 2.0 (the open questions there still need the author's review). Done since: the slug (`emit/slug.rs`). Done since: proptest no-panic/span-validity property (`tests/no_panic.rs`), which closes Milestone 3. Next: Milestone 4 (CLI, benches, emitter fields in the corpus). The Pub 28 verification list in `docs/usps-pub28-notes.md` is done except item 9, the release re-check of every lexicon table, which belongs to Milestone 7.
 
 1. Point Claude Code at the existing Florida parsing code so its rules and tests can seed the corpus (and decide whether it stays as a reference or is ported).
 2. Confirm the library name and crate/package names.
