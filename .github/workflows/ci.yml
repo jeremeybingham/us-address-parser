@@ -23,3 +23,23 @@ jobs:
         run: cargo test -p addr-core --test corpus -- --nocapture
       - name: Corpus emitter expectations agree with emit_expect.py
         run: python3 tools/corpus/emit_expect.py --check tests/corpus/*.jsonl
+
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build the extension and run the Python tests
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install maturin pytest usaddress
+          maturin develop --manifest-path crates/addr-py/Cargo.toml
+          pytest crates/addr-py/tests -q
