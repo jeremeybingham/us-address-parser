@@ -142,10 +142,11 @@ no places or no ZIPs.
 The tables are packed records in `OUT_DIR`, read with `include_bytes!`
 (`emit_places` in `build.rs` has the layout), not tables of `&str`. A
 `&str` table costs a pointer and a relocation per string: the first version
-added 13.4 MB to the `addr` binary. Packed, the national list adds **2.7
-MB** (stripped release binary 1.57 MB without it, 4.29 MB with it; the
-tables are 2.9 MB before linking: names 0.53, keys 0.87, index 0.68, rows
-0.45, ZIPs 0.37). `build.rs` takes about 2 seconds more.
+added 13.4 MB to the `addr` binary. Packed, the national list adds **2.9
+MB** (stripped release binary 1.57 MB without it, 4.49 MB with it; the
+tables are 3.1 MB before linking: names 0.53, keys 0.87, index 0.68, rows
+0.45, ZIPs 0.37, and 0.2 for the any-state name index that `is_place`
+uses). `build.rs` takes about 2 seconds more.
 
 ## Coverage
 
