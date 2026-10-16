@@ -1,7 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/addr-core", "crates/addr-cli"]
-# addr-py (PyO3, built with maturin) joins the workspace in Milestone 6.
+members = ["crates/addr-core", "crates/addr-cli", "crates/addr-py"]
 
 [workspace.package]
 version = "0.0.1"
