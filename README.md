@@ -10,7 +10,9 @@ database-ready identifiers (a stable canonical match key and a URL-safe slug).
 > usaddress. The place list (Milestone 5) is in progress: the Florida pack is
 > built, with open items listed in [`docs/packs/fl.md`](docs/packs/fl.md); a
 > national place list is next (its source data is gathered), then the Python
-> wrapper (Milestone 6). Nothing is published yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
+> wrapper (Milestone 6) and calibrated confidence (Milestone 7). Nothing is
+> published yet. [`docs/design.md`](docs/design.md) section 10 has the plan in
+> build order; section 13 has the open decisions.
 
 ## This is not an address validator
 

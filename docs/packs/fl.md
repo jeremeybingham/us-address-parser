@@ -133,28 +133,33 @@ matches it anyway.
 
 ## To do
 
-Still open (2026-10-16). Florida work found in the DBPR licensee export (counts are rows out of
-445,252 Florida addresses, after the 2026-10-16 fixes):
+Still open (2026-10-16): Florida work found in the DBPR licensee export
+(counts are rows out of 445,252 Florida addresses, after the 2026-10-16
+fixes). This section keeps the evidence; the work is scheduled as items 26
+to 28 in `docs/design.md` section 10, and the decisions are in its section
+13.
 
-- **Unincorporated communities the pack does not know.** 4,514 rows have a
-  city that matches no place, mostly real communities with no city
-  government: `TRINITY` (403), `AVE MARIA` (277), `COCONUT GROVE` (216),
-  `CITRUS SPRINGS` (170), `TIERRA VERDE` (154), `VIERA` (102), `HARMONY`
-  (101), `UNIVERSITY PARK` (84). Add them as `place` rows with their county
-  and ZIPs (the rest are typos and cut-off names such as `MAIMI`,
-  `PT CHARLOTTE`). Related open decision in `docs/design.md` section 13: a
-  city that is no known place, with a ZIP the pack knows.
-- **Rarer misspellings and the penthouse shape.** Suffix typos `DRT` (1 row)
-  and `LNE` (3), and the unit designator `SU` (16, `SU B`). A penthouse
-  written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE PH`; 162
-  rows) gives a designator with no number plus a PH unit; decide whether it
-  is one unit (`APT PH5213`) or two.
-- **`SR` and county road names.** `SR` before a route number is State Road
-  in Florida (`SR 54`; 143 rows), left out of the base tables because it is
-  State Route elsewhere (Appendix F). County road spellings such as
-  `CTY RD` and `CO RD` (19 rows) are not highway prefixes yet. Both belong
-  in `overrides.toml` or the highway table, with evidence like the `CR`
-  entry's.
+- **Unincorporated communities the pack does not know** (item 28, after the
+  national list). 4,514 rows have a city that matches no place, mostly real
+  communities with no city government: `TRINITY` (403), `AVE MARIA` (277),
+  `COCONUT GROVE` (216), `CITRUS SPRINGS` (170), `TIERRA VERDE` (154),
+  `VIERA` (102), `HARMONY` (101), `UNIVERSITY PARK` (84). Add them as
+  `place` rows with their county and ZIPs (the rest are typos and cut-off
+  names such as `MAIMI`, `PT CHARLOTTE`). Many are Census places (CDPs) that
+  the national list (item 24) adds, so remeasure after it. Related open
+  decision in `docs/design.md` section 13: a city that is no known place,
+  with a ZIP the pack knows.
+- **Rarer misspellings and the penthouse shape** (item 27). Suffix typos
+  `DRT` (1 row) and `LNE` (3), and the unit designator `SU` (16, `SU B`). A
+  penthouse written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE
+  PH`; 162 rows) gives a designator with no number plus a PH unit; it is to
+  be read as one unit (`APT PH5213`; `docs/design.md` decision 31).
+- **`SR` and county road names** (item 26). `SR` before a route number is
+  State Road in Florida (`SR 54`; 143 rows), left out of the base tables
+  because it is State Route elsewhere (Appendix F). County road spellings
+  such as `CTY RD` and `CO RD` (19 rows) are not highway prefixes yet. Both
+  belong in `overrides.toml` or the highway table, with evidence like the
+  `CR` entry's.
 
 ## Versioning
 

@@ -1,8 +1,8 @@
 # Comparison with usaddress
 
 How this parser is compared with the Python
-[usaddress](https://github.com/datamade/usaddress) library (design section 9
-and Milestone 8, item 35), and the results.
+[usaddress](https://github.com/datamade/usaddress) library (design sections 9
+and 10), and the results.
 
 ## Tools
 
@@ -41,11 +41,11 @@ plan items are in `docs/design.md`).
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) | Done |
 | Default state | None | None | `default_state` hint (decision 24) |
 | Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug | Done |
-| Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; confidence planned | Milestone 5 |
+| Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; confidence planned | Milestone 7 |
 | Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit | Done |
-| Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer (decision 22, Milestone 9); a user model file later (item 46) |
+| Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer (decision 22, Milestone 9); a user model file later (item 52) |
 | Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed` | Open decisions in design section 13 |
-| Display casing, long form | Keeps input case | Uppercase only | Open decisions (Milestone 9, item 45) |
+| Display casing, long form | Keeps input case | Uppercase only | Open decisions (Milestone 9, item 51) |
 | Batch and dataframes | Loop yourself | `parse_many` (parallel with `rayon`) | Pandas/Polars extras (decision 26, Milestone 9) |
 | Accuracy | Higher on suffix-less streets (84.8% vs 50.3% on the blind benchmark) | Higher with no city (99.0% vs 18.0%) | National place list (Milestone 5) |
 
@@ -203,7 +203,9 @@ Still open:
 
 ## Next steps
 
-- The place list (state packs) for the remaining city cases.
+- The place list for the remaining city cases (`docs/design.md` items 24
+  and 25), then a full rerun of this comparison and the CRF call (item 29).
 - The geocode benchmark is the blind test; rerun it after each rule change
   (commands in the local, uncommitted `local-data/README.md`). A hand-labeled sample (100 to 200 rows) of the
-  Florida files would add a blind test on the data this library targets.
+  Florida files would add a blind test on the data this library targets
+  (item 36).
