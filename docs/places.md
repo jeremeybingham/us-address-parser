@@ -129,9 +129,15 @@ no places or no ZIPs.
 - For every other state a name, variant or ZIP that would lead to two places
   is a build error, as in a pack. Names, counties and kinds are checked the
   same way.
-- Until the parser reads the national layer (design.md item 25), lookups
-  (`Lexicons::place`, `zip_places`, `places`) return only states with a pack.
-  The rest is in the tables and costs binary size, nothing else.
+- The parser reads the national layer for every state (design.md item 25):
+  `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52. So
+  the Florida behaviors work everywhere: a city on a line with no commas, a
+  street versus a city before a ZIP, a city run into the street, a cut-off
+  city completed from the ZIP, and the place from the ZIP.
+  `zip_city_mismatch` stays limited to states with a curated pack
+  (`Lexicons::has_pack`; decision 30), because the list names one place per
+  ZIP, and its place equals the written city on only 75.8% of the
+  benchmark's addresses.
 
 The tables are packed records in `OUT_DIR`, read with `include_bytes!`
 (`emit_places` in `build.rs` has the layout), not tables of `&str`. A

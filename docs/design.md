@@ -16,11 +16,12 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 **Status (2026-10-16):** Milestones 0 to 4 are done: data and types, the
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus, the
 `addr` CLI and benchmarks; so is the usaddress comparison. Milestone 5, the
-place list, is in progress: the Florida pack is built and used (293 corpus
-cases, all passing), and the national list is built and compiled in but not
-yet read by the parser outside Florida.
-**Next (section 10): item 25, the national place list in the parser** (item
-23, the dual-address slug, and item 24, the national data, are done). After Milestone 5 come the usaddress-shaped
+place list, is in progress: the Florida pack is built and used (301 corpus
+cases, all passing), and the national list is built, compiled in and read by
+the parser in every state.
+**Next (section 10): item 29, the benchmark rerun and the CRF call, with the
+Florida items 26 to 28 any time** (items 23 to 25, the dual-address slug and
+the national list, are done). After Milestone 5 come the usaddress-shaped
 features and the Python wrapper (Milestone 6), then calibrated confidence
 (Milestone 7; decision 27); the custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
@@ -390,6 +391,8 @@ Done:
   with no commas, a city run into the street, street versus city before a
   ZIP, cut-off cities completed, the place from the ZIP and
   `zip_city_mismatch`. Corpus `fl-001` to `fl-019`.
+- **The national list in the parser** (item 25): place lookups read all 52
+  states; see the item below for the measured effect.
 - **Slug follows the street for dual addresses** (item 23; decision 11). The
   slug is built from the street line and its units, like the key and the
   RESO output. `rg-040` to `rg-044` changed (`rg-045` is not a dual
@@ -426,7 +429,14 @@ To do, in order:
     cases
     from other states for each shape (`ST LOUIS`, `NORTH LITTLE ROCK`,
     `LA GRANGE PARK`, `ROARING BROOK TWP`); rerun `cargo bench` and record
-    the parse-time change.
+    the parse-time change. **Done:** corpus `pl-001` to `pl-008` (301 cases,
+    all passing); `fl-013` and `fl-019` now name their place. `is_place` got
+    its own any-state index (52 searches per call made the corpus 72%
+    slower; with it, 6.5%: 4.70 to 5.00 ms, single addresses unchanged
+    within noise). On the blind geocode benchmark the whole-address score
+    (coarse) went from 85.7% to 96.1% (usaddress 88.2%) and `PlaceName`
+    tokens from 87.6% to 96.8%; item 29 records the full rerun and the CRF
+    call.
 26. **Florida: `SR` and county road names** (`docs/packs/fl.md`, to do).
     `SR` before a route number is State Road in Florida, and `CTY RD`, `CO
     RD` are county roads. Adds a highway override to the pack's

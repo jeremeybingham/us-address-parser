@@ -154,6 +154,23 @@ addresses), a suffix word (3.3%) or a directional (2.5%). A place list fixes
 these; the Census 2024 Gazetteer (places and county subdivisions, public
 domain) covers 73.5% of the benchmark's cities.
 
+After the national place list (Milestone 5, item 25), with the same
+parsers and the same 30,622 addresses:
+
+| | Ours, before the list | Ours, with the list | usaddress 0.5.16 |
+|---|---|---|---|
+| Tokens (coarse) | 97.2% | 99.2% | 97.7% |
+| Whole address (coarse) | 85.7% | 96.1% | 88.2% |
+| Tokens (fine) | 93.3% | 95.8% | 94.7% |
+| Whole address (fine) | 72.3% | 82.0% | 77.3% |
+| `PlaceName` tokens | 87.6% | 96.8% | 96.8% |
+
+The list finds 87.4% of the benchmark's cities (`docs/places.md`). The
+largest remaining error is still a city taken for street words (1,160
+tokens, `281 EVELYN DR DOTHAN`: a city the list lacks or one that reads as a
+street). The full rerun and the decision on the CRF fallback are design.md
+item 29.
+
 ### Raw files (no labels; agreement, coarse)
 
 | File | Addresses | Same on every token | Tokens agreeing | Tokens ours left unplaced |
