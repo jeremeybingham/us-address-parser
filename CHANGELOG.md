@@ -4,6 +4,18 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Wheels for Linux, macOS and Windows (Milestone 6, item 35)
+
+- `.github/workflows/wheels.yml` builds abi3 wheels with maturin on every pull
+  request and push to `main`: Linux x86_64 and aarch64 (manylinux), macOS
+  (universal2, one file for both architectures) and Windows x64, uploaded as
+  artifacts. Each wheel is then installed (not the source tree) on Python
+  3.10 and 3.13 and the pytest suite runs, which shows one abi3 file serving
+  both ends of the supported range. Nothing is published (item 46).
+- Known gap for publishing: an sdist does not carry the workspace's `data/`
+  directory, so building from it fails; the tables have to move into the
+  package first.
+
 ### Polars in the batch recipe (Milestone 6, item 34 follow-up)
 
 - The Python README now has a tested Polars recipe next to the pandas one:

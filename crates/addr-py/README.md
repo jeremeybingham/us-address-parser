@@ -129,6 +129,12 @@ The differences (tokens that cannot be placed are left out of `tag()`, the
 labels this library does not model) are in the repository README, "Coming from
 usaddress".
 
+## Wheels
+
+Every pull request builds abi3 wheels (Linux x86_64 and aarch64, macOS
+universal2, Windows x64) and tests each on Python 3.10 and 3.13
+(`.github/workflows/wheels.yml`). Nothing is published yet.
+
 ## Build from source
 
 ```sh

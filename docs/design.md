@@ -587,6 +587,20 @@ wrapper does not change when it is filled.
 35. **Wheels.** `.github/workflows/wheels.yml`: abi3 wheels for Linux,
     macOS and Windows, built and tested on every pull request. No
     publishing yet (item 46).
+    **Done:** `wheels.yml` builds one wheel each for Linux x86_64 and aarch64
+    (manylinux), macOS (universal2: both architectures in one file, built on
+    the Apple-silicon runner) and Windows x64, with `PyO3/maturin-action`,
+    and uploads them as artifacts. A second job installs each wheel (not the
+    source tree) on Python 3.10 and 3.13 and runs the pytest suite, so one
+    abi3 file is shown to serve both ends of the range (8 test jobs); usaddress,
+    pandas and polars are installed best-effort and their tests skip when a
+    platform has no wheel for them. Run locally: one wheel built on Linux,
+    installed into fresh 3.10 and 3.13 environments, 27 tests pass on each.
+    **For item 46:** `maturin sdist` does not include the workspace's `data/`
+    directory (which `addr-core/build.rs` reads from `../../data`), so a build
+    from the sdist would fail; the tables must move inside the package first
+    (the note at the top of `build.rs`). Wheels are built from the checkout
+    and are not affected.
 
 ### Milestone 7: calibrated confidence
 
@@ -631,7 +645,9 @@ Python toolchain and no retraining.
     names are free on crates.io and PyPI early **(any time)**, so a taken
     name is found before more docs use it.
 46. **Publishing:** crates.io and PyPI workflows; turn the CHANGELOG's
-    "Unreleased" into the first release.
+    "Unreleased" into the first release. The data tables must be inside the
+    published packages first (the sdist and the crate lack `data/`; see item
+    35).
 
 ### Milestone 9: customization and extras (after Milestone 6; may run beside 7 and 8)
 
