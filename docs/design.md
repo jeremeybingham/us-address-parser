@@ -18,8 +18,8 @@ rule parser, the key, USPS, RESO and slug emitters, the golden corpus, the
 `addr` CLI and benchmarks; so is the usaddress comparison. Milestone 5, the
 place list, is in progress: the Florida pack is built and used (293 corpus
 cases, all passing), and the national list's source data is downloaded.
-**Next (section 10): item 23, the dual-address slug, then items 24 and 25,
-the national place list.** After Milestone 5 come the usaddress-shaped
+**Next (section 10): items 24 and 25, the national place list** (item 23,
+the dual-address slug, is done). After Milestone 5 come the usaddress-shaped
 features and the Python wrapper (Milestone 6), then calibrated confidence
 (Milestone 7; decision 27); the custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
@@ -389,14 +389,13 @@ Done:
   with no commas, a city run into the street, street versus city before a
   ZIP, cut-off cities completed, the place from the ZIP and
   `zip_city_mismatch`. Corpus `fl-001` to `fl-019`.
+- **Slug follows the street for dual addresses** (item 23; decision 11). The
+  slug is built from the street line and its units, like the key and the
+  RESO output. `rg-040` to `rg-044` changed (`rg-045` is not a dual
+  address).
 
 To do, in order:
 
-23. **Slug follows the street for dual addresses** (decision 11). Build the
-    slug from `street_line()`; update the slug section of
-    `docs/key-format.md`, `tools/corpus/emit_expect.py` and the slug
-    expectations of `rg-040` to `rg-045`. Small and independent; it goes
-    first because Python exposes the slug.
 24. **National place data** (`data/places/`, feature `places-us`, on by
     default). Data only: no parser behavior changes, so the PR is the
     builder, its checks and the compiled tables.
@@ -781,11 +780,11 @@ extensible; no state-specific rule in the tagger.
     list are unlikely to close.
 11. **Slug for dual addresses: follow the street.** The key and the RESO
     output already use the street; only the USPS output writes the PO Box,
-    because Pub 28 section 215 says so for the mailpiece. The slug will be
+    because Pub 28 section 215 says so for the mailpiece. The slug is
     built from the street line, as the RESO emitter's `UnparsedAddress` is
     (the shared `street_line()` helper in `emit/usps.rs`), so every
     identifier names the same place. The slug is not a contract, so this
-    needs no version change. Planned before the Python wrapper (Milestone 6),
+    needs no version change. Done before the Python wrapper (Milestone 6),
     since Python exposes the slug.
 12. **`Diagnostics::confidence`: a calibrated probability.** A number from
     0.0 to 1.0: the chance that the whole parse (every component) is right,

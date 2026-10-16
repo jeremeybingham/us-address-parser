@@ -10,14 +10,22 @@ impl ParsedAddress {
     /// to name (no address lines, or a placeholder such as "NO SITUS").
     ///
     /// Built from the Pub 28 style output ([`Self::to_usps`]): delivery line
-    /// with its unit, city, state and ZIP5. ZIP+4 is left out. The slug says
-    /// nothing about whether the address exists or is deliverable.
+    /// with its unit, city, state and ZIP5. ZIP+4 is left out. A dual
+    /// address (street and PO Box) uses the street and its units, like the
+    /// key and the RESO output, not the PO Box the USPS output writes. The
+    /// slug says nothing about whether the address exists or is deliverable.
     pub fn slug(&self) -> Option<String> {
         if self.diagnostics.has(&Warning::Placeholder) {
             return None;
         }
         let u = self.to_usps();
-        let parts = [u.line1, u.city, u.state, u.zip.map(|z| z[..5].to_string())];
+        let line1 = if self.is_dual() {
+            self.street_line()
+                .map(|s| format!("{s} {}", self.units_text()))
+        } else {
+            u.line1
+        };
+        let parts = [line1, u.city, u.state, u.zip.map(|z| z[..5].to_string())];
         let text = parts.into_iter().flatten().collect::<Vec<_>>().join(" ");
         let slug = slugify(&text);
         (!slug.is_empty()).then_some(slug)
@@ -100,6 +108,18 @@ mod tests {
         assert_eq!(
             slug("PO Box 12, Tampa FL 33601").as_deref(),
             Some("po-box-12-tampa-fl-33601")
+        );
+    }
+
+    #[test]
+    fn dual_address_follows_the_street() {
+        assert_eq!(
+            slug("265 Aspen Dr Unit 2 PO Box 2504, Jackson WY 83001").as_deref(),
+            Some("265-aspen-dr-unit-2-jackson-wy-83001")
+        );
+        assert_eq!(
+            slug("1679 E Orangethorpe Ave PO Box 365, Atwood CA 92811").as_deref(),
+            Some("1679-e-orangethorpe-ave-atwood-ca-92811")
         );
     }
 

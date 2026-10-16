@@ -4,6 +4,14 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Slug follows the street for dual addresses
+
+- `slug()` of an address with a street and a PO Box now names the street and
+  its units (`9418-cuba-rd-hayes-va-23072`) instead of the PO Box, so the
+  slug, key and RESO output agree. The USPS output still writes the PO Box
+  (Pub 28 section 215). The slug is not a contract, so the key is unchanged.
+  Corpus `rg-040` to `rg-044`; `docs/key-format.md`.
+
 ### `addr parse-file`: every component has a column
 
 - New columns `addr_second_unit_type`, `addr_second_unit_number` (after

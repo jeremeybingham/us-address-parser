@@ -121,11 +121,10 @@ formatting improves. Never store it as an identifier; use the key.
   gives `apt-4`.
 - Missing parts are left out (`123-main-st`). `None` for a placeholder or an
   address with no lines.
-- A dual address (street and PO Box) follows the USPS output, so its slug
-  names the PO Box (`po-box-100-hayes-va-23072`) while its key uses the
-  street. Planned: build it from the street line instead, so the
-  slug, key and RESO output all name the street (`docs/design.md` section
-  13, decision 11).
+- A dual address (street and PO Box) is built from the street line and its
+  units, not the PO Box the USPS output writes, so the slug, key and RESO
+  output all name the street (`9418-cuba-rd-hayes-va-23072`; `docs/design.md`
+  section 13, decision 11).
 - Example: `123 N. Main Street, Apt 4, Miami FL 33101` gives
   `123-n-main-st-apt-4-miami-fl-33101`.
 
