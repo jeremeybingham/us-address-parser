@@ -140,7 +140,7 @@ crates/
                             # input, lexicon, types, emit/{key,usps,reso,slug,usaddress}, corpus
     tests/                  # corpus.rs, no_panic.rs (proptest), usaddress_gold.rs
   addr-cli/                 # `addr` binary: parse, parse-file, corpus test
-  addr-py/                  # PyO3 bindings (planned, Milestone 6; README only)
+  addr-py/                  # PyO3 bindings: src/lib.rs, python/us_address_parser/ (package, stubs), tests/ (pytest)
 data/                       # suffixes, directionals, units, states, special (.toml)
 benches/parse.rs            # criterion benches
 tests/
@@ -274,7 +274,7 @@ does include the city.
 
 ---
 
-## 7. Python wrapper (`addr-py`, Milestone 6, not started)
+## 7. Python wrapper (`addr-py`, Milestone 6, item 33 done)
 
 - PyO3 with maturin; **abi3 wheels**, minimum Python **3.10**.
 - Python import name `us_address_parser` (section 13, decision 2).
@@ -557,6 +557,16 @@ wrapper does not change when it is filled.
       `test_usaddress_compat.py` (`tag` and `parse_tokens` against
       `usaddress` when it is installed); a CI job that runs `maturin
       develop` and `pytest` on Linux.
+    **Done:** the crate is in the workspace (`test = false` and `doctest =
+    false`, so plain `cargo test` and `clippy` need no libpython); the module
+    is `us_address_parser._core` (pyo3 0.30, abi3-py310, `rust-version`
+    1.83 for the crate), re-exported by the package; `ParsedAddress` is
+    frozen and its dict-valued properties (`place`, `highway`, `rural_route`,
+    `military`) are plain dicts; `ParseError` is a `ValueError`; a `Parser`
+    class holds `default_state`. `parse_many` already releases the GIL and
+    runs in parallel (the `rayon` feature), so item 34 is its tests, benchmark
+    and pandas recipe. 17 pytest tests, including `tag` against usaddress
+    (99.3% identical dicts); a CI job on Python 3.10 and 3.13.
 34. **`parse_many`**, releasing the GIL during the Rust work, with
     `test_batch.py`, a benchmark against a Python loop of `parse`, and the
     pandas recipe in the package README.

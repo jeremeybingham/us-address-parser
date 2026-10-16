@@ -139,7 +139,7 @@ cargo run -p addr-cli -- corpus test
 ```
 crates/addr-core/   pure Rust library (no Python dependency)
 crates/addr-cli/    `addr` command-line tool
-crates/addr-py/     PyO3 bindings (planned, Milestone 6)
+crates/addr-py/     PyO3 bindings and the `us_address_parser` package
 data/               lexicon tables (Pub 28 suffixes, units, states, ...) and
                     national place list (data/places/), state
                     packs (data/packs/), compiled into static tables by

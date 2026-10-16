@@ -4,6 +4,24 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### The Python wrapper (Milestone 6, item 33)
+
+- `crates/addr-py` joins the workspace: the extension module
+  `us_address_parser._core` (PyO3 0.30, abi3 for Python 3.10 and later, built
+  with maturin) and the `us_address_parser` package with type stubs and
+  `py.typed`.
+- `parse`, `parse_fields`, `parse_many` (the GIL is released and the batch
+  parses in parallel), `tag` and `parse_tokens` (usaddress's shapes),
+  `address_type`, and a `Parser(default_state=...)`. A read-only
+  `ParsedAddress` with the components, `place`, `warnings`, `key()`,
+  `slug()`, `to_usps()`, `to_reso()`, `to_usaddress_tags()`, `tag()`,
+  `repeated_labels()` and `to_dict()`. `ParseError` (a `ValueError`) only for
+  input with no address text; a `default_state` that is not a state raises
+  `ValueError`.
+- 17 pytest tests (`crates/addr-py/tests`), including `tag` against usaddress
+  when it is installed, and a CI job (Python 3.10 and 3.13). Plain `cargo
+  test` and `clippy` need no libpython (the crate has no Rust test target).
+
 ### `tag()` and `address_type()` (Milestone 6, item 31, commit 1)
 
 - `ParsedAddress::tag()` is the counterpart of `usaddress.tag()`: tokens that
