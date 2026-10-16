@@ -22,6 +22,15 @@ and 10), and the results.
       [--no-header] --out report.md
   ```
 
+- `tag` mode of the same script compares the joined dicts of
+  `ParsedAddress::tag()` (`addr parse --tag`) with `usaddress.tag()`, and the
+  address types:
+
+  ```
+  uv run --with usaddress python tools/compare/compare_usaddress.py \
+      --out tag-report.md tag tests/external/usaddress/*.xml
+  ```
+
 - `crates/addr-core/tests/usaddress_gold.rs`: scores this parser alone on
   the vendored test files in `cargo test`, and fails if the score falls below
   the recorded floor. No Python needed.
@@ -37,7 +46,7 @@ plan items are in `docs/design.md`).
 |---|---|---|---|
 | Install and call | `pip install`; `parse`, `tag` | Rust crate and CLI; Python wrapper not built | Milestone 6 |
 | Token labels | `parse()` | `to_usaddress_tags()` | Done; `parse_tokens` in Python |
-| Joined components and type | `tag()` returns a dict and `Street Address` / `PO Box` / `Ambiguous`; raises `RepeatedLabelError` | None yet | `tag()`, `address_type()`; warning, not an error (decision 23) |
+| Joined components and type | `tag()` returns a dict and `Street Address` / `PO Box` / `Ambiguous`; raises `RepeatedLabelError` | `tag()`, `address_type()`; a repeated label is reported, not an error (decision 23) | Done; Python in Milestone 6 |
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) | Done |
 | Default state | None | `default_state` hint, `--default-state` (decision 24) | Done |
 | Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug | Done |
@@ -140,6 +149,27 @@ Tokens: ours 99.4% before and 99.5% after; usaddress 100.0%. Nine more
 addresses are in scope after the change because `BuildingName` is now
 modeled. Over all in-scope addresses (the `cargo test` figure): 99.76% of
 47,351 tokens and 99.46% of 9,036 addresses.
+
+### `tag()` against `usaddress.tag()` (2026-10-16)
+
+On the strings of usaddress's test files that use only labels this parser
+models (8,108 addresses, 6,658 of them in usaddress's training files):
+
+| | |
+|---|---|
+| Whole joined dict identical | 8,043 of 8,103 compared (99.3%) |
+| `usaddress.tag()` raised `RepeatedLabelError` | 5 (ours joined them, but its parse repeated no label on those) |
+| Address type identical | 8,088 of 8,103 (99.8%) |
+
+The 60 dicts that differ are the same boundary choices as the token scores
+above: `SAINT JOHN W ST` (the `W` in the name or a postdirectional), a
+`BUSINESS` or `LH` suffix word, `TWP` in the city, a number range
+(`5240;5220`) or an `AddressNumberSuffix` (`214 B`), which this parser keeps in
+`AddressNumber` or leaves out, and the labels it does not model
+(`church street station` as `BuildingName`). The 15 type differences are an
+address with no `AddressNumber` or `USPSBoxID` here (usaddress called 8 of them
+a Street Address and 7 a PO Box). Rerun it after a parser change; it prints
+every label that differs.
 
 ### Geocode benchmark (blind)
 

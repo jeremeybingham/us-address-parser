@@ -122,6 +122,29 @@ pub fn usaddress_record(input: &str, tags: &[UsaddressTag]) -> Value {
     json!({ "input": input, "tags": tags })
 }
 
+/// The record printed by `addr parse --tag`: the parse joined by usaddress
+/// label (`tag()`), the address type, and usaddress's own type name.
+/// `None` is an input with no usable text.
+pub fn tag_record(input: &str, a: Option<&ParsedAddress>) -> Value {
+    let Some(a) = a else {
+        return json!({ "input": input, "tag": null, "address_type": null,
+            "usaddress_type": null, "repeated_labels": [] });
+    };
+    let t = a.tag();
+    let comps: serde_json::Map<String, Value> = t
+        .components()
+        .iter()
+        .map(|(l, v)| ((*l).to_string(), Value::String(v.clone())))
+        .collect();
+    json!({
+        "input": input,
+        "tag": comps,
+        "address_type": t.address_type().code(),
+        "usaddress_type": t.usaddress_type(),
+        "repeated_labels": t.repeated_labels(),
+    })
+}
+
 /// Columns `addr parse-file` appends, in order.
 pub const COLUMNS: [&str; 30] = [
     "street_number",

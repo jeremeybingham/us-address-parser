@@ -47,6 +47,15 @@ pub struct Case {
     /// Expected `ParsedAddress::place` as `"NAME (source)"`, such as
     /// `"WEST PALM BEACH (name)"`, or `"none"`. Absent means not checked.
     place: Option<String>,
+    /// Expected `address_type().code()` (`"street"`, `"po_box"`, ...). Absent
+    /// means not checked.
+    address_type: Option<String>,
+    /// Expected `tag()`: usaddress label to joined value. A label not listed
+    /// must be absent. Absent means not checked.
+    tag: Option<BTreeMap<String, String>>,
+    /// Labels `tag()` joined from separate runs (`repeated_label`).
+    #[serde(default)]
+    tag_repeated: Vec<String>,
     #[serde(default)]
     #[allow(dead_code)]
     note: Option<String>,
@@ -131,7 +140,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 29] = [
+const FIELDS: [&str; 31] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -161,10 +170,21 @@ const FIELDS: [&str; 29] = [
     "usps",
     "reso",
     "place",
+    "address_type",
+    "tag",
 ];
 
 /// Fields checked only for the cases that give them.
-const OPTIONAL_FIELDS: [&str; 6] = ["key", "key_unit", "slug", "usps", "reso", "place"];
+const OPTIONAL_FIELDS: [&str; 8] = [
+    "key",
+    "key_unit",
+    "slug",
+    "usps",
+    "reso",
+    "place",
+    "address_type",
+    "tag",
+];
 
 /// Data Dictionary 2.0 names a case's `reso` object may use.
 const RESO_FIELDS: [&str; 12] = [
@@ -180,6 +200,27 @@ const RESO_FIELDS: [&str; 12] = [
     "PostalCode",
     "PostalCodePlus4",
     "UnparsedAddress",
+];
+
+/// The usaddress labels this parser produces (`ParsedAddress::tag`).
+const USADDRESS_LABELS: [&str; 17] = [
+    "AddressNumber",
+    "StreetNamePreDirectional",
+    "StreetNamePreType",
+    "StreetName",
+    "StreetNamePostType",
+    "StreetNamePostDirectional",
+    "OccupancyType",
+    "OccupancyIdentifier",
+    "BuildingName",
+    "PlaceName",
+    "StateName",
+    "ZipCode",
+    "USPSBoxType",
+    "USPSBoxID",
+    "USPSBoxGroupType",
+    "USPSBoxGroupID",
+    "Recipient",
 ];
 
 type Values = BTreeMap<&'static str, Option<String>>;
@@ -286,7 +327,40 @@ fn expected_values(c: &Case) -> Values {
     if let Some(p) = &c.place {
         v.insert("place", Some(p.clone()));
     }
+    if let Some(t) = &c.address_type {
+        v.insert("address_type", Some(t.clone()));
+    }
+    if let Some(t) = &c.tag {
+        v.insert(
+            "tag",
+            Some(tag_str(
+                t.iter().map(|(k, v)| (k.as_str(), v.as_str())),
+                c.tag_repeated.iter().map(String::as_str),
+            )),
+        );
+    }
     v
+}
+
+/// `Label=value` pairs sorted by label, then the labels joined from
+/// separate runs, so the order a case lists them in does not matter.
+fn tag_str<'a>(
+    pairs: impl IntoIterator<Item = (&'a str, &'a str)>,
+    repeated: impl IntoIterator<Item = &'a str>,
+) -> String {
+    let sorted: BTreeMap<&str, &str> = pairs.into_iter().collect();
+    let mut rep: Vec<&str> = repeated.into_iter().collect();
+    rep.sort_unstable();
+    let body = sorted
+        .iter()
+        .map(|(k, v)| format!("{k}={v}"))
+        .collect::<Vec<_>>()
+        .join("; ");
+    if rep.is_empty() {
+        body
+    } else {
+        format!("{body} | repeated: {}", rep.join(","))
+    }
 }
 
 fn actual_values(a: &ParsedAddress) -> Values {
@@ -366,6 +440,15 @@ fn actual_values(a: &ParsedAddress) -> Values {
         Some(a.place.map_or("none".to_string(), |m| {
             format!("{} ({})", m.place.name(), m.source.code())
         })),
+    );
+    let t = a.tag();
+    v.insert("address_type", Some(t.address_type().code().to_string()));
+    v.insert(
+        "tag",
+        Some(tag_str(
+            t.components().iter().map(|(k, v)| (*k, v.as_str())),
+            t.repeated_labels().iter().copied(),
+        )),
     );
     v
 }
@@ -491,6 +574,25 @@ fn validate(cases: &[(String, Case)], errors: &mut Vec<String>) {
                 errors.push(format!("{at}: unknown warning code {w:?}"));
             }
         }
+        if let Some(t) = &c.address_type {
+            let ok = [
+                "street",
+                "po_box",
+                "rural_route",
+                "military",
+                "general_delivery",
+                "dual",
+                "unknown",
+            ];
+            if !ok.contains(&t.as_str()) {
+                errors.push(format!("{at}: unknown address_type {t:?}"));
+            }
+        }
+        for k in c.tag.iter().flat_map(BTreeMap::keys).chain(&c.tag_repeated) {
+            if !USADDRESS_LABELS.contains(&k.as_str()) {
+                errors.push(format!("{at}: unknown usaddress label {k:?}"));
+            }
+        }
         for k in c.reso.iter().flat_map(BTreeMap::keys) {
             if !RESO_FIELDS.contains(&k.as_str()) {
                 errors.push(format!("{at}: unknown RESO field {k:?}"));
@@ -552,6 +654,8 @@ fn run_case(parser: &Parser, c: &Case) -> Values {
             v.insert("usps", Some(usps_str(&None, &None, &None)));
             v.insert("reso", Some(String::new()));
             v.insert("place", Some("none".to_string()));
+            v.insert("address_type", Some("unknown".to_string()));
+            v.insert("tag", Some(String::new()));
             v.insert("unparsed", Some("<error>".to_string()));
             v
         }

@@ -6,16 +6,21 @@ through `usaddress.parse`. Run with usaddress available, for example:
 
     cargo build --release -p addr-cli
     uv run --with usaddress python tools/compare/compare_usaddress.py \
-        gold tests/external/usaddress/*.xml --out report.md
+        --out report.md gold tests/external/usaddress/*.xml
 
     uv run --with usaddress python tools/compare/compare_usaddress.py \
-        raw data.csv --column address [--line2 C --city C --state C --zip C] \
-        [--no-header] [--limit N] --out report.md
+        --out report.md raw data.csv --column address \
+        [--line2 C --city C --state C --zip C] [--no-header] [--limit N]
+
+    uv run --with usaddress python tools/compare/compare_usaddress.py \
+        --out tag-report.md tag tests/external/usaddress/*.xml
 
 `gold` scores both against usaddress's own labeled test files (held out from
 its training data; see tests/external/usaddress/README.md). `raw` has no
-labels: it reports where the two parsers disagree. The scoring rules are in
-docs/usaddress-comparison.md.
+labels: it reports where the two parsers disagree. `tag` compares the joined
+dicts of `ParsedAddress::tag()` (`addr parse --tag`) with `usaddress.tag()` on
+the strings of the same files, and the address types. The scoring rules are
+in docs/usaddress-comparison.md.
 """
 import argparse
 import collections
@@ -94,6 +99,33 @@ def theirs(strings):
             parsed = []
         spans = byte_spans(s, [t for t, _ in parsed])
         out.append([(sp[0], sp[1], l) for sp, (_, l) in zip(spans, parsed) if sp])
+    return out
+
+
+def ours_tags(strings, binary):
+    """[record or None] per string, from `addr parse --tag`."""
+    text = "\n".join(s.replace("\n", " ") for s in strings) + "\n"
+    run = subprocess.run(
+        [binary, "parse", "--tag"], input=text.encode(), capture_output=True, check=False
+    )
+    lines = run.stdout.decode().splitlines()
+    if len(lines) != len(strings):
+        sys.exit(f"addr returned {len(lines)} records for {len(strings)} inputs")
+    return [json.loads(l) if json.loads(l)["tag"] is not None else None for l in lines]
+
+
+def theirs_tags(strings):
+    """[(dict, type) or None for RepeatedLabelError, or "error"] per string."""
+    import usaddress  # noqa: PLC0415
+
+    out = []
+    for s in strings:
+        try:
+            out.append(usaddress.tag(s))
+        except usaddress.RepeatedLabelError:
+            out.append(None)
+        except Exception:  # noqa: BLE001
+            out.append("error")
     return out
 
 
@@ -340,6 +372,74 @@ def raw_cmd(args):
     return report
 
 
+def tag_cmd(args):
+    seen = load_seen(args.files, args.training_overlap)
+    strings, rows = [], []
+    for path in args.files:
+        for s, toks in load_gold(path):
+            if any(l in OUT_OF_SCOPE for _, l in toks):
+                continue
+            strings.append(s)
+    strings = list(dict.fromkeys(strings))
+    mine, other = ours_tags(strings, args.addr), theirs_tags(strings)
+    c = collections.Counter()
+    label_diff = collections.defaultdict(collections.Counter)
+    example = {}
+    types = collections.Counter()
+    for s, m, t in zip(strings, mine, other):
+        c["addresses"] += 1
+        c["seen" if key(s) in seen else "held_out"] += 1
+        if m is None or t == "error":
+            c["unusable"] += 1
+            continue
+        if t is None:
+            c["usaddress_repeated_label_error"] += 1
+            c["...and ours reported a repeated label"] += bool(m["repeated_labels"])
+            continue
+        theirs_dict, theirs_type = t
+        if m["repeated_labels"]:
+            c["ours_repeated_label_only"] += 1
+        types[(m["usaddress_type"], theirs_type)] += 1
+        same = True
+        for label in sorted(set(m["tag"]) | set(theirs_dict)):
+            a, b = m["tag"].get(label), theirs_dict.get(label)
+            if a == b:
+                continue
+            same = False
+            kind = "only ours" if b is None else "only usaddress" if a is None else "value differs"
+            label_diff[label][kind] += 1
+            example.setdefault((label, kind), (s, a, b))
+        c["same_dict"] += same
+        c["compared"] += 1
+    n = c["compared"]
+    report = [
+        "# usaddress.tag() vs ParsedAddress::tag()", "",
+        "Strings of usaddress's labeled test files, minus those that use a label this "
+        "parser does not model. Rules: docs/usaddress-comparison.md.", "",
+        f"- Addresses: {c['addresses']} ({c['held_out']} not in usaddress's training files, "
+        f"{c['seen']} in them); unusable (no text, or usaddress failed): {c['unusable']}",
+        f"- usaddress raised RepeatedLabelError: {c['usaddress_repeated_label_error']} "
+        f"(ours reported a repeated label on {c['...and ours reported a repeated label']} of them); "
+        f"ours reported one where usaddress did not: {c['ours_repeated_label_only']}",
+        f"- Compared (neither failed): {n}; the whole dict is the same on {c['same_dict']} ({pct(c['same_dict'], n)})",
+        "", "## Where the joined values differ (labels, by kind)", "",
+        "| Label | Value differs | Only ours | Only usaddress | Example (ours / usaddress) |",
+        "|---|---|---|---|---|",
+    ]
+    for label, k in sorted(label_diff.items(), key=lambda kv: -sum(kv[1].values()))[: args.top]:
+        kind = max(k, key=k.get)
+        s, a, b = example[(label, kind)]
+        report.append(
+            f"| {label} | {k['value differs']} | {k['only ours']} | {k['only usaddress']} "
+            f"| `{s}`: `{a}` / `{b}` |"
+        )
+    report += ["", "## Address type (usaddress_type() / usaddress's)", "",
+               "| Ours | usaddress | Addresses |", "|---|---|---|"]
+    for (a, b), k in types.most_common():
+        report.append(f"| {a} | {b} | {k} |")
+    return report
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--addr", default="target/release/addr", help="path to the addr binary")
@@ -349,6 +449,9 @@ def main():
     g = sub.add_parser("gold", help="score both parsers on usaddress-format XML")
     g.add_argument("files", nargs="+")
     g.add_argument("--training-overlap", help="list of addresses usaddress trained on (default: in_training.txt beside the files)")
+    t = sub.add_parser("tag", help="compare ParsedAddress::tag() with usaddress.tag()")
+    t.add_argument("files", nargs="+")
+    t.add_argument("--training-overlap", help="as for gold")
     r = sub.add_parser("raw", help="compare both parsers on unlabeled input")
     r.add_argument("file", help=".csv, or text with one address per line")
     r.add_argument("--column")
@@ -359,7 +462,7 @@ def main():
     args = ap.parse_args()
     if args.cmd == "raw" and args.file.endswith(".csv") and not args.column:
         ap.error("raw .csv input needs --column")
-    report = gold_cmd(args) if args.cmd == "gold" else raw_cmd(args)
+    report = {"gold": gold_cmd, "tag": tag_cmd, "raw": raw_cmd}[args.cmd](args)
     text = "\n".join(report) + "\n"
     if args.out:
         with open(args.out, "w", encoding="utf-8") as fh:

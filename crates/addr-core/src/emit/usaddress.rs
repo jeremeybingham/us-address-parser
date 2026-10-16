@@ -8,7 +8,7 @@
 //! deliverable.
 
 use crate::lexicon::{Lexicons, Special};
-use crate::types::{Component, FieldName, InputKind, ParsedAddress, Span};
+use crate::types::{Component, FieldName, InputKind, ParsedAddress, Span, Warning};
 
 /// One input token and its usaddress label.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,6 +23,105 @@ pub struct UsaddressTag {
     pub label: Option<&'static str>,
 }
 
+/// What kind of address a record is. Finer than usaddress's three values
+/// ([`TaggedAddress::usaddress_type`] gives those, for migration).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AddressType {
+    /// A street address (a street name or a highway).
+    Street,
+    /// A PO Box (or drawer, caller, ...) alone.
+    PoBox,
+    /// A rural route or highway contract route.
+    RuralRoute,
+    /// A military or Department of State line.
+    Military,
+    /// General delivery.
+    GeneralDelivery,
+    /// A street address and a PO Box in one record (Pub 28 section 215).
+    Dual,
+    /// None of the above: nothing to deliver to, or a placeholder.
+    Unknown,
+}
+
+impl AddressType {
+    /// Stable name: `"street"`, `"po_box"`, `"rural_route"`, `"military"`,
+    /// `"general_delivery"`, `"dual"`, `"unknown"`.
+    pub const fn code(&self) -> &'static str {
+        match self {
+            AddressType::Street => "street",
+            AddressType::PoBox => "po_box",
+            AddressType::RuralRoute => "rural_route",
+            AddressType::Military => "military",
+            AddressType::GeneralDelivery => "general_delivery",
+            AddressType::Dual => "dual",
+            AddressType::Unknown => "unknown",
+        }
+    }
+}
+
+/// The parse joined by usaddress label, as `usaddress.tag()` returns it:
+/// the tokens that share a label, joined with a space in input order.
+///
+/// Unlike `usaddress.tag()` it never fails: a label in two separate runs is
+/// joined and reported as [`Warning::RepeatedLabel`] (usaddress raises
+/// `RepeatedLabelError`). Tokens the parse did not place have no label and
+/// are left out.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaggedAddress {
+    components: Vec<(&'static str, String)>,
+    address_type: AddressType,
+    repeated: Vec<&'static str>,
+}
+
+impl TaggedAddress {
+    /// The joined value of one label (`"StreetName"`).
+    pub fn get(&self, label: &str) -> Option<&str> {
+        self.components
+            .iter()
+            .find(|(l, _)| *l == label)
+            .map(|(_, v)| v.as_str())
+    }
+
+    /// Label and value pairs, in the order each label first appears.
+    pub fn components(&self) -> &[(&'static str, String)] {
+        &self.components
+    }
+
+    /// The kind of address.
+    pub fn address_type(&self) -> AddressType {
+        self.address_type
+    }
+
+    /// `usaddress.tag()`'s second value, worked out the way it does: `"Street
+    /// Address"` when an `AddressNumber` is present, else `"PO Box"` when a
+    /// `USPSBoxID` is, else `"Ambiguous"`. (usaddress's `"Intersection"` is
+    /// not modeled.) A dual address is a `"Street Address"` here, as there.
+    pub fn usaddress_type(&self) -> &'static str {
+        if self.get("AddressNumber").is_some() {
+            "Street Address"
+        } else if self.get("USPSBoxID").is_some() {
+            "PO Box"
+        } else {
+            "Ambiguous"
+        }
+    }
+
+    /// [`Warning::RepeatedLabel`] when a label was joined from separate
+    /// runs; empty otherwise.
+    pub fn warnings(&self) -> Vec<Warning> {
+        if self.repeated.is_empty() {
+            Vec::new()
+        } else {
+            vec![Warning::RepeatedLabel]
+        }
+    }
+
+    /// The labels that were joined from separate runs.
+    pub fn repeated_labels(&self) -> &[&'static str] {
+        &self.repeated
+    }
+}
+
 const FIELD_ORDER: [FieldName; 5] = [
     FieldName::Line1,
     FieldName::Line2,
@@ -32,6 +131,65 @@ const FIELD_ORDER: [FieldName; 5] = [
 ];
 
 impl ParsedAddress {
+    /// The kind of address: street, PO Box, rural route, military, general
+    /// delivery, dual (a street and a PO Box) or unknown.
+    pub fn address_type(&self) -> AddressType {
+        if self.is_dual() {
+            AddressType::Dual
+        } else if self.po_box.is_some() {
+            AddressType::PoBox
+        } else if self.rural_route.is_some() {
+            AddressType::RuralRoute
+        } else if self.military.is_some() {
+            AddressType::Military
+        } else if self.general_delivery {
+            AddressType::GeneralDelivery
+        } else if self.has_street() {
+            AddressType::Street
+        } else {
+            AddressType::Unknown
+        }
+    }
+
+    /// The parse joined by usaddress label, the counterpart of
+    /// `usaddress.tag()` (design.md decision 23): tokens that share a label
+    /// are joined with a space in input order, the ends of each value are
+    /// stripped of spaces, commas and semicolons, and tokens the parse did
+    /// not place are left out. A label in two separate runs is joined and
+    /// reported ([`TaggedAddress::repeated_labels`]) instead of failing.
+    /// Built from [`Self::to_usaddress_tags`]; it never re-parses.
+    pub fn tag(&self) -> TaggedAddress {
+        let mut runs: Vec<(&'static str, Vec<String>)> = Vec::new();
+        let mut repeated: Vec<&'static str> = Vec::new();
+        let mut last: Option<&'static str> = None;
+        for t in self.to_usaddress_tags() {
+            let Some(label) = t.label else { continue };
+            match runs.iter_mut().find(|(l, _)| *l == label) {
+                Some((_, toks)) => {
+                    if last != Some(label) && !repeated.contains(&label) {
+                        repeated.push(label);
+                    }
+                    toks.push(t.text);
+                }
+                None => runs.push((label, vec![t.text])),
+            }
+            last = Some(label);
+        }
+        let components = runs
+            .into_iter()
+            .filter_map(|(label, toks)| {
+                let value = toks.join(" ");
+                let value = value.trim_matches([' ', ',', ';']);
+                (!value.is_empty()).then(|| (label, value.to_string()))
+            })
+            .collect();
+        TaggedAddress {
+            components,
+            address_type: self.address_type(),
+            repeated,
+        }
+    }
+
     /// The input's tokens with usaddress labels, in input order (fields in
     /// `line1, line2, city, state, zip` order).
     ///
@@ -245,6 +403,71 @@ mod tests {
         assert_eq!(
             labels("PO Box 12")[..],
             ["USPSBoxType", "USPSBoxType", "USPSBoxID"]
+        );
+    }
+
+    #[test]
+    fn tag_joins_tokens_by_label() {
+        let t = Parser::new()
+            .parse("123 Martin Luther King Jr Blvd, Apt 4, Santa Fe NM 87505")
+            .unwrap()
+            .tag();
+        assert_eq!(t.get("AddressNumber"), Some("123"));
+        // Words that share a label are joined with a space, in order; the
+        // comma after a token is not part of the value.
+        assert_eq!(t.get("PlaceName"), Some("Santa Fe"));
+        assert_eq!(t.get("StreetNamePostType"), Some("Blvd"));
+        assert_eq!(t.get("StreetName"), Some("Martin Luther King Jr"));
+        // The first appearance of each label sets the order.
+        let labels: Vec<_> = t.components().iter().map(|(l, _)| *l).collect();
+        assert_eq!(labels[0], "AddressNumber");
+        assert_eq!(labels.last(), Some(&"ZipCode"));
+        assert!(t.warnings().is_empty() && t.repeated_labels().is_empty());
+        assert_eq!(t.usaddress_type(), "Street Address");
+    }
+
+    #[test]
+    fn tag_reports_a_repeated_label_instead_of_failing() {
+        let t = Parser::new()
+            .parse("123 Main St Apt 4 Ste 5, Miami FL 33101")
+            .unwrap()
+            .tag();
+        assert_eq!(t.get("OccupancyType"), Some("Apt Ste"));
+        assert_eq!(t.get("OccupancyIdentifier"), Some("4 5"));
+        assert_eq!(
+            t.repeated_labels(),
+            ["OccupancyType", "OccupancyIdentifier"]
+        );
+        assert_eq!(t.warnings(), [crate::Warning::RepeatedLabel]);
+    }
+
+    #[test]
+    fn address_types() {
+        let ty = |s: &str| Parser::new().parse(s).unwrap().address_type();
+        use crate::AddressType::*;
+        assert_eq!(ty("123 Main St, Miami FL 33101"), Street);
+        assert_eq!(ty("US Hwy 50, Carson City NV"), Street);
+        assert_eq!(ty("PO Box 12, Tampa FL 33601"), PoBox);
+        assert_eq!(ty("RR 2 Box 15, Loami IL 62661"), RuralRoute);
+        assert_eq!(ty("PSC 1234 Box 56, APO AE 09012"), Military);
+        assert_eq!(ty("General Delivery, Tampa FL 33601"), GeneralDelivery);
+        assert_eq!(ty("9418 CUBA RD, PO BOX 100, HAYES VA 23072"), Dual);
+        assert_eq!(ty("NO SITUS"), Unknown);
+        assert_eq!(ty("Tampa FL 33601"), Unknown);
+    }
+
+    #[test]
+    fn usaddress_type_follows_usaddress_rules() {
+        let t = |s: &str| Parser::new().parse(s).unwrap().tag().usaddress_type();
+        assert_eq!(t("123 Main St, Miami FL 33101"), "Street Address");
+        assert_eq!(t("PO Box 12, Tampa FL 33601"), "PO Box");
+        // A rural route has a USPSBoxID; general delivery has none.
+        assert_eq!(t("RR 2 Box 15, Loami IL 62661"), "PO Box");
+        assert_eq!(t("General Delivery, Tampa FL 33601"), "Ambiguous");
+        // AddressNumber comes first, so a dual address is a Street Address.
+        assert_eq!(
+            t("9418 CUBA RD, PO BOX 100, HAYES VA 23072"),
+            "Street Address"
         );
     }
 

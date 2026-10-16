@@ -215,7 +215,7 @@ a.to_usaddress_tags();   // tokens with usaddress labels
 Planned additions (Milestone 6 unless noted; decisions 22 to 24):
 
 ```rust
-a.tag();                 // TaggedAddress: joined components keyed by usaddress label + address type
+a.tag();                 // TaggedAddress: joined components keyed by usaddress label (done, item 31)
 a.address_type();        // AddressType: Street, PoBox, RuralRoute, Military, GeneralDelivery, Dual, Unknown
 let p = Parser::with_options(ParseOptions { default_state: Some(state) })?;   // done (item 30)
 let p = Parser::new().with_custom_layer(CustomLayer::from_toml(&text)?);   // Milestone 9
@@ -226,8 +226,10 @@ are joined with a space in input order (`StreetName` for `MARTIN LUTHER KING`),
 and unlike usaddress it never fails on a repeated or split label (no
 `RepeatedLabelError`); a label that appears in two separate runs is joined
 and a warning (`repeated_label`) says so. `address_type()` is the finer
-classification and also maps to usaddress's three values (`Street Address`,
-`PO Box`, `Ambiguous`) for migration. Both are built from the parsed fields
+classification; `TaggedAddress::usaddress_type()` gives usaddress's own three
+values (`Street Address`, `PO Box`, `Ambiguous`), worked out by its rule (an
+`AddressNumber` first, then a `USPSBoxID`) so a dual address is a Street
+Address and a rural route a PO Box, as there. Both are built from the parsed fields
 and spans by an emitter, so they follow the emitter rule (read-only, no
 re-parsing).
 
@@ -523,12 +525,27 @@ wrapper does not change when it is filled.
     - Commit 2: a check against `usaddress.tag()` on the vendored test files
       (extend `tools/compare/compare_usaddress.py`) that reports where the
       joined dicts differ.
+    **Commit 1 done:** `ParsedAddress::tag()` (`TaggedAddress`: `get`,
+    `components`, `address_type`, `usaddress_type`, `repeated_labels`),
+    `ParsedAddress::address_type()`, `Warning::RepeatedLabel`
+    (`repeated_label`, reported by `tag()` and never in `Diagnostics`, so
+    `ALL` is 20), `addr parse --tag`, and corpus fields `address_type`, `tag`
+    and `tag_repeated`; cases `tg-001` to `tg-008`. Tokens the parse did not
+    place have no label and are left out (usaddress labels every token).
+    **Commit 2 done:** `compare_usaddress.py tag` compares the joined dicts
+    and types with `usaddress.tag()` on the vendored test files; result in
+    `docs/usaddress-comparison.md` (identical on 99.3% of 8,103; types on
+    99.8%).
 32. **Migration notes** for users coming from usaddress: the "Coming from
     usaddress" section in the README, and the same in
     `crates/addr-py/README.md`, from `docs/usaddress-comparison.md`
     ("Feature comparison"): label names, the unmodeled labels,
     `RepeatedLabelError`, and the extra outputs. Docs only; it can ride
     with item 31 if small.
+    **Done** (with item 31): the README's "Coming from usaddress" has the
+    mapping table and the differences; `crates/addr-py/README.md` has the
+    planned Python names.
+
 33. **The wrapper and its tests.**
     - Commit 1: `crates/addr-py/Cargo.toml`, `pyproject.toml` (maturin),
       `src/lib.rs` with `parse`, `parse_fields`, the `ParsedAddress` object,

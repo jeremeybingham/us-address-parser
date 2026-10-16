@@ -535,12 +535,17 @@ pub enum Warning {
     /// stays empty and the key is unchanged (`docs/design.md` section 13,
     /// decision 24).
     DefaultStateApplied,
+    /// Reported by [`crate::ParsedAddress::tag`], never in `Diagnostics`: a
+    /// usaddress label appears in two separate runs of tokens (two units give
+    /// `OccupancyType` twice). `usaddress.tag()` raises `RepeatedLabelError`
+    /// for this; here the runs are joined and the label is reported.
+    RepeatedLabel,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 19] = [
+    pub const ALL: [Warning; 20] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -560,6 +565,7 @@ impl Warning {
         Warning::InvalidZip,
         Warning::ZipCityMismatch,
         Warning::DefaultStateApplied,
+        Warning::RepeatedLabel,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -585,6 +591,7 @@ impl Warning {
             Warning::InvalidZip => "invalid_zip",
             Warning::ZipCityMismatch => "zip_city_mismatch",
             Warning::DefaultStateApplied => "default_state_applied",
+            Warning::RepeatedLabel => "repeated_label",
         }
     }
 }
