@@ -5,8 +5,9 @@
 
 The input is the golden corpus's single-line addresses (tests/corpus),
 repeated to N (default 100,000). Each timing is the best of three runs. With
-`to_dict`, the Python objects are turned into dicts too, which is what a
-dataframe recipe does.
+`to_dict`, the Python objects are turned into dicts too. The last rows build
+a pandas and a polars DataFrame of seven chosen columns from the parsed
+addresses (the README recipes), when those libraries are installed.
 """
 import json
 import os
@@ -51,6 +52,33 @@ def main():
         ("loop of parse + to_dict", lambda: [uap.parse(s).to_dict() for s in texts]),
         ("parse_many + to_dict", lambda: [a.to_dict() for a in uap.parse_many(texts) if a]),
     ]
+    cols = ["street_number", "street_name", "street_suffix", "unit_number",
+            "city", "state", "zip5"]
+    try:
+        import pandas as pd
+
+        rows.append((
+            "parse_many -> pandas",
+            lambda: pd.DataFrame(
+                [{c: getattr(a, c) for c in cols} if a else {}
+                 for a in uap.parse_many(texts)]
+            ),
+        ))
+    except ImportError:
+        pass
+    try:
+        import polars as pl
+
+        def to_polars():
+            parsed = uap.parse_many(texts)
+            return pl.DataFrame(
+                {c: [getattr(a, c) if a else None for a in parsed] for c in cols},
+                schema={c: pl.String for c in cols},
+            )
+
+        rows.append(("parse_many -> polars", to_polars))
+    except ImportError:
+        pass
     base_t = None
     for name, fn in rows:
         t = best(fn)

@@ -1,0 +1,88 @@
+name: Wheels
+# abi3 wheels (one per platform, Python 3.10 and later), built and tested on
+# every pull request. Nothing is published here (design.md item 46).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+            manylinux: auto
+          - name: linux-aarch64
+            os: ubuntu-24.04-arm
+            manylinux: auto
+          # One wheel for both Mac architectures.
+          - name: macos-universal2
+            os: macos-latest
+            target: universal2-apple-darwin
+          - name: windows-x64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist --manifest-path crates/addr-py/Cargo.toml
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          rust-toolchain: stable
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.name }}
+          path: dist/*.whl
+          if-no-files-found: error
+
+  test:
+    # The same wheel on the oldest and newest supported Python: abi3 means
+    # one file serves both.
+    name: test (${{ matrix.name }}, Python ${{ matrix.python }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [linux-x86_64, linux-aarch64, macos-universal2, windows-x64]
+        python: ["3.10", "3.13"]
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+          - name: linux-aarch64
+            os: ubuntu-24.04-arm
+          - name: macos-universal2
+            os: macos-latest
+          - name: windows-x64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheel-${{ matrix.name }}
+          path: dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install the wheel (not the source tree)
+        run: |
+          python -m pip install --upgrade pip
+          pip install --no-index --find-links dist us-address-parser
+          pip install pytest
+      - name: Optional comparison and dataframe libraries
+        # Wheels for these may be missing on some platforms; the tests that
+        # need them skip.
+        continue-on-error: true
+        run: pip install usaddress pandas polars
+      - name: Python tests
+        run: pytest crates/addr-py/tests -q
