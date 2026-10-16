@@ -35,7 +35,18 @@ is out of scope.
 ## Non-goals (v1)
 
 Validation or deliverability, geocoding, fuzzy matching, address correction,
-international addresses, and runtime-configurable lexicons.
+and international addresses. The shipped lexicons are fixed at compile time;
+customization is a planned add-only custom layer (see below).
+
+## Coming from usaddress
+
+`to_usaddress_tags()` gives usaddress's token labels today. Planned for the
+Python wrapper: `tag()` with an `address_type`, `default_state`, and a custom
+layer for your own aliases and places. This library does not model
+usaddress's intersection, landmark, `CornerOf`, country, recipient or
+`NotAddress` labels (text it cannot place is reported in `unparsed` with a
+warning). The feature-by-feature comparison is in
+[`docs/usaddress-comparison.md`](docs/usaddress-comparison.md).
 
 ## Place data (state packs)
 
