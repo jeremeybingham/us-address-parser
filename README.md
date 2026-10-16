@@ -9,9 +9,10 @@ database-ready identifiers (a stable canonical match key and a URL-safe slug).
 > RESO and slug emitters, a 317-case golden corpus and a comparison with
 > usaddress. The place list (Milestone 5) is built: a national list for every
 > state and a curated Florida pack (open items in
-> [`docs/packs/fl.md`](docs/packs/fl.md)); the benchmark rerun that decides
-> whether a CRF fallback is needed is the last item. The Python wrapper
-> (Milestone 6) and calibrated confidence (Milestone 7) follow. Nothing is
+> [`docs/packs/fl.md`](docs/packs/fl.md)). The benchmark rerun found no gap
+> for a CRF fallback to close, so none will be built (design.md decision
+> 32). The Python wrapper (Milestone 6) and calibrated confidence
+> (Milestone 7) follow. Nothing is
 > published yet. [`docs/design.md`](docs/design.md) section 10 has the plan in
 > build order; section 13 has the open decisions.
 
