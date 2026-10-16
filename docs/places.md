@@ -109,6 +109,34 @@ no places or no ZIPs.
   Islands ZIPs. Other territories have no Census places in these files.
   Puerto Rico urbanizations are not handled here (backlog).
 
+## How it is compiled in
+
+`build.rs` compiles `data/places/` when the `places-us` cargo feature is on
+(it is by default), under the state packs (decision 29):
+
+- A state with a curated pack keeps the pack's places and ZIPs. A national
+  row whose comparison key the pack already has, as a name or a variant, is
+  the pack's and is skipped; the national list adds the rest. For Florida
+  that is 406 Census places the pack lacks (`TRINITY`, `CITRUS SPRINGS`,
+  ... all CDPs), taking its places from 665 to 1,071. One is a duplicate:
+  the Census's `EVERGLADES` is the pack's `EVERGLADES CITY` under another
+  spelling. The pack's 1,473 ZIPs are untouched (GeoNames is the source of
+  both, so the national ZIPs for Florida are the same pairs).
+- For every other state a name, variant or ZIP that would lead to two places
+  is a build error, as in a pack. Names, counties and kinds are checked the
+  same way.
+- Until the parser reads the national layer (design.md item 25), lookups
+  (`Lexicons::place`, `zip_places`, `places`) return only states with a pack.
+  The rest is in the tables and costs binary size, nothing else.
+
+The tables are packed records in `OUT_DIR`, read with `include_bytes!`
+(`emit_places` in `build.rs` has the layout), not tables of `&str`. A
+`&str` table costs a pointer and a relocation per string: the first version
+added 13.4 MB to the `addr` binary. Packed, the national list adds **2.7
+MB** (stripped release binary 1.57 MB without it, 4.29 MB with it; the
+tables are 2.9 MB before linking: names 0.53, keys 0.87, index 0.68, rows
+0.45, ZIPs 0.37). `build.rs` takes about 2 seconds more.
+
 ## Coverage
 
 Measured on the blind geocode benchmark (`local-data/geocode-benchmark/`,
@@ -123,4 +151,11 @@ Measured on the blind geocode benchmark (`local-data/geocode-benchmark/`,
 The last row is why `zip_city_mismatch` stays limited to states with a
 curated pack (decision 30): GeoNames names one place per ZIP, and many ZIPs
 are used by several. The list contains 657 of the Florida pack's 665 places
-(the pack wins for Florida and adds the rest).
+(the pack wins for Florida and adds the rest: `BAREFOOT BAY`, `BRUCE`,
+`ENTERPRISE`, `INLET BEACH`, `PENSACOLA BEACH`, `PERDIDO KEY`, `WALNUT HILL`,
+`WEEKI WACHEE`).
+
+One Florida corpus case changed with the merge: `rg-030` (`BELLVIEW`,
+32526) now has `zip_city_mismatch`. `BELLVIEW` is a Census place in
+Escambia County that the national list adds, but ZIP 32526 lists only
+`PENSACOLA`. This is the Florida communities gap of design.md item 28.

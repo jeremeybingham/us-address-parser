@@ -221,6 +221,8 @@ pub enum PlaceKind {
     Municipality,
     /// A community or postal name with no city government.
     Place,
+    /// A county subdivision such as a township (`ROARING BROOK TOWNSHIP`).
+    Subdivision,
 }
 
 /// How the parser found the place for an address.

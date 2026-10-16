@@ -148,7 +148,13 @@ to 28 in `docs/design.md` section 10, and the decisions are in its section
   names such as `MAIMI`, `PT CHARLOTTE`). Many are Census places (CDPs) that
   the national list (item 24) adds, so remeasure after it. Related open
   decision in `docs/design.md` section 13: a city that is no known place,
-  with a ZIP the pack knows.
+  with a ZIP the pack knows. The national list is now compiled under the
+  pack (item 24): it adds 406 Census places (1,071 in all, including
+  `TRINITY` and `CITRUS SPRINGS`; `docs/places.md`) with their county but no
+  ZIPs, so a ZIP that lists only another place (`BELLVIEW` in 32526, listed
+  as `PENSACOLA`) gives `zip_city_mismatch` until the pack lists it as
+  shared. One duplicate came with it: the Census's `EVERGLADES` is the
+  pack's `EVERGLADES CITY`.
 - **Rarer misspellings and the penthouse shape** (item 27). Suffix typos
   `DRT` (1 row) and `LNE` (3), and the unit designator `SU` (16, `SU B`). A
   penthouse written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE

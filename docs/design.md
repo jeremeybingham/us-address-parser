@@ -408,11 +408,13 @@ To do, in order:
       settles: one county for the 1,304 places that span several, the 462
       places newer than the 2020 county list, and whether Puerto Rico
       (`PR.zip`, a separate GeoNames file) is in this pass.
-    - Commit 2: `build.rs` compiles `data/places/` behind `places-us`, with
+    - Commit 2 (done): `build.rs` compiles `data/places/` behind `places-us`, with
       the same checks as the packs, and merges it under the Florida pack
       (decision 29: the pack wins for Florida; national rows only add
       places it lacks). Record the compiled size (expected 1.5 to 2 MB) and
-      build time.
+      build time. Done: 2.7 MB as packed binary tables (13.4 MB as `&str`
+      tables, which is why they are packed); see `docs/places.md`. Lookups
+      still return only pack states until item 25.
     - Commit 3: GeoNames attribution in `NOTICE` and the README's place
       data section.
 25. **Use the national list in the parser.** `Lexicons` place lookups read

@@ -4,6 +4,19 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### National place list: compiled in (feature `places-us`)
+
+- `build.rs` compiles `data/places/` under the state packs; `places-us` is on
+  by default. The place tables are now packed binary records read with
+  `include_bytes!` instead of `&str` tables: the national list adds 2.7 MB to
+  the `addr` binary (13.4 MB as `&str` tables). `docs/places.md`.
+- Florida gains 406 Census places its pack lacked (`TRINITY`, `CITRUS
+  SPRINGS`, ...). Lookups for other states stay off until the parser uses
+  the list (item 25), so only Florida parses differently. Corpus `rg-030`
+  now reports `zip_city_mismatch` (`BELLVIEW` is a Census place; ZIP 32526
+  lists only `PENSACOLA`).
+- New `PlaceKind::Subdivision` (a township and the like).
+
 ### National place list: builder and data (`data/places/`)
 
 - `tools/places/build_us.py` builds `data/places/places.tsv` (50,376 places

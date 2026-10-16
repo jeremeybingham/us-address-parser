@@ -74,7 +74,7 @@ fn run() -> Result<()> {
     gen_units(&load(&dir, "units.toml")?, &mut out, &mut max_words)?;
     gen_states(&load(&dir, "states.toml")?, &mut out, &mut max_words)?;
     gen_special(&load(&dir, "special.toml")?, &mut out, &mut max_words)?;
-    gen_packs(&dir.join("packs"), &expand, &suffix_rows, &mut out)?;
+    gen_places(&dir, &expand, &suffix_rows, &mut out)?;
 
     writeln!(
         out,
@@ -568,11 +568,54 @@ fn list(s: &str) -> Vec<&str> {
     s.split(';').filter(|v| !v.is_empty()).collect()
 }
 
-/// The state packs enabled by `state-<st>` features, in state order. Each
-/// adds places and ZIPs; nothing in a pack replaces another entry, and a
-/// spelling or ZIP that would lead to two places is a build error.
-fn gen_packs(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Result<()> {
+/// One place. `kind` is 0 municipality, 1 place, 2 subdivision.
+struct PlaceData {
+    state: String,
+    name: String,
+    county: String,
+    kind: u8,
+}
+
+/// The place tables as they are built: rows, the `STATE|key` index, and the
+/// ZIP index. Packs fill it first and the national list adds to it.
+#[derive(Default)]
+struct PlaceTables {
+    rows: Vec<PlaceData>,
+    index: BTreeMap<String, (usize, &'static str)>,
+    zips: BTreeMap<String, (usize, Vec<usize>)>,
+    max_words: usize,
+}
+
+/// The place tables: the state packs enabled by `state-<st>` features, in
+/// state order, then the national list (`data/places/`, feature `places-us`)
+/// under them. Each adds places and ZIPs; nothing replaces another entry,
+/// and a spelling or ZIP that would lead to two places is a build error.
+fn gen_places(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Result<()> {
+    let mut t = PlaceTables {
+        max_words: 1,
+        ..PlaceTables::default()
+    };
+    let (states, pack_suffixes) = gen_packs(&dir.join("packs"), ex, sfx, &mut t)?;
+    if env::var_os("CARGO_FEATURE_PLACES_US").is_some() {
+        gen_national(&dir.join("places"), ex, &states, &mut t)?;
+    }
+    emit_places(&states, &pack_suffixes, &t, out)
+}
+
+/// The state packs enabled by `state-<st>` features, in state order.
+fn gen_packs(
+    dir: &Path,
+    ex: &Expand,
+    sfx: &SuffixRows,
+    t: &mut PlaceTables,
+) -> Result<(Vec<String>, BTreeMap<String, usize>)> {
     println!("cargo:rerun-if-changed={}", dir.display());
+    let PlaceTables {
+        rows,
+        index,
+        zips,
+        max_words,
+    } = t;
     let mut states = Vec::new();
     if let Ok(entries) = fs::read_dir(dir) {
         for e in entries.flatten() {
@@ -585,11 +628,7 @@ fn gen_packs(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Res
     states.sort();
 
     let expand = |w: &str| ex.get(w).cloned();
-    let mut rows = Vec::new(); // PlaceRow literals
-    let mut index: BTreeMap<String, (usize, &str)> = BTreeMap::new();
-    let mut zips: BTreeMap<String, (usize, Vec<usize>)> = BTreeMap::new();
     let mut pack_suffixes: BTreeMap<String, usize> = BTreeMap::new();
-    let mut max_words = 1;
     for st in &states {
         let pdir = dir.join(st.to_lowercase());
         let meta = load(&pdir, "pack.toml")?;
@@ -610,16 +649,19 @@ fn gen_packs(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Res
             let ctx = format!("packs/{} places.tsv {name}", st.to_lowercase());
             check_key(name, &ctx)?;
             let kind = match kind.as_str() {
-                "municipality" => "Municipality",
-                "place" => "Place",
+                "municipality" => 0,
+                "place" => 1,
                 k => return Err(format!("{ctx}: bad kind `{k}`")),
             };
             let i = rows.len();
-            rows.push(format!(
-                "PlaceRow {{ state: {st:?}, name: {name:?}, county: {county:?}, kind: PlaceKind::{kind} }}"
-            ));
+            rows.push(PlaceData {
+                state: st.clone(),
+                name: name.clone(),
+                county: county.clone(),
+                kind,
+            });
             by_name.insert(name.clone(), i);
-            max_words = max_words.max(words(name));
+            *max_words = (*max_words).max(words(name));
             let key = format!("{st}|{}", place_key(name, expand));
             if let Some((j, _)) = index.insert(key.clone(), (i, "Standard")) {
                 return Err(format!("{ctx}: same key `{key}` as row {j}"));
@@ -638,7 +680,7 @@ fn gen_packs(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Res
                     }
                     None => {
                         index.insert(key, (i, "Variant"));
-                        max_words = max_words.max(words(v));
+                        *max_words = (*max_words).max(words(v));
                     }
                 }
             }
@@ -721,39 +763,262 @@ fn gen_packs(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Res
         }
     }
 
+    Ok((states, pack_suffixes))
+}
+
+/// The national place list (`data/places/`), added under the packs. A state
+/// with a curated pack keeps the pack's places and ZIPs; national rows only
+/// add places the pack lacks (a place whose comparison key the pack already
+/// has, as a name or a variant, is the pack's) and are never matched against
+/// the pack's ZIPs. For every other state a repeated key or ZIP is an error.
+fn gen_national(
+    dir: &Path,
+    ex: &Expand,
+    pack_states: &[String],
+    t: &mut PlaceTables,
+) -> Result<()> {
+    println!("cargo:rerun-if-changed={}", dir.display());
+    let ctx = "places/places.toml";
+    let meta = load(dir, "places.toml")?;
+    if meta.get("version").and_then(Value::as_str).is_none() {
+        return Err(format!("{ctx}: missing string `version`"));
+    }
+    let expand = |w: &str| ex.get(w).cloned();
+    let PlaceTables {
+        rows,
+        index,
+        zips,
+        max_words,
+    } = t;
+
+    let places = tsv(
+        &dir.join("places.tsv"),
+        &["state", "name", "county", "kind", "sources", "variants"],
+    )?;
+    let mut added: BTreeMap<(String, String), usize> = BTreeMap::new();
+    for r in &places {
+        let (st, name, county) = (&r[0], &r[1], &r[2]);
+        let ctx = format!("places/places.tsv {st} {name}");
+        if st.len() != 2 || !st.bytes().all(|b| b.is_ascii_uppercase()) {
+            return Err(format!("{ctx}: `{st}` is not a state code"));
+        }
+        check_key(name, &ctx)?;
+        if !county.is_empty() {
+            check_key(county, &ctx)?;
+        }
+        let kind = match r[3].as_str() {
+            "municipality" => 0,
+            "place" => 1,
+            "subdivision" => 2,
+            k => return Err(format!("{ctx}: bad kind `{k}`")),
+        };
+        if list(&r[4])
+            .iter()
+            .any(|s| !matches!(*s, "census" | "geonames"))
+            || r[4].is_empty()
+        {
+            return Err(format!("{ctx}: bad sources `{}`", r[4]));
+        }
+        let key = format!("{st}|{}", place_key(name, expand));
+        if index.contains_key(&key) {
+            if pack_states.contains(st) {
+                continue; // the pack has this place
+            }
+            return Err(format!("{ctx}: same key `{key}` as an earlier row"));
+        }
+        let i = rows.len();
+        rows.push(PlaceData {
+            state: st.clone(),
+            name: name.clone(),
+            county: county.clone(),
+            kind,
+        });
+        index.insert(key, (i, "Standard"));
+        added.insert((st.clone(), name.clone()), i);
+        *max_words = (*max_words).max(words(name));
+    }
+    for r in &places {
+        let Some(&i) = added.get(&(r[0].clone(), r[1].clone())) else {
+            continue;
+        };
+        let ctx = format!("places/places.tsv {} {}", r[0], r[1]);
+        for v in list(&r[5]) {
+            check_key(v, &ctx)?;
+            let key = format!("{}|{}", r[0], place_key(v, expand));
+            match index.get(&key) {
+                Some((j, _)) if *j == i => {}
+                // A pack state's own spelling of another place stands.
+                Some(_) if pack_states.contains(&r[0]) => {}
+                Some((j, _)) => {
+                    return Err(format!("{ctx}: variant `{v}` also leads to row {j}"));
+                }
+                None => {
+                    index.insert(key, (i, "Variant"));
+                    *max_words = (*max_words).max(words(v));
+                }
+            }
+        }
+    }
+    for r in tsv(&dir.join("zips.tsv"), &["zip", "state", "place"])? {
+        let ctx = format!("places/zips.tsv {}", r[0]);
+        if r[0].len() != 5 || !r[0].bytes().all(|b| b.is_ascii_digit()) {
+            return Err(format!("{ctx}: not a 5-digit ZIP"));
+        }
+        let key = format!("{}|{}", r[1], place_key(&r[2], expand));
+        let Some(&(i, _)) = index.get(&key) else {
+            return Err(format!("{ctx}: unknown place `{}`", r[2]));
+        };
+        if zips.contains_key(&r[0]) {
+            if pack_states.contains(&r[1]) {
+                continue; // the pack's ZIP
+            }
+            return Err(format!("{ctx}: ZIP listed twice"));
+        }
+        zips.insert(r[0].clone(), (i, Vec::new()));
+    }
+    Ok(())
+}
+
+fn le32(v: usize, what: &str) -> Result<[u8; 4]> {
+    u32::try_from(v)
+        .map(u32::to_le_bytes)
+        .map_err(|_| format!("place tables: {what} does not fit in 32 bits"))
+}
+
+fn le8(v: usize, what: &str) -> Result<u8> {
+    u8::try_from(v).map_err(|_| format!("place tables: {what} does not fit in 8 bits"))
+}
+
+/// Writes the place tables. The big ones (rows, index, ZIPs) are packed
+/// binary files in `OUT_DIR` that `lexicon.rs` reads with `include_bytes!`;
+/// a table of `&str` would cost a pointer and a relocation per string (13 MB
+/// for the national list), packed records cost none (docs/places.md). All
+/// integers are little-endian.
+///
+/// - `place_pool.txt`: every place name, end to end.
+/// - `place_rows.bin`, 9 bytes per row: name offset u32, name length u8,
+///   state u8 (into `PLACE_STATES`), kind u8, county u16 (into
+///   `PLACE_COUNTIES`, 0 for none).
+/// - `place_keys.txt`: every index key (`STATE|key`), end to end, in sorted
+///   order.
+/// - `place_index.bin`, 10 bytes per key: key offset u32, key length u8,
+///   0 standard or 1 variant, row u32. Sorted by key.
+/// - `zip_index.bin`, 9 bytes per ZIP: the 5 ASCII digits, main place row
+///   u32. Sorted by ZIP. `ZIP_SHARED` lists the few ZIPs with shared places.
+fn emit_places(
+    states: &[String],
+    pack_suffixes: &BTreeMap<String, usize>,
+    t: &PlaceTables,
+    out: &mut String,
+) -> Result<()> {
+    let out_dir = PathBuf::from(env::var("OUT_DIR").map_err(|e| e.to_string())?);
+    let write = |name: &str, bytes: &[u8]| {
+        let path = out_dir.join(name);
+        fs::write(&path, bytes).map_err(|e| format!("{}: {e}", path.display()))
+    };
+
+    let mut place_states: Vec<&str> = t.rows.iter().map(|r| r.state.as_str()).collect();
+    place_states.sort_unstable();
+    place_states.dedup();
+    let mut counties: Vec<&str> = t
+        .rows
+        .iter()
+        .map(|r| r.county.as_str())
+        .filter(|c| !c.is_empty())
+        .collect();
+    counties.sort_unstable();
+    counties.dedup();
+
+    let mut pool = String::new();
+    let mut rows = Vec::new();
+    for r in &t.rows {
+        let state = place_states.binary_search(&r.state.as_str()).unwrap_or(0);
+        let county = if r.county.is_empty() {
+            0
+        } else {
+            counties.binary_search(&r.county.as_str()).unwrap_or(0) + 1
+        };
+        rows.extend(le32(pool.len(), "name pool")?);
+        rows.push(le8(r.name.len(), "name length")?);
+        rows.push(le8(state, "state number")?);
+        rows.push(r.kind);
+        rows.extend(
+            u16::try_from(county)
+                .map_err(|_| "place tables: more than 65535 counties".to_string())?
+                .to_le_bytes(),
+        );
+        pool.push_str(&r.name);
+    }
+
+    let mut keys = String::new();
+    let mut index = Vec::new();
+    for (k, (row, kind)) in &t.index {
+        index.extend(le32(keys.len(), "key pool")?);
+        index.push(le8(k.len(), "key length")?);
+        index.push(u8::from(*kind == "Variant"));
+        index.extend(le32(*row, "row number")?);
+        keys.push_str(k);
+    }
+
+    let mut zips = Vec::new();
+    let mut shared = Vec::new();
+    for (z, (main, others)) in &t.zips {
+        zips.extend(z.bytes());
+        zips.extend(le32(*main, "row number")?);
+        if !others.is_empty() {
+            shared.push((z, others));
+        }
+    }
+
+    write("place_pool.txt", pool.as_bytes())?;
+    write("place_rows.bin", &rows)?;
+    write("place_keys.txt", keys.as_bytes())?;
+    write("place_index.bin", &index)?;
+    write("zip_index.bin", &zips)?;
+
     writeln!(out, "/// State packs compiled in.").ok();
     writeln!(
         out,
         "pub(crate) static PACK_STATES: &[&str] = &{states:?};\n"
     )
     .ok();
-    writeln!(out, "pub(crate) static PLACES: &[PlaceRow] = &[").ok();
-    for r in &rows {
-        writeln!(out, "    {r},").ok();
+    writeln!(out, "/// States that have places, by number.").ok();
+    writeln!(
+        out,
+        "pub(crate) static PLACE_STATES: &[&str] = &{place_states:?};\n"
+    )
+    .ok();
+    writeln!(out, "/// County names; a row's county number minus 1.").ok();
+    writeln!(
+        out,
+        "pub(crate) static PLACE_COUNTIES: &[&str] = &{counties:?};\n"
+    )
+    .ok();
+    for (name, kind, file) in [
+        ("PLACE_POOL", "str", "place_pool.txt"),
+        ("PLACE_KEYS", "str", "place_keys.txt"),
+    ] {
+        writeln!(
+            out,
+            "pub(crate) static {name}: &{kind} = include_{kind}!(concat!(env!(\"OUT_DIR\"), \"/{file}\"));"
+        )
+        .ok();
     }
-    writeln!(out, "];\n").ok();
-    writeln!(
-        out,
-        "/// `STATE|key` (see `place_key`) -> place row and how it is spelled."
-    )
-    .ok();
-    writeln!(
-        out,
-        "pub(crate) static PLACE_INDEX: &[(&str, (u32, MatchKind))] = &["
-    )
-    .ok();
-    for (k, (i, kind)) in &index {
-        writeln!(out, "    ({k:?}, ({i}, MatchKind::{kind})),").ok();
+    for (name, file) in [
+        ("PLACE_ROWS", "place_rows.bin"),
+        ("PLACE_INDEX", "place_index.bin"),
+        ("ZIP_INDEX", "zip_index.bin"),
+    ] {
+        writeln!(
+            out,
+            "pub(crate) static {name}: &[u8] = include_bytes!(concat!(env!(\"OUT_DIR\"), \"/{file}\"));"
+        )
+        .ok();
     }
-    writeln!(out, "];\n").ok();
-    writeln!(out, "/// ZIP -> main place row and shared place rows.").ok();
-    writeln!(
-        out,
-        "pub(crate) static ZIP_INDEX: &[(&str, (u32, &[u32]))] = &["
-    )
-    .ok();
-    for (z, (main, shared)) in &zips {
-        writeln!(out, "    ({z:?}, ({main}, &{shared:?})),").ok();
+    writeln!(out, "\n/// ZIP -> its shared place rows (sparse).").ok();
+    writeln!(out, "pub(crate) static ZIP_SHARED: &[(&str, &[u32])] = &[").ok();
+    for (z, others) in shared {
+        writeln!(out, "    ({z:?}, &{others:?}),").ok();
     }
     writeln!(out, "];\n").ok();
     writeln!(
@@ -766,11 +1031,11 @@ fn gen_packs(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Res
         "pub(crate) static PACK_SUFFIX_INDEX: &[(&str, u16)] = &["
     )
     .ok();
-    for (k, row) in &pack_suffixes {
+    for (k, row) in pack_suffixes {
         writeln!(out, "    ({k:?}, {row}),").ok();
     }
     writeln!(out, "];\n").ok();
     writeln!(out, "/// Most words in any place name or variant.").ok();
-    writeln!(out, "pub const MAX_PLACE_WORDS: usize = {max_words};").ok();
+    writeln!(out, "pub const MAX_PLACE_WORDS: usize = {};", t.max_words).ok();
     Ok(())
 }
