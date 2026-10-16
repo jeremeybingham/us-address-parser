@@ -99,7 +99,10 @@ when the label itself is a judgment call: `unparsed` text, or the warnings
 `possibly_truncated`, `ambiguous_street_number`, `multiple_addresses`,
 `invalid_zip` and `ambiguous_token`. Placeholders get `none` for key and slug
 and an empty `usps`. When you add a case, run the script on the file (it adds
-only the fields that are missing) and review the diff.
+only the fields that are missing) and review the diff. `--check` compares
+every stored expectation with what the script computes and exits 1 on a
+difference; CI runs it, so a rule change in the emitters or the specs has to
+reach the script too.
 
 The runner rejects unknown keys, duplicate ids, unknown warning codes, and
 suffix, unit, state, directional, highway-prefix or military values that are

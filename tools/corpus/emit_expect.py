@@ -1,6 +1,10 @@
 """Write key/slug/usps/reso expectations into corpus cases from the specs
 (docs/key-format.md, docs/reso-mapping.md, Pub 28), using only each case's
-hand-labeled `expect`. Never reads emitter output."""
+hand-labeled `expect`. Never reads emitter output.
+
+    python3 tools/corpus/emit_expect.py FILE.jsonl ...          add missing ones
+    python3 tools/corpus/emit_expect.py --check FILE.jsonl ...  compare stored ones
+"""
 import json, re, sys, collections
 
 SKIP_WARN = {"possibly_truncated","ambiguous_street_number","multiple_addresses","invalid_zip","unparsed_remainder","ambiguous_token"}
@@ -29,9 +33,18 @@ def special(e):
     return ""
 
 def name_text(e):
+    """The street's name; for a highway, the highway and any name words after
+    the route (`HIGHWAY 66 FRONTAGE`, docs/key-format.md)."""
+    nm=plain(e["street_name"]) if e.get("street_name") else ""
     if e.get("highway"):
-        h=e["highway"]; return join(h.get("state",""),h["prefix"],plain(h["route"]))
-    return plain(e["street_name"]) if e.get("street_name") else ""
+        h=e["highway"]; return join(h.get("state",""),h["prefix"],plain(h["route"]),nm)
+    return nm
+
+def has_street(e): return bool(e.get("street_name") or e.get("highway"))
+
+def dual(e):
+    """A street and a PO Box in one record (Pub 28 section 215, decision 6)."""
+    return has_street(e) and bool(e.get("po_box"))
 
 def unit_text(t,n):
     n=plain(n) if n else ""
@@ -44,11 +57,17 @@ def units(e):
     return join(unit_text(e.get("unit_type"),e.get("unit_number")),
                 unit_text(e.get("second_unit_type"),e.get("second_unit_number")))
 
+def street_line(e):
+    return join(plain(e["street_number"]) if e.get("street_number") else "",
+                e.get("street_dir_prefix",""),name_text(e),e.get("street_suffix",""),
+                e.get("street_dir_suffix",""),units(e))
+
 def line1(e):
+    """The USPS delivery line. A dual address is the PO Box alone, without
+    the street's units (section 215)."""
+    if dual(e): return special(e)
     sp=special(e)
-    base=sp or join(plain(e["street_number"]) if e.get("street_number") else "",
-                    e.get("street_dir_prefix",""),name_text(e),e.get("street_suffix",""),e.get("street_dir_suffix",""))
-    return join(base,units(e))
+    return join(sp,units(e)) if sp else street_line(e)
 
 def city_of(e): return e.get("military_post_office") or e.get("city","")
 
@@ -65,7 +84,8 @@ def keyseg(s):
 def key(e,unit):
     st,z=e.get("state",""),e.get("zip5","")
     pre="k1:" if st and z else "k1n:"
-    if e.get("po_box"): body=["P",e["po_box"],st,z]
+    # A dual address keys on the street (decision 6).
+    if e.get("po_box") and not has_street(e): body=["P",e["po_box"],st,z]
     elif e.get("rural_route"):
         r=e["rural_route"]; body=["R",r["kind"],r["route"],r.get("box",""),st,z]
     elif e.get("military"):
@@ -83,7 +103,9 @@ def slug(e):
 
 def reso(e):
     r={}
-    sp=special(e)
+    # A dual address uses the street; the box is not emitted (decision 8 in
+    # docs/reso-mapping.md).
+    sp="" if dual(e) else special(e)
     num=e.get("street_number","") if not sp else ""
     if num: r["StreetNumber"]=plain(num)
     m=re.match(r"\d+",num or "")
@@ -107,7 +129,7 @@ def reso(e):
     if e.get("state"): r["StateOrProvince"]=e["state"]
     if e.get("zip5"): r["PostalCode"]=e["zip5"]
     if e.get("zip4"): r["PostalCodePlus4"]=e["zip4"]
-    ua=", ".join(x for x in [line1(e),c,join(e.get("state",""),zipfull(e))] if x)
+    ua=", ".join(x for x in [street_line(e) if dual(e) else line1(e),c,join(e.get("state",""),zipfull(e))] if x)
     if ua: r["UnparsedAddress"]=ua
     return r
 
@@ -143,7 +165,36 @@ def add(c, with_reso):
     c.clear(); c.update(out)
     return changed
 
+def computed(c):
+    """The expectations this script derives for a case, or {} if none."""
+    kind=eligible(c)
+    if kind!="ok": return {}
+    e=c["expect"]
+    u={"line1":line1(e)}
+    if (l:=last_line(e)): u["last_line"]=l
+    out={"key":key(e,False),"key_unit":key(e,True),"slug":slug(e),"usps":u}
+    if e.get("state") and e.get("zip5"): out["reso"]=reso(e)
+    return out
+
+def check(paths):
+    """--check: every stored expectation must equal what the rules give.
+    Run it after changing a rule here or in the docs it follows."""
+    n=bad=0
+    for path in paths:
+        for l in open(path,encoding="utf-8"):
+            if not l.strip(): continue
+            c=json.loads(l)
+            for k,v in computed(c).items():
+                if k in c:
+                    n+=1
+                    if c[k]!=v:
+                        bad+=1; print(f"{c['id']} {k}:\n  stored   {c[k]}\n  computed {v}")
+    print(f"compared {n} expectations, {bad} differ")
+    return bad==0
+
 if __name__=="__main__":
+    if sys.argv[1:2]==["--check"]:
+        sys.exit(0 if check(sys.argv[2:]) else 1)
     n=0
     for path in sys.argv[1:]:
         lines=open(path,encoding="utf-8").read().splitlines()
