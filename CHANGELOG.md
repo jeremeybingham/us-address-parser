@@ -4,6 +4,32 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Florida pack and place lookups (Milestone 5)
+
+Decisions 13 to 19 of 2026-10-16 in `docs/design.md`; data and sources in
+`docs/packs/fl.md`; corpus cases `fl-001` to `fl-013`.
+
+- State packs: `data/packs/<st>/` compiled in by `build.rs` behind a
+  `state-<st>` feature. The Florida pack (`state-fl`, on by default) has 665
+  places, 998 variant spellings and 1,473 ZIPs, exported from
+  auction-tracker's `cities_fl.json` by `tools/packs/build_fl.py`. GeoNames
+  ZIP data is CC BY 4.0; see `NOTICE`.
+- `Lexicons::place`, `zip_places`, `place_key`, `is_place`, `has_pack` and
+  `places`; new types `Place`, `PlaceKind`, `PlaceMatch`, `PlaceSource`,
+  `ZipPlaces`. Place names compare without case, punctuation, spacing or
+  abbreviations (`W PALM BCH` is WEST PALM BEACH).
+- New `ParsedAddress::place`: the place the city names, a listed
+  misspelling, a cut-off city completed from the ZIP, or the ZIP's place
+  when there is no city. `city` is unchanged. The CLI prints `place`;
+  `parse-file` adds `addr_place` and `addr_place_source`.
+- New `Warning::ZipCityMismatch` (`zip_city_mismatch`): a known city whose
+  ZIP the pack does not list for it. `rg-041` now expects it.
+- On one line, a place the pack knows sets where the city starts, before
+  the suffix rule (`123 MAIN ST WEST PALM BEACH FL`); a street suffix run
+  into a place is split (`WILSON STREETDADE CITY FL`); with a pack, a first
+  segment ending in a suffix that is no place is the street
+  (`WINGATE ST, 32507`).
+
 ### Rule changes from the usaddress comparison and the geocode benchmark
 
 Corpus cases `rg-050` to `rg-081`; rules in `docs/usps-pub28-notes.md`;

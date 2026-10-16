@@ -176,6 +176,90 @@ impl fmt::Display for StateCode {
     }
 }
 
+/// A city, town or community from a state pack (`data/packs/`,
+/// `docs/packs/`). Obtain one with [`crate::Lexicons::place`] or
+/// [`crate::Lexicons::zip_places`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Place {
+    pub(crate) state: &'static str,
+    pub(crate) name: &'static str,
+    pub(crate) county: &'static str,
+    pub(crate) kind: PlaceKind,
+}
+
+impl Place {
+    /// The two-letter state code: `"FL"`.
+    pub fn state(&self) -> &'static str {
+        self.state
+    }
+
+    /// The place's standard name, as the pack spells it: `"PORT SAINT LUCIE"`.
+    pub fn name(&self) -> &'static str {
+        self.name
+    }
+
+    /// The county name, upper case: `"SAINT LUCIE"`.
+    pub fn county(&self) -> &'static str {
+        self.county
+    }
+
+    pub fn kind(&self) -> PlaceKind {
+        self.kind
+    }
+}
+
+impl fmt::Display for Place {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name)
+    }
+}
+
+/// What kind of place a [`Place`] is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PlaceKind {
+    /// An incorporated city, town or village.
+    Municipality,
+    /// A community or postal name with no city government.
+    Place,
+}
+
+/// How the parser found the place for an address.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PlaceSource {
+    /// The city matches the place's name (case, punctuation and
+    /// abbreviations aside: `W PALM BCH` is WEST PALM BEACH).
+    Name,
+    /// The city is a spelling the pack lists for the place, usually a typo
+    /// (`BOCA RATOM`).
+    Variant,
+    /// The city looks cut off, and exactly one place for the ZIP starts that
+    /// way (`WESLEY CHA` is WESLEY CHAPEL).
+    Completed,
+    /// There is no city; the place is the ZIP's main place.
+    Zip,
+}
+
+impl PlaceSource {
+    /// Stable snake_case identifier.
+    pub const fn code(self) -> &'static str {
+        match self {
+            PlaceSource::Name => "name",
+            PlaceSource::Variant => "variant",
+            PlaceSource::Completed => "completed",
+            PlaceSource::Zip => "zip",
+        }
+    }
+}
+
+/// The place found for an address and how it was found (`docs/design.md`
+/// section 13, decision 13). [`ParsedAddress::city`] keeps what the input
+/// said; this names the place it stands for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PlaceMatch {
+    pub place: Place,
+    pub source: PlaceSource,
+}
+
 /// Rural route or highway contract route.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RouteKind {
@@ -432,12 +516,16 @@ pub enum Warning {
     MissingZip,
     /// A ZIP that is not 5 digits, or ZIP+4 that is not 4 digits.
     InvalidZip,
+    /// The city is a known place, but the state pack does not list the ZIP
+    /// for it (`docs/design.md` section 13, decision 14). A disagreement
+    /// with the pack's data, not a finding that the address is wrong.
+    ZipCityMismatch,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 17] = [
+    pub const ALL: [Warning; 18] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -455,6 +543,7 @@ impl Warning {
         Warning::UnknownState,
         Warning::MissingZip,
         Warning::InvalidZip,
+        Warning::ZipCityMismatch,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -478,6 +567,7 @@ impl Warning {
             Warning::UnknownState => "unknown_state",
             Warning::MissingZip => "missing_zip",
             Warning::InvalidZip => "invalid_zip",
+            Warning::ZipCityMismatch => "zip_city_mismatch",
         }
     }
 }
@@ -565,7 +655,12 @@ pub struct ParsedAddress {
     /// A building name after the street or its unit (`EAST TOWER`,
     /// `ANNEX BUILDING`), as written. Not part of any emitted address.
     pub building: Option<String>,
+    /// The city as the input wrote it.
     pub city: Option<String>,
+    /// The place the city stands for, from the state packs, or the ZIP's
+    /// main place when there is no city. `None` when no pack covers the
+    /// state or nothing matched. Not part of any emitted address.
+    pub place: Option<PlaceMatch>,
     pub state: Option<StateCode>,
     pub zip5: Option<String>,
     pub zip4: Option<String>,
@@ -607,6 +702,7 @@ impl ParsedAddress {
             attention: None,
             building: None,
             city: None,
+            place: None,
             state: None,
             zip5: None,
             zip4: None,

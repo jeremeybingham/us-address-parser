@@ -3,13 +3,13 @@
 
 use std::ops::Range;
 
-use super::{Tag, Tagger};
+use super::{PlaceCtx, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
     is_grid_number, is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value, join,
     longest_at, longest_ending, zip_parts, NumberShape,
 };
-use crate::lexicon::{MatchKind, Special};
+use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{StateKind, Warning};
 
 /// A special delivery line: the tags to apply and where it ends.
@@ -127,6 +127,7 @@ impl Tagger<'_> {
             self.set(r.clone(), Tag::State);
             ll_start = r.start;
         }
+        self.places = self.place_ctx(state.clone(), zip.then_some(hi - 1));
         if !zip && !bad_zip && state.is_none() {
             // "123 MAIN ST, MIAMI": a last segment of plain words after a
             // street is the city.
@@ -161,7 +162,9 @@ impl Tagger<'_> {
             // The last line starts its segment: the city is the segment before.
             let cs = self.seg_start(prev).max(lo);
             let first_seg = toks[cs].seg == toks[lo].seg;
-            if !first_seg || self.looks_like_city(cs, ll_start) {
+            if !first_seg
+                || (self.looks_like_city(cs, ll_start) && !self.known_street(cs, ll_start))
+            {
                 Some(cs..ll_start)
             } else {
                 // "626 E KILBOURN AVE MILWAUKEE, WI 53202": the street and
@@ -174,7 +177,9 @@ impl Tagger<'_> {
                 if street_end {
                     None
                 } else {
-                    self.city_after_street(cs, ll_start).map(|c| c..ll_start)
+                    self.place_city(cs, ll_start)
+                        .or_else(|| self.city_after_street(cs, ll_start))
+                        .map(|c| c..ll_start)
                 }
             }
         } else {
@@ -184,8 +189,12 @@ impl Tagger<'_> {
                 // segment belongs to the street.
                 Some(self.after_unit(cs, ll_start)..ll_start)
             } else {
-                // One line with no commas: the city follows the street.
-                self.city_after_street(lo, ll_start).map(|c| c..ll_start)
+                // One line with no commas: the city follows the street. A
+                // place the state pack knows wins over the suffix rule
+                // (`MAIN ST WEST PALM BEACH`).
+                self.place_city(lo, ll_start)
+                    .or_else(|| self.city_after_street(lo, ll_start))
+                    .map(|c| c..ll_start)
             }
         };
         match city {
@@ -195,6 +204,70 @@ impl Tagger<'_> {
             }
             _ => (ll_start, None),
         }
+    }
+
+    /// The pack for the last line: the state tagged there when a pack
+    /// covers it, else the state of the ZIP's main place.
+    fn place_ctx(&self, state: Option<Range<usize>>, zip: Option<usize>) -> Option<PlaceCtx> {
+        let zip = zip
+            .and_then(|k| zip_parts(self.text(k)))
+            .and_then(|(z5, _)| self.lex.zip_places(z5));
+        let state = match state {
+            Some(r) => self.lex.state(&join(&self.toks[r]))?.value.code(),
+            None => zip?.main().state(),
+        };
+        if !self.lex.has_pack(state) {
+            return None;
+        }
+        let zip = zip.filter(|z| z.main().state() == state);
+        Some(PlaceCtx { state, zip })
+    }
+
+    /// `WINGATE ST, 32507`: with a state pack, a first segment of plain words
+    /// that ends in a street suffix and is no place the pack knows is the
+    /// street, not the city (`docs/prior-art.md`).
+    fn known_street(&self, lo: usize, hi: usize) -> bool {
+        let Some(ctx) = self.places else {
+            return false;
+        };
+        hi > lo + 1
+            && self.lex.suffix(self.text(hi - 1)).is_some()
+            && self
+                .lex
+                .place(ctx.state, &join(&self.toks[lo..hi]))
+                .is_none()
+    }
+
+    /// In a line with no commas, where the city starts by the state pack's
+    /// place list: the longest run of words ending at `hi` that is a place,
+    /// preferring one the ZIP belongs to. A listed misspelling counts only
+    /// when the ZIP agrees. After a house number, a street name must be left
+    /// before the city; with no number the whole run may be the city
+    /// (`PALM BEACH 33480`).
+    pub(super) fn place_city(&self, lo: usize, hi: usize) -> Option<usize> {
+        let ctx = self.places?;
+        let first_number = lo < hi && house_number(self.text(lo)).is_some();
+        let min = if first_number { lo + 2 } else { lo };
+        let mut best: Option<(usize, bool)> = None;
+        for k in min.max(hi.saturating_sub(MAX_PLACE_WORDS))..hi {
+            let run = &self.toks[k..hi];
+            if run.iter().any(|t| has_digit(&t.text) || t.is_hash()) {
+                continue;
+            }
+            let Some(hit) = self.lex.place(ctx.state, &join(run)) else {
+                continue;
+            };
+            let agrees = ctx.zip.is_some_and(|z| z.contains(&hit.value));
+            if hit.kind != MatchKind::Standard && !agrees {
+                continue;
+            }
+            // Longest first, so a later run replaces it only if the ZIP
+            // agrees with it and not with the longer one.
+            if !matches!(best, Some((_, a)) if a || !agrees) {
+                best = Some((k, agrees));
+            }
+        }
+        best.map(|(k, _)| k)
     }
 
     /// A state spelling. `loose` also accepts traditional abbreviations

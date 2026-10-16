@@ -30,7 +30,8 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
 
 - `id`: unique across all files. Prefixed with the source: `at-`
   (auction-tracker tests), `atg-` (auction-tracker golden CSVs), `p28-`
-  (Pub 28 examples), `rg-` (regressions), `key-`, `reso-` (emitter cases);
+  (Pub 28 examples), `rg-` (regressions), `key-`, `reso-` (emitter cases),
+  `fl-` (Florida pack, `fl-pack.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
@@ -74,6 +75,12 @@ Emitter expectations are optional record keys, checked only when present
 
 - `usps`: `{"line1": ..., "line2": ..., "last_line": ...}` from
   `to_usps()`; an omitted part must be empty.
+
+- `place`: `ParsedAddress::place` as `"NAME (source)"`, with the pack's
+  standard name and the `PlaceSource::code()` (`"WEST PALM BEACH (name)"`,
+  `"FERNANDINA BEACH (completed)"`, `"PENSACOLA (zip)"`), or `"none"`.
+  These cases need the state packs, which the tests always build with
+  (default features).
 
 - `reso`: an object of Data Dictionary 2.0 field names to the expected
   `to_reso()` values (`{"StreetName": "MAIN", "City": "MIAMI"}`). A field not

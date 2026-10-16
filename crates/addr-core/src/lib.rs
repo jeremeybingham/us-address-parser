@@ -27,18 +27,19 @@ mod emit;
 mod input;
 pub mod lexicon;
 mod parser;
+mod place;
 mod tagger;
 mod tokenize;
 mod types;
 
 pub use emit::{KeyOptions, ResoAddress, UsaddressTag, UspsAddress};
 pub use input::Fields;
-pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind};
+pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind, ZipPlaces};
 pub use parser::{ParseError, Parser};
 pub use types::{
     Component, ComponentSpan, Diagnostics, Directional, FieldName, Highway, InputKind, MilitaryBox,
-    MilitaryKind, MilitaryPostOffice, ParsedAddress, RouteKind, RuralRoute, SourceInfo, Span,
-    StateCode, StateKind, StreetSuffix, UnitType, Warning,
+    MilitaryKind, MilitaryPostOffice, ParsedAddress, Place, PlaceKind, PlaceMatch, PlaceSource,
+    RouteKind, RuralRoute, SourceInfo, Span, StateCode, StateKind, StreetSuffix, UnitType, Warning,
 };
 
 /// Library version, surfaced in [`Diagnostics`].

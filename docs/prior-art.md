@@ -1,8 +1,8 @@
 # Prior art: the author's Florida address code
 
-Two existing repositories handle Florida addresses. This note records what
-they do, what carried over into this library, and what is left for the
-state packs (`docs/design.md` section 11).
+The author's auction-tracker repository handles Florida addresses. This
+note records what it does, what carried over into this library, and what
+is left for the state packs (`docs/design.md` section 11).
 
 Reviewed 2026-10-14:
 
@@ -10,9 +10,6 @@ Reviewed 2026-10-14:
   `parse/normalize.py` (`split_address`), `config/places.py`, and
   `tests/test_addresses.py`. It scrapes county foreclosure and tax-deed
   auction sites, so its input is messy assessor and clerk data.
-- **dbpr_fl**: `stats.py` (`load_city_master`, `normalize_cities`) and
-  `cities_fl.json`. It analyzes Florida DBPR real estate license files and
-  only normalizes city names.
 
 ## auction-tracker
 
@@ -76,6 +73,13 @@ and rules in `docs/usps-pub28-notes.md` ("Parser rules"):
 
 ### Left for the state packs
 
+Done in the Florida pack (`docs/packs/fl.md`, corpus `fl-pack.jsonl`): cities
+run into the street, the place list and its comparison rule, completion of
+a cut-off city (from the ZIP's places, since the parser has no county), the
+ZIP's place when there is no city, and a `zip_city_mismatch` warning. Two
+differences from auction-tracker: a city that is no known place (`SAINT
+LUCIE COUNTY`) gets no place rather than the ZIP's, and SR/CR stay open.
+
 - **Cities run into the street line**, with or without a space:
   `13551 WILSON STREETDADE CITY`, `1155 TITUS AVE TITUSVILLE`. Only safe with
   a place list; a word-boundary check stops `GRAND DRIVE` being read as
@@ -92,6 +96,12 @@ and rules in `docs/usps-pub28-notes.md` ("Parser rules"):
 - City from ZIP when the site's city is not a place (`TAL`, `SAINT LUCIE
   COUNTY`), and a `zip_mismatch` status when city and ZIP disagree. That
   belongs in pack-level diagnostics, never in the key (design section 6).
+- `cities_fl.json` is the only source of Florida variants (an older copy
+  of the list elsewhere is redundant). Its variants include abbreviations
+  (`ALTAMONTE SPGS`), the state run into the name (`BOCA RATON FL`) and
+  real typos (`ADVENTURA`). `SPGS`, `BCH`, `PRK` are Pub 28 suffix
+  abbreviations used inside names, which the pack can expand from the
+  suffix table.
 - `SR` is State Road in Florida; `CR` is County Road. Kept out of the base
   highway table where they are ambiguous (`special.toml` comments).
 
@@ -104,28 +114,7 @@ address lines in the golden CSVs under `tests/golden/v2/` (305 rows from 8
 counties) seeded `auction-tracker-golden.jsonl`; those CSVs hold the old
 parser's output, so the labels were written by hand.
 
-Open finding from that pass: `WINGATE ST 32507` parses as a street plus
-ZIP, but its USPS output (`WINGATE ST` / `32507`) re-read with a comma reads
+Finding from that pass: `WINGATE ST 32507` parses as a street plus ZIP, but
+its USPS output (`WINGATE ST` / `32507`) re-read with a comma read
 `WINGATE ST` as a city (`PALM BEACH, 32507` has the same shape). Only a place
-list separates them, so the case was left out of the corpus.
-
-## dbpr_fl
-
-`stats.py` keeps only rows with city, state, ZIP, county and address line 1,
-and normalizes cities with an exact lookup from `cities_fl.json` (413
-places, 291 with variants). It does not parse street addresses.
-
-What it adds is the **variant list**: real misspellings from license files
-(`ALTAMONTE SPGS`, `BOCA RATON FL`, `BOYNTON\xa0BEACH`, `BOCA RATÓN`, a
-trailing comma). Lessons:
-
-- Input cleaning (`clean.rs`) handles non-breaking spaces, trailing commas,
-  doubled spaces and accented letters before lookup (done).
-- City fields often carry the state (`BOCA RATON, FL`, `... FL.`);
-  `parse_fields` picks it up (done).
-- `SPGS`, `BCH`, `PRK` show up inside place names. They are Pub 28 suffix
-  abbreviations used as abbreviations of words in names, which a FL pack
-  can expand from the same suffix table.
-- The variant list is a ready source of city aliases for the FL pack. It
-  overlaps with auction-tracker's `cities_fl.json` (same origin) but adds
-  license-file misspellings; merge them when the pack is built.
+list separates them. Fixed with the Florida pack (`fl-004`, `fl-005`).

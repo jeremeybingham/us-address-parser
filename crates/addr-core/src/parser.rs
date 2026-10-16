@@ -9,6 +9,7 @@ use crate::assemble::assemble;
 use crate::clean::clean;
 use crate::input::Fields;
 use crate::lexicon::Lexicons;
+use crate::place;
 use crate::tagger::{tag_fields, tag_line, LineLengths};
 use crate::tokenize::{tokenize, Token};
 use crate::types::{FieldName, InputKind, ParsedAddress, Span};
@@ -64,6 +65,7 @@ impl Parser {
         assemble(&mut addr, &toks, tagged, &self.lex, &|s: &Span| {
             input.get(s.start..s.end)
         });
+        place::resolve(&mut addr, &self.lex);
         Ok(addr)
     }
 
@@ -103,6 +105,7 @@ impl Parser {
         let mut addr =
             ParsedAddress::empty(fields.joined(), InputKind::Fields, Some(fields.clone()));
         assemble(&mut addr, &toks, tagged, &self.lex, &source);
+        place::resolve(&mut addr, &self.lex);
         Ok(addr)
     }
 

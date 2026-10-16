@@ -1,0 +1,11 @@
+us-address-parser
+Copyright the us-address-parser authors. Code licensed under MIT OR Apache-2.0.
+
+This product includes data from third parties under their own terms:
+
+- GeoNames postal code data (https://www.geonames.org/), licensed under the
+  Creative Commons Attribution 4.0 License
+  (https://creativecommons.org/licenses/by/4.0/). Used for the ZIP-to-place
+  tables in data/packs/ (see docs/packs/).
+- US Census Bureau Gazetteer files (public domain), used for place names.
+- usaddress test data (MIT, datamade), vendored in tests/external/usaddress/.
