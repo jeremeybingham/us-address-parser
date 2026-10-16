@@ -14,15 +14,15 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 | `tests/corpus/README.md` | Golden-corpus record format and labeling conventions |
 
 **Status (2026-10-16):** Milestones 0 to 4 are done: data and types, the
-rule parser, the key, USPS, RESO and slug emitters, the golden corpus (258
-cases, all passing), the `addr` CLI and benchmarks. From Milestone 8, the
-usaddress comparison is done. Milestone 5 is in progress: the Florida pack
-is built and used (293 corpus cases, all passing), with open Florida items
-still to fix (section 13, open tasks). The national place list's source data
-is downloaded to `local-data/places/` (section 10, item 23). **Next: the
-national place list, the benchmark rerun and the CRF call, calibrated
-confidence, then Milestone 6, the Python wrapper.**
-Section 10 has the plan and section 13 the open items.
+rule parser, the key, USPS, RESO and slug emitters, the golden corpus, the
+`addr` CLI and benchmarks; so is the usaddress comparison. Milestone 5, the
+place list, is in progress: the Florida pack is built and used (293 corpus
+cases, all passing), and the national list's source data is downloaded.
+**Next (section 10): item 23, the dual-address slug, then items 24 and 25,
+the national place list.** After Milestone 5 comes the Python wrapper
+(Milestone 6), then calibrated confidence (Milestone 7; decision 22).
+Section 10 is the plan, in build order, one pull request per item; section
+13 has the open decisions and the unscheduled backlog.
 
 ---
 
@@ -134,7 +134,10 @@ tests/
 tools/
   corpus/emit_expect.py     # writes emitter expectations into corpus cases from the specs
   compare/                  # usaddress comparison and training-overlap scripts
-  train/                    # (planned, Milestone 7) CRF training scripts
+  packs/                    # Florida pack export and observed-ZIP scripts
+  places/                   # (planned, item 24) national place list builder
+  calibrate/                # (planned, item 35) confidence fitting
+  train/                    # (planned, Milestone 7, if built) CRF training scripts
 models/                     # (planned, Milestone 7) CRF model; README only
 .github/workflows/ci.yml    # fmt, clippy, test, corpus report
 local-data/                 # gitignored: private and unlicensed test data, never committed
@@ -233,7 +236,7 @@ does include the city.
 - `parse(str)`, `parse_fields(...)`, and **`parse_many(list[str])`**, which releases the GIL during Rust work.
 - Emitters: `to_usps()`, `to_reso()`, `key()`, `slug()`, `to_usaddress_tags()`.
 - `place` (name, state, county, kind, source) or `None`, as the CLI prints it.
-- `confidence` is exposed as `float | None` (calibrated in Milestone 5; `None` only where no score applies, such as a placeholder).
+- `confidence` is exposed as `float | None`: `None` until it is calibrated (Milestone 7), then `None` only where no score applies, such as a placeholder.
 - Errors map to Python exceptions only for unusable input.
 - No required runtime dependencies. No pandas/Polars dependency; document a short recipe instead.
 
@@ -268,7 +271,12 @@ it says little about unseen data; the blind benchmark is the better measure.
 
 ## 10. Milestones
 
-Each milestone ends with passing tests.
+Each milestone ends with passing tests. Items 23 onward are the remaining
+work in build order. Each numbered item is one pull request (its commits
+listed where it has more than one), small enough to review on its own and
+leaving `main` green. An item marked **(author)** needs the author's data or
+decision before it can start; **(any time)** has no dependency and can go
+in wherever it fits.
 
 ### Milestone 0: scaffolding (done)
 
@@ -302,89 +310,167 @@ Each milestone ends with passing tests.
 
 ### Milestone 4: corpus and CLI (done)
 
-19. Golden corpus seeded from auction-tracker's tests and golden CSVs, Pub 28's own examples and regression cases. The author's own Florida code is still pending (section 13).
+19. Golden corpus seeded from auction-tracker's tests and golden CSVs, Pub 28's own examples and regression cases. The author's own Florida code is still pending (backlog, section 13).
 20. Corpus runner: the `addr_core::corpus` module (feature `corpus`), used by `tests/corpus.rs` and `addr corpus test`. Exit codes: 0 ok, 2 malformed corpus, 3 regression or stale baseline.
 21. `addr` CLI (section 8). The CLI, not the core, depends on `csv` and `serde_json`.
 22. `benches/parse.rs`. First numbers (quick run, 2026-10-15): about 4 to 11 µs per address, about 110K addresses/s one by one, about 3x that through `parse_many` with `rayon`. Run `cargo bench -p addr-core --bench parse` (add `--features rayon`).
 
-### Milestone 5: place list and calibrated confidence (next)
+Also done ahead of its milestone: the usaddress comparison script and
+results (`tools/compare/compare_usaddress.py`,
+`docs/usaddress-comparison.md`), first planned for Milestone 8.
+
+### Milestone 5: place list (in progress)
 
 The first state-pack work (section 11), scoped to what the parser needs to
-find the city. It comes before the Python wrapper, so Python ships with the
-calibrated confidence, and it decides Milestone 7.
+find the city. It ends with the benchmark rerun that makes the CRF call
+(decision 10).
 
-23. Place list data in two layers (section 11; section 13, decisions 13
-    to 19):
-    - **Florida pack** *(done)* (`data/packs/fl/`, feature `state-fl`), built by
-      `tools/packs/build_fl.py` from auction-tracker's `cities_fl.json`
-      (places, county, kind, main and shared ZIPs, variant spellings
-      tagged as abbreviation or typo) and checked against its Census and
-      GeoNames sources. Provenance and licenses in `docs/packs/fl.md`.
-    - **National base** *(next)* (`data/places/`, feature `places-us`), built by
-      `tools/places/build_us.py` from the Census 2024 Gazetteer (places
-      and county subdivisions, public domain) and the GeoNames US postal
-      file (ZIP to city, CC BY 4.0). Abbreviated spellings (`ST`/`SAINT`,
-      directionals, Pub 28 suffix words inside names, `TWP`) come from a
-      comparison rule, not stored variants. Built after the Florida pack,
-      in the same format.
-      *Source data ready* (2026-10-16), in `local-data/places/` (gitignored;
-      URLs, dates and checksums in `local-data/README.md`): the Census 2024
-      Gazetteer national places, county subdivisions and counties; the
-      Census 2020 place-by-county code list (the `county` column: it covers
-      31,871 of the 32,333 places; 462 are newer than 2020); and GeoNames
-      `US.zip` (41,489 ZIPs) and `PR.zip` (177, a separate file). Open for
-      the builder: one county for the 1,304 places that span several, and
-      the 462 with none. The GeoNames attribution goes in `NOTICE` when the
-      list ships.
-24. Use it behind the `Lexicons` interface (lookups take the state found
-    from a state token or the ZIP's pack; no state logic in the tagger).
-    *Done for Florida* (`docs/packs/fl.md`; corpus `fl-001` to `fl-013`):
-    - find where the city starts on one line with no commas, and separate
-      cities run into the street (`13551 WILSON STREETDADE CITY`); on a
-      whole line only names and abbreviation variants count, typo
-      variants only in a city field or when the ZIP agrees;
-    - tell a street from a city before a ZIP (`WINGATE ST 32507`);
-    - complete a cut-off city when exactly one place for the ZIP starts
-      that way (`WESLEY CHA`);
-    - fill a missing city from the ZIP's main place, and warn when city
-      and ZIP disagree.
-    Golden-corpus cases for each shape.
-25. Calibrated confidence (section 13, decision 12): record the uncertain
-    decisions the tagger makes, fit the score on licensed labeled data, and
-    report calibration in `docs/`.
-26. Rerun the usaddress comparison and the blind geocode benchmark; record the
-    results in `docs/usaddress-comparison.md`, then make the Milestone 7
-    go/no-go call (section 13, decision 10).
+Done:
+
+- **Florida pack** (`data/packs/fl/`, feature `state-fl`), built by
+  `tools/packs/build_fl.py` from auction-tracker's `cities_fl.json` and
+  checked against its Census and GeoNames sources, plus observed ZIP places
+  from the DBPR export and the `CR` override. Provenance, licenses and use:
+  `docs/packs/fl.md`; decisions 13 to 21.
+- **Florida lookups** behind the `Lexicons` interface: the city on one line
+  with no commas, a city run into the street, street versus city before a
+  ZIP, cut-off cities completed, the place from the ZIP and
+  `zip_city_mismatch`. Corpus `fl-001` to `fl-019`.
+
+To do, in order:
+
+23. **Slug follows the street for dual addresses** (decision 11). Build the
+    slug from `street_line()`; update the slug section of
+    `docs/key-format.md`, `tools/corpus/emit_expect.py` and the slug
+    expectations of `rg-040` to `rg-045`. Small and independent; it goes
+    first because Python exposes the slug.
+24. **National place data** (`data/places/`, feature `places-us`, on by
+    default). Data only: no parser behavior changes, so the PR is the
+    builder, its checks and the compiled tables.
+    - Commit 1: `tools/places/build_us.py` and its output, from the Census
+      2024 Gazetteer (places and county subdivisions, public domain), the
+      Census 2020 place-by-county list and GeoNames `US.zip` (CC BY 4.0).
+      Source files are in `local-data/places/` (gitignored; URLs, dates and
+      checksums in `local-data/README.md`). With it, `docs/places.md`
+      (sources, licenses, how it is built), recording what the builder
+      settles: one county for the 1,304 places that span several, the 462
+      places newer than the 2020 county list, and whether Puerto Rico
+      (`PR.zip`, a separate GeoNames file) is in this pass.
+    - Commit 2: `build.rs` compiles `data/places/` behind `places-us`, with
+      the same checks as the packs, and merges it under the Florida pack
+      (the layering rule is the open decision in section 13, needed before
+      this commit). Record the compiled size (expected 1.5 to 2 MB) and
+      build time.
+    - Commit 3: GeoNames attribution in `NOTICE` and the README's place
+      data section.
+25. **Use the national list in the parser.** `Lexicons` place lookups read
+    the national layer for every state, so the Florida behaviors (city on
+    one line, street versus city before a ZIP, cut-off cities, place from
+    the ZIP) work everywhere. Decide in this PR whether `zip_city_mismatch`
+    fires on national data alone (section 13, open decisions). Corpus cases
+    from other states for each shape (`ST LOUIS`, `NORTH LITTLE ROCK`,
+    `LA GRANGE PARK`, `ROARING BROOK TWP`); rerun `cargo bench` and record
+    the parse-time change.
+26. **Florida: `SR` and county road names** (`docs/packs/fl.md`, to do).
+    `SR` before a route number is State Road in Florida, and `CTY RD`, `CO
+    RD` are county roads. Adds a highway override to the pack's
+    `overrides.toml` (today it only reads suffixes), with evidence counts
+    from the DBPR export. **(any time)**
+27. **Florida: rarer misspellings and the penthouse shape.** `DRT`, `LNE`,
+    `SU` as observed spellings, and `APT PH 5213` read as the decision
+    says. **(author)** for the penthouse decision (section 13); the
+    spellings alone can go in any time.
+28. **Florida: communities still missing after the national list.** Item
+    24 adds Census places (including unincorporated CDPs such as `TRINITY`
+    and `CITRUS SPRINGS`) for Florida, so remeasure the DBPR rows with no
+    place match first, then add what is left (`COCONUT GROVE`, and so on)
+    to the pack, with county and ZIPs. Needs a source for added rows: a
+    hand-kept `places_added.tsv` beside the export, or a change to
+    auction-tracker's list and a re-export.
+29. **Rerun the comparisons and make the CRF call.** Rerun the usaddress
+    comparison and the blind geocode benchmark; record the results in
+    `docs/usaddress-comparison.md` and the go or no-go for Milestone 7's
+    CRF items as a decision in section 13. Docs only.
 
 ### Milestone 6: Python wrapper
 
-27. `crates/addr-py/Cargo.toml`, `pyproject.toml` (maturin), `src/lib.rs`; add to the workspace
-28. Python package `us_address_parser`: `__init__.py`, `__init__.pyi`, `py.typed`
-29. `crates/addr-py/tests/test_basic.py`, `test_batch.py`
-30. `.github/workflows/wheels.yml`
+Before calibrated confidence (decision 22): `confidence` is already in the
+API as `float | None`, so the wrapper does not change when it is filled.
 
-### Milestone 7: CRF fallback (only if Milestone 5 leaves a gap worth it)
+30. **The wrapper and its tests.**
+    - Commit 1: `crates/addr-py/Cargo.toml`, `pyproject.toml` (maturin),
+      `src/lib.rs` with `parse`, `parse_fields`, the `ParsedAddress` object,
+      `to_dict()` and the emitters (section 7); add to the workspace.
+    - Commit 2: the `us_address_parser` package: `__init__.py`,
+      `__init__.pyi`, `py.typed`.
+    - Commit 3: `crates/addr-py/tests/test_basic.py`; a CI job that runs
+      `maturin develop` and `pytest` on Linux.
+31. **`parse_many`**, releasing the GIL during the Rust work, with
+    `test_batch.py`, a benchmark against a Python loop of `parse`, and the
+    pandas recipe in the package README.
+32. **Wheels.** `.github/workflows/wheels.yml`: abi3 wheels for Linux,
+    macOS and Windows, built and tested on every pull request. No
+    publishing yet (item 43).
 
-31. First, verify that a CRFsuite-format model trained from usaddress data loads in `crfs`; if not, pick a compatible export path before investing further.
-32. `tools/train/`: export labeled data, train with parserator/python-crfsuite, write the model file
-33. `models/`: model file plus `README.md` with provenance, version, training date (usaddress MIT attribution)
-34. `src/tagger/crf.rs` using `crfs`, behind feature `crf`; embed the model with `include_bytes!`. The CRF's sequence probability feeds `confidence`, calibrated the same way.
+### Milestone 7: calibrated confidence, then the CRF fallback if item 29 says go
+
+Calibrated confidence (decision 12):
+
+33. **Blind Florida sample** **(author)**: hand-label 100 to 200 rows of the
+    private Florida files, stored in `local-data/` with the labeling
+    conventions of `tests/corpus/README.md`. It is calibration data and a
+    blind test on the data this library targets. The rows never leave
+    `local-data/`; only numbers fitted from them ship.
+34. **Record the tagger's uncertain decisions.** The tagger notes which
+    uncertain rules settled a boundary (city by comma, by the no-comma
+    suffix split or by the place list; a state with no ZIP; a bare unit; a
+    house-number letter rule). Internal (`pub(crate)`), with unit tests; no
+    output or key changes. Can start before item 33.
+35. **Fit and ship the score.**
+    - Commit 1: `tools/calibrate/` fits each path's accuracy (a fixed table
+      or a small logistic model) on the golden corpus, usaddress's test
+      files and the Florida sample.
+    - Commit 2: the fitted table in `data/` with its source, compiled by
+      `build.rs`, and `Diagnostics::confidence` filled from it.
+    - Commit 3: `docs/confidence.md`, the calibration report, checked on
+      the geocode benchmark (used to check, never to fit).
+
+CRF fallback (only if item 29 says go):
+
+36. **Spike: does a CRFsuite model trained on usaddress data load in
+    `crfs`?** Result recorded in section 13; if not, pick a compatible
+    export path before going further.
+37. `tools/train/`: export labeled data, train with parserator or
+    python-crfsuite, write the model file.
+38. `models/`: the model file plus `README.md` with provenance, version and
+    training date (usaddress MIT attribution).
+39. `src/tagger/crf.rs` using `crfs`, behind feature `crf`, with the model
+    embedded by `include_bytes!`. Its sequence probability feeds
+    `confidence`, recalibrated with item 35's tools and report.
 
 ### Milestone 8: hardening and release
 
-35. usaddress comparison script and results. *Done: `tools/compare/compare_usaddress.py`, `docs/usaddress-comparison.md`.*
-36. Re-check every lexicon table and the USPS emitter rules against the live Pub 28 pages (`docs/usps-pub28-notes.md`, "Verification status").
-37. Fuzz targets (cargo-fuzz) for the tokenizer and assembler.
-38. Rename for publishing: crates and Python package to `us-address-parser` / `us_address_parser` (section 13, decision 2); check name availability first.
-39. Copy `data/` into the `addr-core` crate for packaging (`build.rs` already looks for a crate-local `data/` first).
-40. crates.io and PyPI publishing workflows; turn the CHANGELOG's "Unreleased" into the first release.
+40. **Fuzz targets** (cargo-fuzz) for the tokenizer and assembler.
+    **(any time)**
+41. **Re-check every lexicon table and the USPS emitter rules against the
+    live Pub 28 pages** (`docs/usps-pub28-notes.md`, "Verification
+    status"). Last before release, so the check covers the final tables.
+42. **Rename for publishing:** crates and Python package to
+    `us-address-parser` / `us_address_parser` (decision 2), and copy
+    `data/` into the `addr-core` crate (`build.rs` already looks for a
+    crate-local `data/` first); `cargo package` must succeed. Check that the
+    names are free on crates.io and PyPI early **(any time)**, so a taken
+    name is found before more docs use it.
+43. **Publishing:** crates.io and PyPI workflows; turn the CHANGELOG's
+    "Unreleased" into the first release.
 
 ---
 
 ## 11. Deferred feature: state tuning packs
 
-Mostly deferred. The place list (Milestone 5) is the first piece to be built;
-the rest waits. Recorded so the core stays ready for it.
+Partly built. The place list (Milestone 5) is the first piece: the Florida
+pack is done and the national list is items 24 and 25. The rest waits, and
+is recorded so the core stays ready for it.
 
 **Idea:** the base parser is US-wide and state-agnostic. Data comes in
 layers, each a set of files compiled in by `build.rs`:
@@ -403,17 +489,20 @@ data/packs/fl/
   pack.toml        # state code, pack version, sources and licenses
   places.tsv       # canonical place names, county, kind, variants (abbreviation or typo)
   zips.tsv         # ZIP -> main place, shared places
-  overrides.toml   # (later) SR/CR and other road patterns
+  zips_observed.tsv # more (ZIP, place) pairs seen in real data
+  overrides.toml   # suffix spellings read differently in the state (CR); road names next
 ```
 
 Layering is add-only: a later layer adds names, variants and ZIPs and
 never replaces or removes an earlier entry; a conflict fails the build.
+How the national list and a curated pack for the same state combine is an
+open decision (section 13).
 Packs are fixed at compile time (section 3, decision 7); there are no user
 packs loaded from a directory. State selection is two-pass: find the
 state (state token or ZIP prefix), then look up places in that state.
 
-**Work already waiting on packs** (from the corpus, `docs/prior-art.md` and
-`docs/usaddress-comparison.md`):
+**Work waiting on packs** (from the corpus, `docs/prior-art.md` and
+`docs/usaddress-comparison.md`), with where each is tracked:
 
 - A place list to find the city on one line with no commas (`ST LOUIS`,
   `MOUNTAIN VIEW`, `W. PALM BEACH`). *Done for Florida*, along with a city
@@ -421,21 +510,24 @@ state (state token or ZIP prefix), then look up places in that state.
   completed from the ZIP (`WESLEY CHA`), the place from the ZIP, and
   `WINGATE ST 32507` (street plus ZIP, not city plus ZIP). Nationally this
   is the largest remaining gap on the blind benchmark; the Census 2024
-  Gazetteer (public domain) covers 73.5% of its cities.
+  Gazetteer (public domain) covers 73.5% of its cities. Items 24 and 25.
 - `SR` (State Road in Florida, State Route elsewhere), `RR` as Ranch Road in
   Texas, `CR` as CIRCLE in Florida (*done*: the Florida pack's
-  `overrides.toml`, decision 20), `PR 462` (Texas private road vs Puerto Rico), `CTY ROAD`,
-  `LEE ROAD 2004`-style county road names.
-- Queens-style hyphenated house numbers, Puerto Rico urbanizations.
+  `overrides.toml`, decision 20), `PR 462` (Texas private road vs Puerto
+  Rico), `CTY ROAD`, `LEE ROAD 2004`-style county road names. Florida's
+  `SR` and county roads are item 26; the rest are in the backlog.
+- Queens-style hyphenated house numbers, Puerto Rico urbanizations
+  (backlog).
 - `--default-state` for `addr parse-file` (most of the 1,700 auction rows
-  with no state).
+  with no state; backlog).
 - `ST`/`FT`/`MT` vs `SAINT`/`FORT`/`MOUNT` in place names, and suffix
   abbreviations inside place names (`ALTAMONTE SPGS`). *Done*: the place
   comparison rule (`lexicon/place_key.rs`).
 
 Settled 2026-10-16 (section 13, decisions 13 to 19): add-only layering,
 compile-time packs, the pack version recorded in `pack.toml` but not yet in
-output, and GeoNames (CC BY 4.0) as the ZIP source. Still open:
+output, and GeoNames (CC BY 4.0) as the ZIP source. Still open, in the
+backlog (section 13):
 
 - Whether packs may ship their own model weights (suggest no initially; reserve a manifest field).
 - A required golden-test corpus per pack, enforced in CI (`addr pack test`).
@@ -457,14 +549,14 @@ extensible; no state-specific rule in the tagger.
   usaddress scores 100% by construction). Details:
   `docs/usaddress-comparison.md`.
 - **Model format compatibility** between CRFsuite-trained models and `crfs`
-  must be verified before any Milestone 7 work.
+  must be verified before any CRF work (item 36, a spike).
 - **Key stability.** `k1` is signed off and stored keys depend on it. Parser
   fixes can still change the key an input produces; each such change is
   recorded in `docs/key-format.md`.
 - **Licensing.** Keep MIT attribution for vendored usaddress test data and
   any usaddress-derived training data. Unlicensed test data (the geocode
   benchmark) stays in `local-data/` and is never committed.
-- **Fuzzing** does not exist yet (Milestone 8); proptest covers the
+- **Fuzzing** does not exist yet (item 40, any time); proptest covers the
   never-panic rule meanwhile.
 - **Python boundary overhead** for single-address calls; recommend `parse_many` in the docs.
 
@@ -487,8 +579,9 @@ extensible; no state-specific rule in the tagger.
 ### Decisions recorded 2026-10-16
 
 10. **CRF fallback: decided after the place list.** Milestone 5 builds the
-    place list and reruns the blind benchmark; Milestone 7 goes ahead only if
-    a gap remains that rules plus the place list are unlikely to close.
+    place list and reruns the blind benchmark (item 29); the CRF items of
+    Milestone 7 go ahead only if a gap remains that rules plus the place
+    list are unlikely to close.
 11. **Slug for dual addresses: follow the street.** The key and the RESO
     output already use the street; only the USPS output writes the PO Box,
     because Pub 28 section 215 says so for the mailpiece. The slug will be
@@ -501,7 +594,7 @@ extensible; no state-specific rule in the tagger.
     0.0 to 1.0: the chance that the whole parse (every component) is right,
     calibrated so that of the addresses scored 0.9, about 90% are right on a
     labeled set the rules were not tuned on. It stays `None` until it is
-    calibrated (Milestone 5, item 25). Plan:
+    calibrated (Milestone 7, items 33 to 35). Plan:
     - The rule tagger has no native probability, so the score comes from
       the decisions it had to make: which warnings fired, and which uncertain
       rules settled a boundary (city found by a comma, by the no-comma
@@ -571,40 +664,66 @@ extensible; no state-specific rule in the tagger.
     places (`zips_observed.tsv`, `tools/packs/observe_fl_zips.py`);
     `zip_city_mismatch` on that data fell from 5.4% to 0.4% of rows.
 
+### Decisions recorded 2026-10-16 (planning review)
+
+22. **Python before calibrated confidence.** Milestone 5 used to end with
+    calibration so the wrapper would ship with it. Nothing is published
+    before Milestone 8, and `confidence` is already in the API (`None`
+    until calibrated), so the wrapper does not depend on it; calibration
+    does depend on the hand-labeled Florida sample (item 33), which is the
+    author's work. Calibration moves to Milestone 7, ahead of the CRF items,
+    which reuse its tools. Both still land before the first release.
+23. **One pull request per plan item.** Section 10 lists the remaining work
+    in build order as numbered items, each one pull request; commits within
+    an item are listed where there are several. Open items found while
+    building go into section 10 if they are scheduled, otherwise into the
+    backlog below. `docs/packs/<st>.md` keeps the evidence for its state's
+    items.
+
 ### Open decisions (for the author)
 
+- **How the national list and the Florida pack combine** (needed for item
+  24, commit 2). The national data has its own row for every Florida place,
+  sometimes with another spelling (the Census's `Everglades` is the pack's
+  `EVERGLADES CITY`) or another main ZIP. Suggested: where a state has a
+  curated pack, the pack's places and ZIPs are used and the national rows
+  for that state only add places the pack lacks, matched by the place
+  comparison rule. Add-only layering (decision 18) then still holds.
+- **`zip_city_mismatch` on national data alone** (item 25). With GeoNames'
+  one place per ZIP, Florida fired on 5.4% of DBPR rows before the observed
+  ZIP places (decision 21). Suggested: fire only where a curated pack
+  covers the state, and say so in the warning's docs.
+- **The penthouse after a designator** (item 27): `APT PH 5213`, `UNIT
+  PH6`, `SUITE PH` (162 DBPR rows) give a designator with no number plus a
+  PH unit today. One unit (`APT PH5213`) or two?
 - **A city that is no known place, with a ZIP the pack knows** (`SINGER
   ISLAND`, `SAINT LUCIE COUNTY`): `place` is `None` today. auction-tracker
   uses the ZIP's place there. Filling it (source `zip`) would name the
   place mail goes to, but would put a different name beside a real
-  community's.
+  community's. Revisit after item 25, since the national list will know
+  more of these names.
 
-### Open tasks
+### Backlog (not scheduled)
 
-- **Slug follows the street for dual addresses** (decision 11): change
-  `emit/slug.rs`, the slug section of `docs/key-format.md`, the corpus slug
-  expectations for `rg-040` to `rg-045` and `tools/corpus/emit_expect.py`.
-- **Florida pack to do, still open** (`docs/packs/fl.md`, "To do"):
-  unincorporated communities the pack lacks (about 4,500 DBPR rows with no
-  place match), rarer misspellings and the `APT PH 5213` penthouse shape,
-  and `SR` as State Road plus county road names.
-- **Milestone 5**, in order: the national base list (next; source data is
-  downloaded, item 23), the benchmark rerun and the CRF call, then
-  calibrated confidence. The Florida pack is built and in use, with the
-  open items above.
-- **auction-tracker's `cities_fl.json`**: drop `BELLVIEW` from BELLEVIEW's
-  variants (Bellview is a Census place in Escambia County). The pack's
-  export already drops it (`docs/packs/fl.md`).
-- **Milestone 6**, the Python wrapper.
-- **Florida code** from the author, to seed more corpus cases.
-- **Blind Florida sample:** hand-label 100 to 200 rows of the private Florida
-  files. It is a blind test on the data this library targets and calibration
-  data for confidence.
-- **Accuracy backlog** not tied to packs (`docs/usaddress-comparison.md`):
-  named buildings without a building word (`THE GARRETT`), and highway
-  modifiers such as BUSINESS before a city on one line.
-- **Milestone 8** items 36 to 40 (Pub 28 re-check, fuzzing, rename and name
-  availability, packaging `data/`, publishing).
+Known work with no place in section 10 yet. Move an item into section 10
+when it is scheduled.
+
+- **Florida code** from the author **(author)**, to seed more corpus cases.
+- **Accuracy, not tied to packs** (`docs/usaddress-comparison.md`): named
+  buildings without a building word (`THE GARRETT`), and highway modifiers
+  such as BUSINESS before a city on one line.
+- **`--default-state` for `addr parse-file`**: most of the 1,700 auction
+  rows with no state.
+- **Other state-pack rules** (section 11): `RR` as Ranch Road in Texas,
+  `PR 462` (Texas private road or Puerto Rico), `LEE ROAD 2004`-style
+  county road names, Queens-style hyphenated house numbers, Puerto Rico
+  urbanizations. Each waits for real data from that state.
+- **Pack infrastructure** (section 11): the pack version in output, a
+  required corpus per pack enforced in CI (`addr pack test`), and whether
+  packs may ship model weights.
+- **Outside this repository:** drop `BELLVIEW` from BELLEVIEW's variants in
+  auction-tracker's `cities_fl.json` (Bellview is a Census place in
+  Escambia County). The pack's export already drops it.
 
 ---
 

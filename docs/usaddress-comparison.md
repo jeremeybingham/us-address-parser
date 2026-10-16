@@ -1,8 +1,8 @@
 # Comparison with usaddress
 
 How this parser is compared with the Python
-[usaddress](https://github.com/datamade/usaddress) library (design section 9
-and Milestone 8, item 35), and the results.
+[usaddress](https://github.com/datamade/usaddress) library (design sections 9
+and 10), and the results.
 
 ## Tools
 
@@ -176,7 +176,9 @@ Still open:
 
 ## Next steps
 
-- The place list (state packs) for the remaining city cases.
+- The place list for the remaining city cases (`docs/design.md` items 24
+  and 25), then a full rerun of this comparison and the CRF call (item 29).
 - The geocode benchmark is the blind test; rerun it after each rule change
   (commands in the local, uncommitted `local-data/README.md`). A hand-labeled sample (100 to 200 rows) of the
-  Florida files would add a blind test on the data this library targets.
+  Florida files would add a blind test on the data this library targets
+  (item 33).

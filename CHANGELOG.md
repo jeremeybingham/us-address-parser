@@ -106,7 +106,7 @@ benchmark, whole-address accuracy (coarse) rose from 76.1% to 85.4%
 - `tests/usaddress_gold.rs` floors raised to 99.7% of tokens and 99.4% of
   addresses.
 
-### usaddress comparison (design decision 11; Milestone 8, item 35)
+### usaddress comparison (design decision 11; first planned for Milestone 8)
 
 - `ParsedAddress::to_usaddress_tags()` (`UsaddressTag`): each input token with
   its usaddress label, from the component spans. `addr parse --usaddress`
