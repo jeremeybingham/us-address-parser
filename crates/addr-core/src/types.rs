@@ -492,7 +492,9 @@ impl fmt::Display for Warning {
 pub struct Diagnostics {
     pub warnings: Vec<Warning>,
     pub unparsed: Option<String>,
-    /// Present only when the CRF tagger is used; semantics undefined until then.
+    /// Planned: the calibrated probability (0.0 to 1.0) that the whole parse
+    /// is right. `None` until calibrated (`docs/design.md` section 13,
+    /// decision 12).
     pub confidence: Option<f32>,
     pub library_version: &'static str,
     pub model_version: Option<&'static str>,

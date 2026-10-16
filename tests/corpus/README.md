@@ -1,7 +1,8 @@
 # Golden corpus
 
 Labeled addresses with their expected parse, one JSON record per line in
-`*.jsonl`. The runner is the `addr_core::corpus` module (feature `corpus`), run by `crates/addr-core/tests/corpus.rs` and by `addr corpus test`:
+`*.jsonl`. The runner is the `addr_core::corpus` module (feature `corpus`),
+run by `crates/addr-core/tests/corpus.rs` and by `addr corpus test`:
 
 ```sh
 addr corpus test [--verbose] [--update-baseline]            # same runner, from the CLI
@@ -27,8 +28,10 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
  "note": "# designator: unit_type stays empty"}
 ```
 
-- `id`: unique across all files. Prefix with the source (`at-` for
-  auction-tracker).
+- `id`: unique across all files. Prefixed with the source: `at-`
+  (auction-tracker tests), `atg-` (auction-tracker golden CSVs), `p28-`
+  (Pub 28 examples), `rg-` (regressions), `key-`, `reso-` (emitter cases);
+  `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
   - `lines`: an array of address lines as the source gave them (for example
@@ -150,7 +153,7 @@ Hernando, Lee, Miami-Dade, Orange; reviewed 2026-10-15). Only the input
 shapes were taken, one case per distinct shape; the CSVs' parsed columns
 were not used as expected values. Ids `atg-006` and `atg-028` are unused, and `atg-029` was added later
 (cases dropped after review: an ambiguous street-plus-ZIP round trip, and
-empty input, which is an error by design 6 rather than a parse).
+empty input, which is an error by design decision 6 rather than a parse).
 
 Not taken from auction-tracker:
 

@@ -45,7 +45,7 @@ k1:G|<state>|<zip5>
   building name, anything in
   `diagnostics`.
   - City is noisy and the field most likely to be corrected later; leaving it
-    out keeps stored keys stable (design 6.4).
+    out keeps stored keys stable (design section 6).
   - ZIP+4 varies within one building.
 
 ## Strong and partial keys
@@ -113,7 +113,9 @@ formatting improves. Never store it as an identifier; use the key.
   address with no lines.
 - A dual address (street and PO Box) follows the USPS output, so its slug
   names the PO Box (`po-box-100-hayes-va-23072`) while its key uses the
-  street.
+  street. Planned: build it from the street line instead, so the
+  slug, key and RESO output all name the street (`docs/design.md` section
+  13, decision 11).
 - Example: `123 N. Main Street, Apt 4, Miami FL 33101` gives
   `123-n-main-st-apt-4-miami-fl-33101`.
 

@@ -20,16 +20,14 @@ entry whose `forms` leave out its own name or abbreviation.
 
 ### Verification status
 
-`pe.usps.com` could not be reached from the environment where the tables
-were written (the proxy denied it, and web archives were blocked too). So
-each table was first transcribed from independent open-source copies. In
-October 2026 the Appendix C1 and C2 tables were checked against a copy of
-the live HTML pages supplied by the maintainer. Later in October 2026 the
-live pages were fetched directly (`pe.usps.com` redirects clients that
-don't send a browser User-Agent to a "page not found" page). Appendix B,
-Appendix F and the chapter 2 sections cited below were checked against
-them. Before release (Milestone 7), re-check every table against the live
-Pub 28 pages.
+Each table was first transcribed from independent open-source copies
+(usaddress-scourgify and the street-address gem, both MIT), then checked in
+October 2026 against the live Pub 28 pages: Appendix C1 and C2 from a copy
+of the HTML supplied by the maintainer, Appendix B, Appendix F and the
+chapter 2 sections cited below fetched directly (`pe.usps.com` sends
+clients without a browser User-Agent to a "page not found" page). Before
+release, re-check every table against the live pages (`docs/design.md`,
+Milestone 8 item 36).
 
 Chapter 2 page map (all under `https://pe.usps.com/text/pub28/`): 225
 Military Addresses `28c2_010.htm`; 233 Directionals `28c2_014.htm`; 237
@@ -233,9 +231,9 @@ October 2026. What each check found:
    corpus military and general delivery cases now check `usps`.
 8. **Key punctuation rule.** Traced: `docs/key-format.md` rule 1 now cites
    sections 222 and 354.
-9. **Release re-check (still open, Milestone 7).** Re-check every lexicon
-   table and the emitter rules above against the live Pub 28 pages before
-   release, as listed under "Verification status". Not done in this pass.
+9. **Release re-check (open).** Re-check every lexicon table and the
+   emitter rules above against the live Pub 28 pages before release
+   (`docs/design.md`, Milestone 8 item 36).
 
 Special forms (sourced):
 

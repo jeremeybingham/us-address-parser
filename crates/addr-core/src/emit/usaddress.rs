@@ -1,4 +1,4 @@
-//! usaddress-compatible token labels (design decision 11, section 8): each
+//! usaddress-compatible token labels (design decision 11): each
 //! whitespace-delimited token of the input with the label the Python
 //! `usaddress` library uses for it (`AddressNumber`, `StreetName`, ...). For
 //! migration and for comparing the two parsers on usaddress's labeled data

@@ -1,199 +1,143 @@
 # Changelog
 
+Nothing is released yet. Entries are newest first.
+
 ## Unreleased
 
-- Rule changes from the usaddress comparison and the geocode benchmark
-  (corpus cases `rg-050` to `rg-081`; rules in `docs/usps-pub28-notes.md`;
-  decisions 8 and 9 of 2026-10-15 in `docs/design.md`). On the blind geocode
-  benchmark, whole-address accuracy (coarse) rose from 76.1% to 85.4%
-  (usaddress: 88.2%):
-  - A highway route ends the street when finding the city on one line;
-    name words after the route are kept in the USPS, RESO and key output
-    (`HIGHWAY 66 FRONTAGE RD` lost FRONTAGE before), and words on a later
-    line are unparsed instead of hidden.
-  - Street and city in the first comma segment are split; a unit starting
-    the city's segment, or before the street, is a unit.
-  - A no-ZIP state at the end of one line; hyphenated routes (`GA-25`,
-    `US-385`, `CR-48`); `BOX <number>` alone as a PO Box; military box line
-    in reverse order; HC with ROUTE; `HGWY` and `COUNTRY ROAD` as observed
-    spellings (the highway table takes `observed` forms).
-  - House numbers: a letter before a directional (`428 B SOUTH`), letter and
-    digits (`T703`), two-part grid numbers (`N165 W2123`); letter routes
-    after a county prefix (`COUNTY ROAD J`); a stray backtick is trimmed.
-  - New `Warning::MissingStreetName` (`missing_street_name`) for a house
-    number and a unit with no street.
-  - Ordinal floors are numbers (`5TH FLOOR` is FL 5), which changes
-    unit-level keys for them.
-  - New `ParsedAddress::building` (`Component::Building`, usaddress
-    `BuildingName`) from a `[building]` word list in `data/special.toml`
-    (`Lexicons::is_building_word`); not emitted. The CLI prints it and
-    `parse-file` adds `addr_building`.
-  - `tests/usaddress_gold.rs` floors raised to 99.7% of tokens and 99.4% of
-    addresses; `BuildingName` is now in scope for the comparison.
+### Rule changes from the usaddress comparison and the geocode benchmark
 
-- usaddress comparison (design decision 11; Milestone 7, item 31):
-  - `ParsedAddress::to_usaddress_tags()` (`UsaddressTag`): each input token
-    with its usaddress label, from the component spans.
-    `addr parse --usaddress` prints them as JSON.
-  - `tests/external/usaddress/`: usaddress's labeled test files (MIT,
-    pinned commit) and `in_training.txt`, the test addresses also in its
-    training data (`tools/compare/training_overlap.py`).
-  - `tools/compare/compare_usaddress.py`: runs both parsers and scores them
-    by the same rules, on labeled files (`gold`) or raw CSV and text (`raw`).
-  - `crates/addr-core/tests/usaddress_gold.rs`: fails if this parser's
-    coarse score on those files drops below the recorded floor.
-  - Results and the backlog of gaps: `docs/usaddress-comparison.md`.
+Corpus cases `rg-050` to `rg-081`; rules in `docs/usps-pub28-notes.md`;
+decisions 8 and 9 of 2026-10-15 in `docs/design.md`. On the blind geocode
+benchmark, whole-address accuracy (coarse) rose from 76.1% to 85.4%
+(usaddress: 88.2%).
+
+- A highway route ends the street when finding the city on one line. Name
+  words after the route are kept in the USPS, RESO and key output
+  (`HIGHWAY 66 FRONTAGE RD` lost FRONTAGE before), and words on a later line
+  are unparsed instead of hidden.
+- Street and city in the first comma segment are split; a unit starting the
+  city's segment, or before the street, is a unit.
+- A no-ZIP state at the end of one line; hyphenated routes (`GA-25`,
+  `US-385`, `CR-48`); `BOX <number>` alone as a PO Box; military box line in
+  reverse order; HC with ROUTE; `HGWY` and `COUNTRY ROAD` as observed
+  spellings (the highway table takes `observed` forms).
+- House numbers: a letter before a directional (`428 B SOUTH`), letter and
+  digits (`T703`), two-part grid numbers (`N165 W2123`). Letter routes after
+  a county prefix (`COUNTY ROAD J`). A stray backtick is trimmed.
+- New `Warning::MissingStreetName` (`missing_street_name`) for a house number
+  and a unit with no street.
+- Ordinal floors are numbers (`5TH FLOOR` is FL 5), which changes unit-level
+  keys for them.
+- New `ParsedAddress::building` (`Component::Building`, usaddress
+  `BuildingName`) from a `[building]` word list in `data/special.toml`
+  (`Lexicons::is_building_word`). Not emitted; the CLI prints it and
+  `parse-file` adds `addr_building`.
+- `tests/usaddress_gold.rs` floors raised to 99.7% of tokens and 99.4% of
+  addresses.
+
+### usaddress comparison (design decision 11; Milestone 8, item 35)
+
+- `ParsedAddress::to_usaddress_tags()` (`UsaddressTag`): each input token with
+  its usaddress label, from the component spans. `addr parse --usaddress`
+  prints them as JSON.
+- `tests/external/usaddress/`: usaddress's labeled test files (MIT, pinned
+  commit) and `in_training.txt` (`tools/compare/training_overlap.py`).
+- `tools/compare/compare_usaddress.py`: runs both parsers and scores them by
+  the same rules, on labeled files (`gold`) or raw CSV and text (`raw`).
+- `crates/addr-core/tests/usaddress_gold.rs`: fails if this parser's coarse
+  score on those files drops below the recorded floor.
+- Results and the backlog: `docs/usaddress-comparison.md`.
+
+### Dual addresses and attention lines
 
 - Dual addresses (Pub 28 section 215; design decision 6 of 2026-10-15): a
   record with a street address and a PO Box keeps both, with the new
-  `dual_address` warning. The key and `to_reso()` use the street;
-  `to_usps()` (and so the slug) writes the PO Box alone. Corpus cases
-  `rg-040` to `rg-045`; the USPS round-trip test skips these records.
+  `dual_address` warning. The key and `to_reso()` use the street; `to_usps()`
+  (and so the slug) writes the PO Box alone. Corpus cases `rg-040` to
+  `rg-045`.
 - `ParsedAddress::attention` (section 214): ATTN, ATTENTION, C/O and CARE OF
-  lines, from `data/special.toml` `[attention]` (`Special::Attention`). Not
-  emitted. The CLI prints it and `parse-file` adds an `addr_attention`
-  column. Corpus cases `rg-046` to `rg-049`; corpus records take an
-  `attention` field. New `Component::Attention` span.
+  lines, from `data/special.toml` `[attention]`. Not emitted; the CLI prints
+  it and `parse-file` adds `addr_attention`. Corpus cases `rg-046` to `rg-049`.
 
-- Parser fixes from the DBPR out-of-state license file (corpus cases
-  `rg-032` to `rg-039`):
-  - County grid house numbers (`22W410`, `W338S9739`, `S1749`) are house
-    numbers, not street names.
-  - A postdirectional after a comma belongs to the street
-    (`GOODWOOD BLVD., SE`).
-  - `5TH FLOOR` after a one-word street name (`115 BROADWAY`) is a floor.
-  - A line 2 that is only a number is a unit with no designator, when a
-    street name comes first.
-  - A delivery line written twice is read once.
+### Parser fixes from real Florida and out-of-state data
 
-- Parser fixes from two real Florida files (auction listings and DBPR
-  license addresses; corpus cases `rg-017` to `rg-031`):
-  - A street suffix ending the line is not a cut-off designator, though
-    `ST` and `TRL` start STE and TRAILER (`DRY CREEK TRL` lost its `TRL`).
-  - The city-copy rule no longer drops a unit value or a single letter:
-    `SUITE A` before `ARCHER`, `13TH AVE S` before `ST PETERSBURG` and
-    `SAXONY D` before `DELRAY BEACH` were silently losing the letter.
-  - PMB is a unit designator (Pub 28 section 285).
-  - `FL 40` at the start of the street is a state highway (`FL HIGHWAY
-    40`), not floor 40 with no street.
-  - `12 SIMON CT 32505`: CT is the COURT suffix when no city precedes it.
-  - Multi-field input drops a trailing copy of the state field from the
-    address line, and a line 2 that repeats the end of line 1.
-  - `3RD FLOOR` is a floor with value `3RD`.
-  - A comma list of house numbers raises `multiple_addresses`.
-  - Asterisks are trimmed from words; `PRIVATE ADDRESS` is a placeholder.
-  - `Highway::name()`; the CLI's `highway` output now includes the state
-    code.
+Corpus cases `rg-017` to `rg-039` (auction listings, DBPR license files):
 
-- Golden corpus: emitter expectations (`key`, `key_unit`, `slug`, `usps`, and
-  `reso` where a state and ZIP are present) on 170 of 193 cases, generated by
-  `tools/corpus/emit_expect.py` from `docs/key-format.md`,
-  `docs/reso-mapping.md` and Pub 28 without reading the emitters. Checked:
-  key 170, slug 167, USPS 171, RESO 40. No emitter changes were needed.
-- `benches/parse.rs` (Milestone 4, item 22): criterion benchmarks for six
-  address shapes, the whole golden corpus (`parse` and `parse_many`) and the
-  four emitters. `corpus::Corpus::inputs()` supplies the corpus strings.
+- County grid house numbers (`22W410`, `W338S9739`, `S1749`).
+- A postdirectional after a comma belongs to the street (`GOODWOOD BLVD., SE`).
+- Floors: `3RD FLOOR`, and `5TH FLOOR` after a one-word street name.
+- A line 2 that is only a number is a unit with no designator, when a street
+  name comes first. A delivery line written twice is read once.
+- A street suffix ending the line is not a cut-off designator (`DRY CREEK TRL`
+  lost its `TRL`).
+- The city-copy rule no longer drops a unit value or a single letter
+  (`SUITE A` before `ARCHER`, `13TH AVE S` before `ST PETERSBURG`).
+- PMB is a unit designator (Pub 28 section 285).
+- `FL 40` at the start of the street is a state highway, not floor 40.
+- `12 SIMON CT 32505`: CT is the COURT suffix when no city precedes it.
+- Multi-field input drops a trailing copy of the state field from the address
+  line, and a line 2 that repeats the end of line 1.
+- A comma list of house numbers raises `multiple_addresses`.
+- Asterisks are trimmed from words; `PRIVATE ADDRESS` is a placeholder.
+- `Highway::name()`; the CLI's `highway` output includes the state code.
+
+### Milestone 4: corpus, CLI and benchmarks
+
+- `addr` CLI: `addr parse` prints one JSON record (components, warnings, key,
+  slug, USPS and RESO output), with `--pretty`, `--usps`, field options, or
+  one address per stdin line. `addr parse-file IN.csv --column NAME
+  [-o OUT.csv]` appends `addr_`-prefixed columns. `addr corpus test [--dir
+  DIR] [--verbose] [--update-baseline]`.
 - Corpus runner moved into `addr_core::corpus` (feature `corpus`, optional
   serde and serde_json; the default build is still dependency-free).
-  `crates/addr-core/tests/corpus.rs` is now a thin wrapper, and
-  `addr corpus test [--dir DIR] [--verbose] [--update-baseline]` runs the
-  same code (exit 0 ok, 2 malformed corpus, 3 regression or stale baseline).
-- `addr` CLI (Milestone 4, item 21): `addr parse` prints one JSON record
-  (components, warnings, key, slug, USPS and RESO output); `--pretty`,
-  `--usps`, `--line1/--line2/--city/--state/--zip`, or one address per stdin
-  line. `addr parse-file IN.csv --column NAME [-o OUT.csv]` appends
-  `addr_`-prefixed columns. Exit codes: 0 ok, 1 bad usage, 2 unusable input.
-- `LP` is an observed spelling of LOOP (auction-tracker golden CSVs); corpus
-  case `atg-029`.
-- Milestone 4, corpus expansion: `tests/corpus/auction-tracker-golden.jsonl`
-  (26 `atg-` cases) from the raw address lines in auction-tracker's
-  `packages/radar/tests/golden/v2/*.csv`, hand-labeled. The tagger now skips
-  a ZIP ending the address line that repeats the ZIP on the last line
-  (`413 OLD CORRY FIELD RD B 32506` before `PENSACOLA, FL- 32506`).
-- RESO emitter (Milestone 3): `ParsedAddress::to_reso()` returns a
-  `ResoAddress` with the RESO Data Dictionary 2.0 Property address fields
-  (`StreetNumber`, `StreetNumberNumeric`, `StreetDirPrefix`, `StreetName`,
-  `StreetSuffix`, `StreetDirSuffix`, `UnitNumber`, `City`, `StateOrProvince`,
-  `PostalCode`, `PostalCodePlus4`, `UnparsedAddress`). `fields()` gives
-  Data Dictionary names; `length_overruns()` reports values over the
-  suggested maximum lengths. `docs/reso-mapping.md` has the sources, the
-  folding rules for shapes with no field, and the author's decisions.
-  Golden corpus: optional `reso` expectation and `tests/corpus/reso.jsonl`.
-- Initial workspace skeleton (Milestone 0).
-- Milestone 1, data and types:
-  - Populated `data/*.toml` from USPS Pub 28 (Appendix B, C1, C2 and
-    chapter 2), cross-checked against open-source transcriptions; sources and
-    verification status in `docs/usps-pub28-notes.md`.
-  - `build.rs` compiles the tables into static sorted arrays and validates them.
-    Runtime has no dependencies.
-  - `Lexicons` lookup interface (suffix, directional, unit, state, special
-    forms, highway prefixes, placeholder text).
-  - Types: `StreetSuffix`, `UnitType` (with `range_required`), `StateCode`
-    (with `StateKind`), `RouteKind`; new `Warning` variants with stable
-    `code()` strings.
-  - `docs/prior-art.md`: lessons from the author's Florida address code
-    (auction-tracker, dbpr_fl).
-- Golden corpus (brought forward from Milestone 4):
-  - JSONL record format and labeling conventions (`tests/corpus/README.md`).
-  - Runner `crates/addr-core/tests/corpus.rs`: per-field and whole-address
-    accuracy report; fails on malformed records and on regressions against
-    `tests/corpus/passing.txt`.
-  - 67 cases hand-labeled from auction-tracker's address tests.
-  - `Warning::ALL`, used to check expected warning codes.
-- `docs/design.md`: decisions 13 to 15 (spans into the original input,
-  per-field parsing of `Fields`, new fields for highway, general delivery,
-  military and second-unit addresses).
-- `ParsedAddress` fields from decision 15: `highway` (prefix and route),
-  `second_unit_type` / `second_unit_number`, `general_delivery`, `military`
-  (CPR, OPC, PSC, UPR, UNIT box lines) and `military_post_office` (APO,
-  FPO, DPO), with `data/special.toml` tables and `Lexicons::military`,
-  `Lexicons::military_post_office` (Pub 28 sections 225.1, 238.1, 239).
-- Component spans into the original input (decision 13): `Span`,
-  `Component`, `SourceInfo::spans`, `SourceInfo::text`.
-- Corpus: the two held-back highway cases, and `pub28.jsonl` with 49 cases
-  from Pub 28's own examples.
-- Milestone 2, parser (items 10 to 16):
-  - `clean.rs`: whitespace, accents, Unicode dashes and quotes, uppercase,
-    with a byte map back to the original input.
-  - `tokenize.rs`: tokens with original spans and comma segments; `#`,
-    parentheses, hyphens and periods; splits glued tokens (`101BRADDOCK`,
-    `TAMPA33616`, `I10`, `APT107`, `CTAPT`).
-  - `classify.rs`: token shapes and longest-match lexicon lookups.
-  - `tagger/`: rule tagger for the last line, PO Box, rural and highway
-    contract routes, general delivery, military lines, highways, streets
-    and up to two units. Rules and sources: `docs/usps-pub28-notes.md`.
-  - `assemble.rs`: tags to `ParsedAddress`, component spans, warnings.
-  - `parse_fields` tags each field on its own (decision 14); with only
-    address lines it reads them like one line.
-  - `parse_many` runs in parallel with the `rayon` feature (now a real
-    optional dependency).
-  - `Warning::NotImplemented` removed.
-  - Corpus: 134 cases, all passing (`regressions.jsonl` added).
-- Milestone 3, canonical key (`k1`): `ParsedAddress::key(KeyOptions)` in
-  `emit/key.rs`, spec in `docs/key-format.md`; corpus records can carry
-  `key` and `key_unit`, with `tests/corpus/keys.jsonl` (7 cases).
-- Milestone 3, USPS emitter: `ParsedAddress::to_usps()` returns a
-  `UspsAddress` (`line1`, `line2`, city, state, ZIP, `last_line()`); corpus
-  records can carry `usps`; a corpus test checks that parsing the USPS output
-  gives the same keys. Layout rules are unverified against Pub 28 (blocked
-  host); see `docs/usps-pub28-notes.md`.
-- Parser fix found by that round trip: `# V 21` (letter and number after
-  `#`) is one unit value (`us-roundtrip-001`).
-- USPS emitter checked against the live Pub 28 text (items 1 to 8 of the
-  verification list in `docs/usps-pub28-notes.md`; the release re-check of
-  the lexicon tables stays open for Milestone 7):
-  - The unit stays at the end of the delivery line (section 213); the
-    40-character placeholder limit is gone, since Pub 28 sets none (35).
-    New `to_usps_wrapped(max_line)` moves the unit to `line2`, and
-    `UspsAddress::lines()` returns mailpiece order, with `line2` above
-    `line1` (213.3, 356).
-  - A period between digits is kept (`39.2 RD`, section 232).
-  - `Highway::state`: a state named in a highway name is parsed and written
-    as its code (`KENTUCKY STATE HIGHWAY 625` is `KY STATE HIGHWAY 625`,
-    `KY 1207` is `KY HIGHWAY 1207`; Appendix F). The `k1` key name segment
-    carries the code the same way.
-  - Hyphenated house numbers such as `112-10` (Appendix D1) no longer raise
-    `multiple_addresses`; ranges such as `1204-1206` still do.
-  - Corpus: 17 new Pub 28 cases (159 in all), and `usps` checks on the
-    military, general delivery, route and PO Box cases; highway records
-    take an optional `state`.
+- `benches/parse.rs`: criterion benchmarks for six address shapes, the whole
+  corpus (`parse` and `parse_many`) and the four emitters.
+- Corpus: `auction-tracker-golden.jsonl` from the raw address lines of
+  auction-tracker's golden CSVs, hand-labeled. Emitter expectations (`key`,
+  `key_unit`, `slug`, `usps`, `reso`) generated by
+  `tools/corpus/emit_expect.py` from the specs, without reading the emitters.
+- The tagger skips a ZIP ending the address line that repeats the ZIP on the
+  last line. `LP` is an observed spelling of LOOP.
+
+### Milestone 3: emitters
+
+- Canonical key `k1` (`ParsedAddress::key(KeyOptions)`), spec in
+  `docs/key-format.md`.
+- USPS emitter (`to_usps()`, `to_usps_wrapped(max_line)`,
+  `UspsAddress::lines()`), checked against the live Pub 28 text: the unit at
+  the end of the delivery line (213), no fixed line length (35), a period
+  between digits kept (`39.2 RD`, 232), a state inside a highway name written
+  as its code (`KY HIGHWAY 1207`, Appendix F, `Highway::state`).
+- RESO emitter (`to_reso()`, `ResoAddress`) for Data Dictionary 2.0;
+  `fields()` and `length_overruns()`. Mapping and the author's decisions in
+  `docs/reso-mapping.md`.
+- Slug (`slug()`), display only.
+- Proptest no-panic and span-validity properties (`tests/no_panic.rs`).
+- Corpus: `keys.jsonl`, `reso.jsonl`, 17 more Pub 28 cases, and a test that
+  parsing the USPS output gives the same keys. Fixes it found: `# V 21` is
+  one unit value; hyphenated house numbers such as `112-10` no longer raise
+  `multiple_addresses`.
+
+### Milestone 2: parser
+
+- `clean.rs`, `tokenize.rs`, `classify.rs`, `tagger/`, `assemble.rs`: the rule
+  parser, with component spans into the original input (decision 13).
+- `ParsedAddress` fields for highways, a second unit, general delivery,
+  military box lines and APO/FPO/DPO (decision 15).
+- `parse_fields` tags each field on its own (decision 14); `parse_many` runs
+  in parallel with the `rayon` feature.
+- Golden corpus format and runner (`tests/corpus/README.md`), first cases from
+  auction-tracker's tests, Pub 28's examples and regressions.
+
+### Milestone 1: data and types
+
+- `data/*.toml` from USPS Pub 28 (Appendix B, C1, C2 and chapter 2), verified
+  against the live pages; sources in `docs/usps-pub28-notes.md`.
+- `build.rs` compiles the tables into static sorted arrays and validates them.
+- `Lexicons` lookup interface; `StreetSuffix`, `UnitType`, `StateCode`,
+  `RouteKind`; `Warning` variants with stable `code()` strings.
+- `docs/prior-art.md`: lessons from the author's Florida address code.
+
+### Milestone 0
+
+- Workspace skeleton, CI, licenses, README, design document.
