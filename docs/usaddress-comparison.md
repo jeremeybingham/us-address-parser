@@ -46,7 +46,7 @@ plan items are in `docs/design.md`).
 |---|---|---|---|
 | Install and call | `pip install`; `parse`, `tag` | Rust crate and CLI; Python wrapper not built | Milestone 6 |
 | Token labels | `parse()` | `to_usaddress_tags()` | Done; `parse_tokens` in Python |
-| Joined components and type | `tag()` returns a dict and `Street Address` / `PO Box` / `Ambiguous`; raises `RepeatedLabelError` | None yet | `tag()`, `address_type()`; warning, not an error (decision 23) |
+| Joined components and type | `tag()` returns a dict and `Street Address` / `PO Box` / `Ambiguous`; raises `RepeatedLabelError` | `tag()`, `address_type()`; a repeated label is reported, not an error (decision 23) | Done; Python in Milestone 6 |
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) | Done |
 | Default state | None | `default_state` hint, `--default-state` (decision 24) | Done |
 | Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug | Done |

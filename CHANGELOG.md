@@ -20,6 +20,9 @@ Nothing is released yet. Entries are newest first.
   a rural route a PO Box, as there.
 - `addr parse --tag`; corpus fields `address_type`, `tag`, `tag_repeated`;
   corpus `tg-001` to `tg-008`.
+- Migration notes (item 32): "Coming from usaddress" in the README has the
+  call mapping and the differences; `crates/addr-py/README.md` has the
+  planned Python names.
 - `tools/compare/compare_usaddress.py ... tag` compares the joined dicts and
   types with `usaddress.tag()` on the vendored test files: identical on 99.3%
   of 8,103 addresses, types on 99.8% (`docs/usaddress-comparison.md`).

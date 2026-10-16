@@ -44,13 +44,35 @@ customization is a planned add-only custom layer (see below).
 
 ## Coming from usaddress
 
-`to_usaddress_tags()` gives usaddress's token labels today. Planned for the
-Python wrapper: `tag()` with an `address_type`, `default_state`, and a custom
-layer for your own aliases and places. This library does not model
-usaddress's intersection, landmark, `CornerOf`, country, recipient or
-`NotAddress` labels (text it cannot place is reported in `unparsed` with a
-warning). The feature-by-feature comparison is in
-[`docs/usaddress-comparison.md`](docs/usaddress-comparison.md).
+The labels are usaddress's, so a pipeline built on them keeps working:
+
+| usaddress | This library (Rust and CLI today; the Python wrapper is planned) |
+|---|---|
+| `usaddress.parse(s)`: `[(token, label)]` | `a.to_usaddress_tags()`; `addr parse --usaddress` |
+| `usaddress.tag(s)`: `(dict, type)` | `a.tag()` and `a.tag().usaddress_type()`; `addr parse --tag` |
+| `RepeatedLabelError` | not raised: the runs are joined and `tag().repeated_labels()` lists the labels |
+| `Street Address`, `PO Box`, `Ambiguous` | `a.address_type()` is finer (`Street`, `PoBox`, `RuralRoute`, `Military`, `GeneralDelivery`, `Dual`, `Unknown`); `usaddress_type()` gives the three by usaddress's own rule |
+| Retrain to fix a misparse | no model to retrain; a custom layer of aliases and places is planned (Milestone 9) |
+
+What differs:
+
+- Tokens the parser could not place have no label and are left out of
+  `tag()`, and `unparsed` and a warning report them (usaddress labels every
+  token).
+- usaddress's `AddressNumberSuffix` (`214 B`) and number ranges
+  (`5240;5220`) are kept in `AddressNumber` or left out; its intersection,
+  landmark, `CornerOf`, country, recipient and `NotAddress` labels are not
+  modeled (text goes to `unparsed`).
+- A highway's route is `StreetName` and its prefix and state are
+  `StreetNamePreType`, as in usaddress; a rural, highway contract or
+  military line uses the `USPSBoxGroup*` and `USPSBox*` labels.
+- Not in usaddress: `Parser::with_options(ParseOptions { default_state })`
+  (a state hint for input with no state), the Pub 28 and RESO output, the
+  match key and slug, byte spans, `place` and warnings.
+
+On the joined dicts of usaddress's own test files the two agree on 99.3% of
+8,103 addresses (`docs/usaddress-comparison.md`). The feature-by-feature
+comparison is in [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md).
 
 ## Place data (national list and state packs)
 

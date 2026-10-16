@@ -542,6 +542,10 @@ wrapper does not change when it is filled.
     ("Feature comparison"): label names, the unmodeled labels,
     `RepeatedLabelError`, and the extra outputs. Docs only; it can ride
     with item 31 if small.
+    **Done** (with item 31): the README's "Coming from usaddress" has the
+    mapping table and the differences; `crates/addr-py/README.md` has the
+    planned Python names.
+
 33. **The wrapper and its tests.**
     - Commit 1: `crates/addr-py/Cargo.toml`, `pyproject.toml` (maturin),
       `src/lib.rs` with `parse`, `parse_fields`, the `ParsedAddress` object,
