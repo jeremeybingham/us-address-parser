@@ -16,14 +16,14 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 **Status (2026-10-16):** Milestones 0 to 4 are done: data and types, the
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus, the
 `addr` CLI and benchmarks; so is the usaddress comparison. Milestone 5, the
-place list, is in progress: the Florida pack is built and used (301 corpus
-cases, all passing), and the national list is built, compiled in and read by
-the parser in every state.
-**Next (section 10): item 29, the benchmark rerun and the CRF call, with the
-Florida items 26 to 28 any time** (items 23 to 25, the dual-address slug and
-the national list, are done). After Milestone 5 come the usaddress-shaped
-features and the Python wrapper (Milestone 6), then calibrated confidence
-(Milestone 7; decision 27); the custom layer is Milestone 9.
+place list, is done: the national list is built, compiled in and read by the
+parser in every state; the Florida pack is built, extended and used (items
+26 to 28); the dual-address slug follows the street (item 23); and the
+benchmark rerun (item 29) found no gap for a CRF to close, so there is none
+(decision 32). The golden corpus has 317 cases, all passing.
+**Next (section 10): Milestone 6, the usaddress-shaped features (items 30 to
+32) and then the Python wrapper**, then calibrated confidence (Milestone 7;
+decision 27); the custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the open decisions and the unscheduled backlog.
 
@@ -103,8 +103,8 @@ they cause friction.
 
 | # | Decision | Resolution |
 |---|---|---|
-| 1 | Parsing approach | Rules first; CRF fallback behind a cargo feature (`crf`, declared but empty). Whether to build it is decided after the place list (Milestone 5; section 13, decision 10). |
-| 2 | Model training | Train in Python (parserator / python-crfsuite) on usaddress's MIT-licensed training data plus own labels; Rust does inference only via `crfs`. |
+| 1 | Parsing approach | Rules plus the place list. No CRF fallback: decided no-go after the place list (item 29; section 13, decisions 10 and 32). The empty `crf` cargo feature stays reserved until the first release. |
+| 2 | Model training | Not applicable: no model is trained or shipped (decision 32). Was: train in Python on usaddress's MIT-licensed data, Rust inference via `crfs`. |
 | 3 | Input scope | Both single-line strings and multi-field input (line1, line2, city, state, zip). |
 | 4 | Geographic scope | US-wide grammar. Place data in layers (section 11): a national place list generated from public data, plus curated state packs, Florida first (Milestone 5). Other pack contents (road patterns) are deferred. |
 | 5 | Canonical key | Unit inclusion is an explicit option (default off, property level); the key carries a version prefix. City and ZIP+4 excluded. Spec in `docs/key-format.md`. |
@@ -149,11 +149,9 @@ tests/
 tools/
   corpus/emit_expect.py     # writes emitter expectations into corpus cases from the specs
   compare/                  # usaddress comparison and training-overlap scripts
-  packs/                    # Florida pack export and observed-ZIP scripts
+  packs/                    # Florida pack export, observed-ZIP and unmatched-city scripts
   places/                   # build_us.py: national place list from Census and GeoNames data
   calibrate/                # (planned, item 38) confidence fitting
-  train/                    # (planned, Milestone 7, if built) CRF training scripts
-models/                     # (planned, Milestone 7) CRF model; README only
 .github/workflows/ci.yml    # fmt, clippy, test, corpus report
 local-data/                 # gitignored: private and unlicensed test data, never committed
 ```
@@ -169,7 +167,7 @@ raw input
   -> clean.rs     whitespace, accents, Unicode punctuation, uppercase; byte map to the original
   -> tokenize.rs  tokens with original spans, lines and comma segments, glued-token splits
   -> classify.rs  token shapes and longest-match lexicon lookups
-  -> tagger/      rules (CRF fallback, if built, would go here)
+  -> tagger/      rules and place lookups
   -> assemble.rs  ParsedAddress, component spans, warnings
   -> emit/        read-only consumers: key, usps, reso, slug, usaddress tags
 ```
@@ -196,7 +194,7 @@ ZIP5, ZIP+4, `diagnostics` and `source`.
 `Diagnostics` holds the warnings (`Warning`, each with a stable `code()`
 string; `Warning::ALL` lists them), the unparsed remainder, the library
 version, `confidence` (`None` until calibrated; meaning in section 13,
-decision 12) and `model_version` (`None` until a CRF model exists).
+decision 12) and `model_version` (always `None`: no model is shipped, decision 32; to be dropped or kept reserved when the Python wrapper is built).
 
 ### Public API
 
@@ -309,7 +307,7 @@ does include the city.
 
 | Check | Status |
 |---|---|
-| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 293 cases, all passing. |
+| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 317 cases, all passing. |
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
@@ -374,11 +372,11 @@ Also done ahead of its milestone: the usaddress comparison script and
 results (`tools/compare/compare_usaddress.py`,
 `docs/usaddress-comparison.md`), first planned for Milestone 8.
 
-### Milestone 5: place list (in progress)
+### Milestone 5: place list (done)
 
 The first state-pack work (section 11), scoped to what the parser needs to
-find the city. It ends with the benchmark rerun that makes the CRF call
-(decision 10).
+find the city. It ended with the benchmark rerun that made the CRF call: no
+CRF (decisions 10 and 32).
 
 Done:
 
@@ -391,14 +389,26 @@ Done:
   with no commas, a city run into the street, street versus city before a
   ZIP, cut-off cities completed, the place from the ZIP and
   `zip_city_mismatch`. Corpus `fl-001` to `fl-019`.
+- **National place data** (item 24): `data/places/` (50,375 places, 41,154
+  ZIPs for the 50 states, DC and Puerto Rico) built by
+  `tools/places/build_us.py` from the Census Gazetteer and GeoNames, compiled
+  behind `places-us` as packed binary tables (+2.9 MB). `docs/places.md`.
 - **The national list in the parser** (item 25): place lookups read all 52
-  states; see the item below for the measured effect.
+  states; `zip_city_mismatch` stays limited to states with a curated pack.
+  Blind geocode benchmark, whole address (coarse): 85.7% to 96.1% (usaddress
+  88.2%). See the item below.
+- **Florida pack extensions** (items 26 to 28): `SR` and `CTY HWY` highway
+  prefixes through `Lexicons::highway_in`; `DRT`, `LNE`, `SU` and the
+  penthouse unit; 19 added communities and 16 added spellings, with the
+  observed-ZIP table rerun (unmatched DBPR rows 2,957 to 1,348). See the
+  items below and `docs/packs/fl.md`.
 - **Slug follows the street for dual addresses** (item 23; decision 11). The
   slug is built from the street line and its units, like the key and the
   RESO output. `rg-040` to `rg-044` changed (`rg-045` is not a dual
   address).
 
-To do, in order:
+Plan for items 24 to 29, in build order (all done; the notes under each say
+what was built):
 
 24. **National place data** (`data/places/`, feature `places-us`, on by
     default). Data only: no parser behavior changes, so the PR is the
@@ -468,7 +478,11 @@ To do, in order:
 29. **Rerun the comparisons and make the CRF call.** Rerun the usaddress
     comparison and the blind geocode benchmark; record the results in
     `docs/usaddress-comparison.md` and the go or no-go for Milestone 7's
-    CRF items as a decision in section 13. Docs only.
+    CRF items as a decision in section 13. Docs only. **Done:** the reruns
+    and the call are in `docs/usaddress-comparison.md` and decision 32:
+    **no CRF**. Blind geocode benchmark, whole address (coarse): ours 96.1%,
+    usaddress 88.2%; usaddress's own files 99.2% against its 100.0%
+    (regression tests it trains on). Items 39 to 42 and item 52 are dropped.
 
 ### Milestone 6: usaddress-shaped features, then the Python wrapper
 
@@ -518,7 +532,7 @@ wrapper does not change when it is filled.
     macOS and Windows, built and tested on every pull request. No
     publishing yet (item 46).
 
-### Milestone 7: calibrated confidence, then the CRF fallback if item 29 says go
+### Milestone 7: calibrated confidence
 
 Calibrated confidence (decision 12):
 
@@ -541,29 +555,11 @@ Calibrated confidence (decision 12):
     - Commit 3: `docs/confidence.md`, the calibration report, checked on
       the geocode benchmark (used to check, never to fit).
 
-CRF fallback (only if item 29 says go):
-
-39. **Spike: does a CRFsuite model trained on usaddress data load in
-    `crfs`?** Result recorded in section 13; if not, pick a compatible
-    export path before going further.
-40. `tools/train/`: export labeled data, train with parserator or
-    python-crfsuite, write the model file.
-41. `models/`: the model file plus `README.md` with provenance, version and
-    training date (usaddress MIT attribution).
-42. `src/tagger/crf.rs` using `crfs`, behind feature `crf`, with the model
-    embedded by `include_bytes!`. Its sequence probability feeds
-    `confidence`, recalibrated with item 38's tools and report.
-
-**The CRF is an accuracy fallback, not the customization mechanism.** The
-model is trained offline in Python on labeled data and shipped as a fixed
-file. Fixing one misparse means labeling examples and retraining, which needs
-the Python toolchain and a set of labeled addresses, and a retrained model can
-change other parses. User customization is the custom layer (section 11,
-Milestone 9), which works with or without a CRF. The two compose: the layer's
-rules and lexicons run in the rule stage and the place lookups, before and
-around the CRF, so a layer entry takes effect whichever tagger finishes the
-parse. A user-trained model file is a possible later tier of the same layer
-(Milestone 9, item 52), not part of this milestone.
+**No CRF fallback.** Item 29 decided no-go (decision 32), so the CRF items 39
+to 42 (a `crfs` spike, `tools/train/`, `models/`, `src/tagger/crf.rs`) are
+dropped. The numbers are kept so that references stay stable. User
+customization is the custom layer (section 11, Milestone 9), which needs no
+Python toolchain and no retraining.
 
 ### Milestone 8: hardening and release
 
@@ -610,11 +606,8 @@ changes the shipped data or the `k1` key format.
     decisions in section 13): a mixed-case display form and a long-form
     (unabbreviated) form, one pull request each. **(author)**: not started
     until decided.
-52. **User model file (only after Milestone 7 and only if wanted):** a layer
-    may name a CRF model file for the `crf` feature to load at run time
-    (`crfs` reads a model from bytes; to be verified in item 39). Training
-    stays in `tools/train/`; the layer records the model's version, which
-    `Diagnostics::model_version` reports.
+52. **User model file: dropped** (decision 32). There is no CRF to load a
+    model into. Item number kept.
 
 ---
 
@@ -642,7 +635,9 @@ data/packs/fl/
   places.tsv       # canonical place names, county, kind, variants (abbreviation or typo)
   zips.tsv         # ZIP -> main place, shared places
   zips_observed.tsv # more (ZIP, place) pairs seen in real data
-  overrides.toml   # suffix spellings read differently in the state (CR); road names next
+  places_added.tsv  # hand-kept communities seen in real data, with address counts
+  variants_added.tsv # hand-kept spellings of known places, with address counts
+  overrides.toml   # suffix spellings read differently in the state (CR) and highway prefixes (SR)
 ```
 
 Layering is add-only: a later layer adds names, variants and ZIPs and
@@ -742,11 +737,9 @@ need code), the output formats, or the key format, and it does not validate
 or correct addresses. Rare shapes it cannot express (intersections, landmarks)
 are the open decisions in section 13.
 
-**Relation to the CRF.** The layer is the customization path; the CRF is an
-accuracy fallback (Milestone 7). A layer works with the rule tagger alone and
-still applies when a CRF is built (it feeds the rule stage and the place
-lookups). A user-trained CRF model is a possible later tier of the layer
-(item 52).
+**No CRF.** The layer is the customization path, and the only one: there is
+no trained model to retrain (decision 32). It works with the rule tagger and
+feeds the rule stage and the place lookups.
 
 **Design-now constraints:** keep all lexicon access behind the `Lexicons`
 interface; keep the key independent of city (section 6); keep diagnostics
@@ -763,8 +756,6 @@ extensible; no state-specific rule in the tagger.
   test files it gets 98.9% (those are usaddress's regression tests, so
   usaddress scores 100% by construction). Details:
   `docs/usaddress-comparison.md`.
-- **Model format compatibility** between CRFsuite-trained models and `crfs`
-  must be verified before any CRF work (item 39, a spike).
 - **Key stability.** `k1` is signed off and stored keys depend on it. Parser
   fixes can still change the key an input produces; each such change is
   recorded in `docs/key-format.md`.
@@ -803,7 +794,7 @@ extensible; no state-specific rule in the tagger.
 10. **CRF fallback: decided after the place list.** Milestone 5 builds the
     place list and reruns the blind benchmark (item 29); the CRF items of
     Milestone 7 go ahead only if a gap remains that rules plus the place
-    list are unlikely to close.
+    list are unlikely to close. **Decided no-go, 2026-10-16: decision 32.**
 11. **Slug for dual addresses: follow the street.** The key and the RESO
     output already use the street; only the USPS output writes the PO Box,
     because Pub 28 section 215 says so for the mailpiece. The slug is
@@ -830,8 +821,6 @@ extensible; no state-specific rule in the tagger.
       files, and the hand-labeled Florida sample. The geocode benchmark has
       no license, so it is used to check calibration, not to fit numbers
       that ship.
-    - If a CRF is built (Milestone 7), its sequence probability gives the
-      score for CRF parses, checked against the same calibration report.
     - Calibration waits for the place list, because the place list changes
       which paths are uncertain.
 
@@ -899,8 +888,8 @@ revisit if they cause friction.
     `Lexicons` interface. This narrows decisions 7 and 18 ("no user packs from
     a directory"): shipped data stays fixed at compile time, but the user layer
     is loaded at run time. Rejected as the primary mechanism: retraining the
-    CRF (needs the Python toolchain and labeled data, and moves other parses),
-    and an editable copy of the shipped tables.
+    CRF (needs the Python toolchain and labeled data, and moves other parses;
+    since dropped, decision 32), and an editable copy of the shipped tables.
 23. **`tag()` and `address_type()` are core emitters.** `tag()` joins tokens
     by usaddress label, `address_type()` classifies the address (finer than
     usaddress's three values and mapped to them for migration). Neither fails
@@ -926,8 +915,8 @@ revisit if they cause friction.
     before Milestone 8, and `confidence` is already in the API (`None`
     until calibrated), so the wrapper does not depend on it; calibration
     does depend on the hand-labeled Florida sample (item 36), which is the
-    author's work. Calibration moves to Milestone 7, ahead of the CRF items,
-    which reuse its tools. Both still land before the first release.
+    author's work. Calibration moves to Milestone 7 (the CRF items that were to follow it
+    are dropped, decision 32). It still lands before the first release.
 28. **One pull request per plan item.** Section 10 lists the remaining work
     in build order as numbered items, each one pull request; commits within
     an item are listed where there are several. Open items found while
@@ -951,6 +940,33 @@ revisit if they cause friction.
     plus a PH unit today. They become one unit: the designator with `PH`
     joined to the number (`APT PH5213`, `UNIT PH6`; `SUITE PH` is `STE
     PH`). Item 27 (done).
+
+### Decisions recorded 2026-10-16 (CRF call)
+
+32. **No CRF fallback.** Item 29 reran the usaddress comparison and the blind
+    geocode benchmark after the national place list and the Florida work
+    (`docs/usaddress-comparison.md`). Decision 10 asked whether a gap
+    remains that rules plus the place list are unlikely to close. None does:
+    - On the blind benchmark (30,622 addresses neither parser trained on),
+      whole address (coarse) is 96.1% against usaddress's 88.2%, and
+      `PlaceName` tokens tie at 96.8%. The place list moved it from 85.7%.
+    - usaddress still wins only on its own test files (ours 99.2% against its
+      100.0%), which are its regression tests and training data, so they
+      measure closeness to usaddress and not accuracy.
+    - The largest remaining error (1,161 `PlaceName` tokens taken for
+      `StreetName`, such as `281 EVELYN DR DOTHAN`) is a row with no state
+      and no ZIP. A CRF has no place list and would not find the city
+      either; `default_state` (item 30, decision 24) is the lever.
+    - A CRF would add a Python training toolchain, a shipped model file and a
+      retraining step for every fix, and could move other parses. The custom
+      layer (decision 22) is the customization path.
+    Consequences: items 39 to 42 and item 52 are dropped; `confidence` is
+    calibrated on the rule paths only (decision 12); `model_version` stays
+    `None` and is dropped or kept reserved when the Python wrapper is built
+    (Milestone 6); the empty `crf` cargo feature stays until the first release
+    and is removed then if unused. **Reopen if** the hand-labeled Florida
+    sample (item 36) or real use shows a persistent class of parses that
+    rules and the place list cannot reach.
 
 ### Open decisions (for the author)
 

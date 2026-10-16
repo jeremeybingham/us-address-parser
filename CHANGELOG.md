@@ -4,6 +4,15 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### No CRF fallback (item 29, decision 32)
+
+- The usaddress comparison and the blind geocode benchmark were rerun after
+  the place list and the Florida work. Whole address (coarse) on the blind
+  benchmark: ours 96.1%, usaddress 88.2%; on usaddress's own test files ours
+  99.2%, usaddress 100.0% (its regression tests). No gap remains that a CRF
+  would close, so none will be built: plan items 39 to 42 and 52 are dropped.
+  Numbers in `docs/usaddress-comparison.md`; decision in `docs/design.md`.
+
 ### Florida: communities and spellings still missing after the national list (item 28)
 
 - `tools/packs/measure_fl_places.py` lists the cities in the DBPR export that

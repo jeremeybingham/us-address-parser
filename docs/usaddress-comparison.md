@@ -41,19 +41,18 @@ plan items are in `docs/design.md`).
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) | Done |
 | Default state | None | None | `default_state` hint (decision 24) |
 | Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug | Done |
-| Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; confidence planned | Milestone 7 |
+| Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; confidence planned (calibrated rule paths) | Milestone 7 |
 | Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit | Done |
-| Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer (decision 22, Milestone 9); a user model file later (item 52) |
+| Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer (decision 22, Milestone 9) |
 | Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed` | Open decisions in design section 13 |
 | Display casing, long form | Keeps input case | Uppercase only | Open decisions (Milestone 9, item 51) |
 | Batch and dataframes | Loop yourself | `parse_many` (parallel with `rayon`) | Pandas/Polars extras (decision 26, Milestone 9) |
 | Accuracy | Higher on suffix-less streets (84.8% vs 50.3% on the blind benchmark) | Higher with no city (99.0% vs 18.0%) | National place list (Milestone 5) |
 
-**Customization is not what the CRF is for.** The planned CRF (Milestone 7)
-raises accuracy on odd shapes, but a user fixes a misparse with it only by
-labeling data and retraining offline. The custom layer is the plan for
-adapting the parser: a few lines of aliases or places, no retraining, and the
-change is visible in review. The two compose.
+**Customization without retraining.** usaddress adapts by labeling data and
+retraining offline. This parser does not build a CRF (design.md decision 32):
+the custom layer is the plan for adapting it, a few lines of aliases or
+places, no retraining, and the change is visible in review.
 
 ## Label mapping
 
@@ -122,6 +121,21 @@ first run; "after" follows the rule changes listed under "Gaps found".
 | `us50_test_tagged.xml` | 555 | 99.1% | 99.5% | 100.0% |
 | **All** | 2,239, then 2,248 | 98.4% | 98.9% | 100.0% |
 
+Rerun on 2026-10-16, after the national place list and the Florida work
+(Milestone 5, item 29), same files and scoring:
+
+| File | Addresses | Ours: whole address | usaddress |
+|---|---|---|---|
+| `labeled.xml` (hard cases) | 118 | 89.8% | 100.0% |
+| `simple_address_patterns.xml` | 5 | 100.0% | 100.0% |
+| `synthetic_clean_osm_data.xml` | 784 | 100.0% | 100.0% |
+| `synthetic_osm_data.xml` | 786 | 99.7% | 100.0% |
+| `us50_test_tagged.xml` | 555 | 99.5% | 100.0% |
+| **All** | 2,248 | 99.2% | 100.0% |
+
+Tokens: ours 99.6%, usaddress 100.0%. The gain over 98.9% is in `labeled.xml`
+(83.1% to 89.8%), the hard cases; the rest was already near its ceiling.
+Fine score, all files: ours 75.1%, usaddress 76.2%.
 Tokens: ours 99.4% before and 99.5% after; usaddress 100.0%. Nine more
 addresses are in scope after the change because `BuildingName` is now
 modeled. Over all in-scope addresses (the `cargo test` figure): 99.76% of
@@ -168,17 +182,33 @@ parsers and the same 30,622 addresses:
 The list finds 87.4% of the benchmark's cities (`docs/places.md`). The
 largest remaining error is still a city taken for street words (1,160
 tokens, `281 EVELYN DR DOTHAN`: a city the list lacks or one that reads as a
-street). The full rerun and the decision on the CRF fallback are design.md
-item 29.
+street).
+
+Rerun on 2026-10-16 for item 29, after the Florida items (26 to 28): the
+numbers above did not change (96.1% whole address, coarse; 82.0% fine), so
+those items did not touch this data. The errors that remain, by gold label
+and what this parser predicted (tokens): `PlaceName` taken for `StreetName`
+1,161 (`281 EVELYN DR DOTHAN`: no state and no ZIP, so no state to look the
+city up in), `StreetName` taken for `PlaceName` 161 (`705 BLUE RIDGE VILLA
+DR AL 35226`), `StateName` taken for `StreetName` 129 (`22 NEWMARKER SOUTH
+WINDSOR CT 06074`: a city beginning with a state code), `StreetName` taken
+for `OccupancyIdentifier` 83 (`143 LEE ROAD 2004 ...`, a county road name).
+usaddress's largest error on the same data is `StreetName` taken for
+`PlaceName`, 1,347 tokens.
 
 ### Raw files (no labels; agreement, coarse)
 
 | File | Addresses | Same on every token | Tokens agreeing | Tokens ours left unplaced |
 |---|---|---|---|---|
 | Florida auction listings | 9,314 | 87.3% | 96.1% | 3.2% |
-| DBPR licensees, region 4 (Florida) | 15,294 | 97.9% | 99.4% | 0.3% |
-| DBPR licensees, region 11 (out of state) | 25,369 | 97.0% | 99.0% | 0.5% |
-| usaddress `unparseable.csv` | 1,322 | 13.7% | 55.3% | 6.1% |
+| DBPR licensees, region 4 (Florida) | 15,294 | 98.0% | 99.4% | 0.2% |
+| DBPR licensees, region 11 (out of state) | 25,369 | 97.1% | 99.1% | 0.4% |
+| usaddress `unparseable.csv` | 1,322 | 22.4% | 59.3% | 7.2% |
+
+Rerun on 2026-10-16 (item 29), compared with the first run: the DBPR files
+and `unparseable.csv` moved up a little, the auction listings did not. The
+auction listings' disagreements are mostly addresses this parser leaves
+unplaced on purpose (a landmark, `0 UNKNOWN`, `CONFIDENTIAL`).
 
 Raw mode joins the columns into one line, so it does not exercise this
 parser's multi-field rules. In hand-checked samples of disagreements, this
@@ -220,8 +250,8 @@ Still open:
 
 ## Next steps
 
-- The place list for the remaining city cases (`docs/design.md` items 24
-  and 25), then a full rerun of this comparison and the CRF call (item 29).
+- Done: the place list and the full rerun with the CRF call (design.md items
+  24 to 29): no CRF, decision 32.
 - The geocode benchmark is the blind test; rerun it after each rule change
   (commands in the local, uncommitted `local-data/README.md`). A hand-labeled sample (100 to 200 rows) of the
   Florida files would add a blind test on the data this library targets
