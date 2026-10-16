@@ -1,0 +1,666 @@
+name	county	kind	sources	variants
+ALACHUA	ALACHUA	municipality	original;census;geonames	
+ALFORD	JACKSON	municipality	original;census;geonames	
+ALTAMONTE SPRINGS	SEMINOLE	municipality	original;census;geonames	ALTAMONTE SPEINGS;ALTAMONTE SPGS;ALTAMONTE SPRING;ALTAMONTE SPRINGS FL;ALTAMONTE SPRINSG;ALTAMOTNE SPRINGS;ALTIMONTE SPRINGS;ALTMONTE SPRINGS;ALTOMONTE SPRINGS
+ALTHA	CALHOUN	municipality	original;census;geonames	
+ALTOONA	LAKE	place	geonames	
+ALTURAS	POLK	place	geonames	
+ALVA	LEE	place	geonames	
+ANNA MARIA	MANATEE	municipality	original;census;geonames	
+ANTHONY	MARION	place	geonames	
+APALACHICOLA	FRANKLIN	municipality	original;census;geonames	
+APOLLO BEACH	HILLSBOROUGH	place	geonames	
+APOPKA	ORANGE	municipality	original;census;geonames	APOKA;APOPA;APOPK
+ARCADIA	DESOTO	municipality	original;census;geonames	
+ARCHER	ALACHUA	municipality	original;census;geonames	
+ARGYLE	WALTON	place	geonames	
+ARIPEKA	PASCO	place	geonames	
+ASTATULA	LAKE	municipality	original;census;geonames	ASHTABULA
+ASTOR	LAKE	place	geonames	
+ATLANTIC BEACH	DUVAL	municipality	original;census;geonames	ATLANTA BEACH;ATLANTIC BCH
+ATLANTIS	PALM BEACH	municipality	original;census	
+AUBURNDALE	POLK	municipality	original;census;geonames	ABURNDALE;AUBERNDALE;AUBUNRDALE;AUBURDALE;AURBUNDALE
+AVENTURA	DADE	municipality	original;census;observed	ADVENTURA;ADVENTURE;AVANTURA;AVENTRA;AVENTRUA;AVENTURE;AVENTURW;AVENURA;AVENUTRA;AVERNTURA;AVETURA;AVNTURA;VENTURA
+AVON PARK	HIGHLANDS	municipality	original;census;geonames	
+BABSON PARK	POLK	place	geonames	
+BAGDAD	SANTA ROSA	place	geonames	
+BAKER	OKALOOSA	place	geonames	
+BAL HARBOUR	DADE	municipality	original;census;observed	BAL HABOUR;BAL HARBOR;BALL HARBOUR;BAY HARBOR;BAY HARBOUR;BEL HARBOR
+BALDWIN	DUVAL	municipality	original;census;observed	BALLWIN
+BALM	HILLSBOROUGH	place	geonames	
+BARBERVILLE	VOLUSIA	place	geonames	
+BAREFOOT BAY	BREVARD	place	observed	
+BARTOW	POLK	municipality	original;census;geonames	
+BASCOM	JACKSON	municipality	original;census;geonames	
+BAY HARBOR ISLANDS	DADE	municipality	original;census	BAL HARBOR ISLANDS;BAL HARBOUR ISLANDS;BAY HABOR ISLANDS;BAY HARBOR ISLAND;BAY HARBOUR ISLAND;BAY HARBOUR ISLANDS
+BAY LAKE	ORANGE	municipality	original;census	
+BAY PINES	PINELLAS	place	geonames	
+BELL	GILCHRIST	municipality	original;census;geonames	BELLS
+BELLE GLADE	PALM BEACH	municipality	original;census;geonames	BALLE GLADE;BELLE GLAE
+BELLE ISLE	ORANGE	municipality	original;census	BELLA ISLE;BELLE ISLES
+BELLEAIR	PINELLAS	municipality	original;census	BELAIR;BELL AIRE;BELLAIR;BELLEAIRE
+BELLEAIR BEACH	PINELLAS	municipality	original;census;geonames	BELLEAIR BCH;BELLEIAR BEACH
+BELLEAIR BLUFFS	PINELLAS	municipality	original;census	BELLAIRE BLUFFS;BELLEAIR BLUFF;BELLEAIRE BLUFFS;BELLEIAR BLUFFS
+BELLEAIR SHORE	PINELLAS	municipality	census	
+BELLEVIEW	MARION	municipality	original;census;geonames	BELLVIEW
+BEVERLY BEACH	FLAGLER	municipality	original;census	
+BEVERLY HILLS	CITRUS	place	geonames	
+BIG PINE KEY	MONROE	place	geonames	
+BISCAYNE PARK	DADE	municipality	original;census;observed	BISCAINE PARK;BISCAYNE PRK
+BLOUNTSTOWN	CALHOUN	municipality	original;census;geonames	
+BOCA GRANDE	LEE	place	geonames	
+BOCA RATON	PALM BEACH	municipality	original;census;geonames	BOCA ARTON;BOCA RAON;BOCA RAOTN;BOCA RARTON;BOCA RATO;BOCA RATOM;BOCA RATON F;BOCA RATON FL;BOCA RATONE;BOCA ROTON;BOCA RTAON;BOCARAPON;BOCCA RATON;ROCA RATON
+BOKEELIA	LEE	place	geonames	
+BONIFAY	HOLMES	municipality	original;census;geonames	
+BONITA SPRINGS	LEE	municipality	original;census;geonames	BENITA SPRINGS;BOINTA SPRINGS;BONIT SPRINGS;BONITA SPGS;BONITA SPRING;BONITA SPRINGS FL;BONITA SPRINS;BONITA SPRINTS;BONITA SRINGS;BONTIA SPRINGS;BONTITA SPRINGS
+BOSTWICK	PUTNAM	place	geonames	
+BOWLING GREEN	HARDEE	municipality	original;census;geonames	
+BOYNTON BEACH	PALM BEACH	municipality	original;census;geonames	BOYNTN BEACH;BOYNTON BACH;BOYNTON BCH;BOYNTON BEACH FL;BOYNTON NEACH;BOYTNON BEACH;BOYTON BEACH;POYNTON BEACH
+BRADENTON	MANATEE	municipality	original;census;geonames	BRABENTON;BRADENDON;BRADENTOM;BRADENTON FL;BRADETON;BRAEDENTON;BRANDENTON
+BRADENTON BEACH	MANATEE	municipality	original;census;geonames	BRADENTON BCH
+BRADLEY	POLK	place	geonames	
+BRANDON	HILLSBOROUGH	place	geonames	
+BRANFORD	SUWANNEE	municipality	original;census;geonames	CRANFORD
+BRINY BREEZES	PALM BEACH	municipality	original;census	
+BRISTOL	LIBERTY	municipality	original;census;geonames	BRISTOW
+BRONSON	LEVY	municipality	original;census;geonames	BRANSON;BRINSON
+BROOKER	BRADFORD	municipality	original;census;geonames	
+BROOKSVILLE	HERNANDO	municipality	original;census;geonames	BROOKESVILLE;BROOKEVILLE;BROOKSIVLLE;BROOKSVILE;BROOKSVILLS;BROOKVILLE;BROOSKVILLE
+BRUCE	WALTON	place	original	
+BRYCEVILLE	NASSAU	place	geonames	
+BUNNELL	FLAGLER	municipality	original;census;geonames	BUNNEL;VUNNELL
+BUSHNELL	SUMTER	municipality	original;census;geonames	
+CALLAHAN	NASSAU	municipality	original;census;geonames	
+CALLAWAY	BAY	municipality	original;census	CALLOWAY
+CAMPBELLTON	JACKSON	municipality	original;census;geonames	
+CANAL POINT	PALM BEACH	place	geonames	
+CANDLER	MARION	place	geonames	
+CANTONMENT	ESCAMBIA	place	geonames	
+CAPE CANAVERAL	BREVARD	municipality	original;census;geonames	CAPE CANAVAERAL;CAPE CANAVERL;CAPE CANEVERAL
+CAPE CORAL	LEE	municipality	original;census;geonames	CAPE CORRAL;CAPE CORSL;CAPRE CORAL;KAPE CORAL
+CAPTIVA	LEE	place	geonames	
+CARRABELLE	FRANKLIN	municipality	original;census;geonames	CARABELLE
+CARYVILLE	WASHINGTON	municipality	original;census;geonames	MARYVILLE
+CASSADAGA	VOLUSIA	place	geonames	
+CASSELBERRY	SEMINOLE	municipality	original;census;geonames	CASELBERRY;CASFELBERRY;CASSALBERRY;CASSELBERY;CASSELEBERRY
+CEDAR KEY	LEVY	municipality	original;census;geonames	
+CELEBRATION	OSCEOLA	place	original	CELERATION
+CENTER HILL	SUMTER	municipality	original;census;geonames	
+CENTURY	ESCAMBIA	municipality	original;census;geonames	
+CHATTAHOOCHEE	GADSDEN	municipality	original;census;geonames	CHATTAHOOTCHEE
+CHIEFLAND	LEVY	municipality	original;census;geonames	
+CHIPLEY	WASHINGTON	municipality	original;census;geonames	
+CHOKOLOSKEE	COLLIER	place	geonames	
+CHRISTMAS	ORANGE	place	geonames	
+CHULUOTA	SEMINOLE	place	observed	
+CINCO BAYOU	OKALOOSA	municipality	census	
+CITRA	MARION	place	geonames	
+CLARCONA	ORANGE	place	geonames	
+CLARKSVILLE	CALHOUN	place	geonames	
+CLEARWATER	PINELLAS	municipality	original;census;geonames;observed	CLEARATER;CLEARWATEER;CLEAWATER;N CLEARWATER
+CLEARWATER BEACH	PINELLAS	place	geonames	
+CLERMONT	LAKE	municipality	original;census;geonames	CLEARMONT;CLEMONT;CLERMOMT;CLERONT;CLERRMONT
+CLEWISTON	HENDRY	municipality	original;census;geonames	LEWISTON
+CLOUD LAKE	PALM BEACH	municipality	census	
+COCOA	BREVARD	municipality	original;census;geonames	
+COCOA BEACH	BREVARD	municipality	original;census;geonames	COCO BEACH;COCOA BCH
+COCONUT CREEK	BROWARD	municipality	original;census;geonames;observed	COCNUT CREEK;COCOANUT CREEK;COCOCNUT CREEK;COCOCUT CREEK;COCONOT CREEK;COCONT CREEK;COCONUT CREEEK;COCONUT CREEK F;COCONUT GREEK;COCONUTCREECK;COONUT CREEK
+COLEMAN	SUMTER	municipality	original;census;geonames	
+COOPER CITY	BROWARD	municipality	original;census;observed	
+COPELAND	COLLIER	place	geonames	
+CORAL GABLES	DADE	municipality	original;census;geonames	CORAL GABELS;CORAL GABLE;CORAL GABLESS;CORAL GBALES;CORAL GRABLES;CORAN GABLES;CORLA GABLES
+CORAL SPRINGS	BROWARD	municipality	original;census;geonames;observed	CORA SPRINGS;CORAL SPEINGS;CORAL SPRIINGS;CORAL SPRING;CORAL SPRINNGS;CORAL SPRINTS;CORAL SPRNGS;CORALS SPRINGS;COROL SPRINGS;CORRAL SPRINGS
+CORTEZ	MANATEE	place	geonames	
+COTTONDALE	JACKSON	municipality	original;census;geonames	
+CRAWFORDVILLE	WAKULLA	place	geonames	
+CRESCENT CITY	PUTNAM	municipality	original;census;geonames	CRECENT CITY
+CRESTVIEW	OKALOOSA	municipality	original;census;geonames	CRESSTVIEW
+CROSS CITY	DIXIE	municipality	original;census;geonames	
+CRYSTAL BEACH	PINELLAS	place	geonames	
+CRYSTAL RIVER	CITRUS	municipality	original;census;geonames	CYSTAL RIVER
+CRYSTAL SPRINGS	PASCO	place	geonames	
+CUTLER BAY	DADE	municipality	original;census;observed	CUTTER BAY;CUTTLER BAY
+CYPRESS	JACKSON	place	geonames	
+DADE CITY	PASCO	municipality	original;census;geonames	
+DANIA	BROWARD	place	geonames	
+DANIA BEACH	BROWARD	municipality	original;census;observed	BANIA BEACH;DANIA BCH;DANIA BECH;DANIE BEACH
+DAVENPORT	POLK	municipality	original;census;geonames	DAVEMPORT;DAVENORT;DAVENPOERT;DAVENPPORT;DAVENTORT;DAVENVORT;DAVEPORT;DAVNPORT;DEVENPORT
+DAVIE	BROWARD	municipality	original;census;observed	DAVIES
+DAY	LAFAYETTE	place	geonames	
+DAYTONA BEACH	VOLUSIA	municipality	original;census;geonames	DATONA BEACH;DAYTON BEACH;DAYTONA BAECH;DAYTONA BCH;DAYTONA BEACAH;S DAYTONA BEACH
+DAYTONA BEACH SHORES	VOLUSIA	municipality	original;census;observed	DAYTONA BCH SHORES;DAYTONA BEACGH SHORE;DAYTONA BEACH SHORE
+DE LEON SPRINGS	VOLUSIA	place	geonames	
+DEBARY	VOLUSIA	municipality	original;census;geonames	DEBARRY
+DEERFIELD BEACH	BROWARD	municipality	original;census;geonames;observed	DEEFIELD BEACH;DEERDIELD BEACH;DEERFEILD BEACH;DEERFFIELD BEACH;DEERFIELD BCH;DEERFIELD0 BEACH;DEERFILD BEACH;DEERFILED BEACH;DEERIELD BEACH;DERFIELD BEACH
+DEFUNIAK SPRINGS	WALTON	municipality	original;census;geonames	DEFUNAIK SPRINGS;DEFUNIAK SPGS
+DELAND	VOLUSIA	municipality	original;census;geonames	
+DELRAY BEACH	PALM BEACH	municipality	original;census;geonames	BELRAY BEACH;DALRAY BEACH;DEIRAY BEACH;DELARY BEACH;DELAY BEACH;DELIAY BEACH;DELRAT BEACH;DELRAY BCH;DELRAY BEACHB;DELRAY BEAH;DELRAY BERACH;DELRAY EACH;DELREAY BEACH;DELREY BEACH;DERAY BEACH;W DELRAY BEACH
+DELTONA	VOLUSIA	municipality	original;census;geonames	
+DESTIN	OKALOOSA	municipality	original;census;geonames	
+DOCTORS INLET	CLAY	place	geonames	
+DORAL	DADE	municipality	original;census;observed	
+DOVER	HILLSBOROUGH	place	geonames	
+DUNDEE	POLK	municipality	original;census;geonames	
+DUNEDIN	PINELLAS	municipality	original;census;geonames	DUNDEDIN;DUNEBIN;DUNEDINE
+DUNNELLON	MARION	municipality	original;census;geonames	DUNELLON;DUNNELON
+DURANT	HILLSBOROUGH	place	geonames	
+EAGLE LAKE	POLK	municipality	original;census;geonames	EAGLE LAKES
+EARLETON	ALACHUA	place	geonames	
+EAST PALATKA	PUTNAM	place	geonames	
+EASTLAKE WEIR	MARION	place	geonames	
+EASTPOINT	FRANKLIN	place	geonames	
+EATON PARK	POLK	place	geonames	
+EATONVILLE	ORANGE	municipality	original;census	
+EBRO	WASHINGTON	municipality	original;census;geonames	
+EDGEWATER	VOLUSIA	municipality	original;census;geonames	EDGEWATERS
+EDGEWOOD	ORANGE	municipality	original;census	
+EGLIN AFB	OKALOOSA	place	geonames	
+EL JOBEAN	CHARLOTTE	place	geonames	
+EL PORTAL	DADE	municipality	original;census	
+ELFERS	PASCO	place	geonames	
+ELKTON	ST. JOHNS	place	geonames	
+ELLENTON	MANATEE	place	geonames	
+ENGLEWOOD	SARASOTA	place	geonames	
+ENTERPRISE	VOLUSIA	place	observed	
+ESTERO	LEE	municipality	original;census;geonames;observed	ESTRERO;ESTRO
+ESTO	HOLMES	municipality	census	
+EUSTIS	LAKE	municipality	original;census;geonames	EUSTIST;EUTIS
+EVERGLADES CITY	COLLIER	municipality	original;census;geonames	
+EVINSTON	ALACHUA	place	geonames	
+FAIRFIELD	MARION	place	geonames	
+FANNING SPRINGS	LEVY	municipality	original;census	
+FELDA	HENDRY	place	geonames	
+FELLSMERE	INDIAN RIVER	municipality	original;census;geonames	SELLSMERE
+FERN PARK	SEMINOLE	place	observed	
+FERNANDINA BEACH	NASSAU	municipality	original;census;geonames	FERNADINA BEACH;FERNANDIA BEACH;FERNANDINA BCH;FERNANDINAY BEACH;FERNIDINA BEACH;FETNANDINA BEACH
+FERNDALE	LAKE	place	geonames	
+FLAGLER BEACH	FLAGLER	municipality	original;census;geonames	FLAGER BEACH
+FLEMING ISLAND	CLAY	place	original;geonames	FLEMIMG ISLAND;FLEMING ISAND;FLEMMING ISLAND
+FLORAHOME	PUTNAM	place	geonames	
+FLORAL CITY	CITRUS	place	geonames	
+FLORIDA CITY	DADE	municipality	original;census;observed	
+FORT LAUDERDALE	BROWARD	municipality	original;census;geonames	FOR LAUDERDALE;FORT LADERDALE;FORT LAUDARDALE;FORT LAUDEDALE;FORT LAUDEERDALE;FORT LAUDERALE;FORT LAUDERDADE;FORT LAUDERDADLE;FORT LAUDERDAE;FORT LAUDERDAL;FORT LAUDERDALEE;FORT LAUDERDALEW;FORT LAUDERDALLE;FORT LAUDERDLAE;FORT LAUDERDLE;FORT LAUDERDSLE;FORT LAUDEREDALE;FORT LAUDRRDALE;FORT LAUERDALE;FORT LAURDERDALE;FORT LAUTERDALE;FORT LUADERDALE;FORTH LAUDERDALE
+FORT MC COY	MARION	place	geonames	
+FORT MEADE	POLK	municipality	original;census;geonames	
+FORT MYERS	LEE	municipality	original;census;geonames	FOR MYERS;FORT MAYERS;FORT MEYERS;FORT MYER;FORT MYERS S;FORTH MYERS;S FORT MYERS
+FORT MYERS BEACH	LEE	municipality	original;census;geonames	
+FORT OGDEN	DESOTO	place	geonames	
+FORT PIERCE	ST. LUCIE	municipality	original;census;geonames	FOR PIERCE;FORT PEIRCE;FORT PIRECE;PORT PIERCE
+FORT WALTON BEACH	OKALOOSA	municipality	original;census;geonames	FORT WALTO BEACH;FORT WALTON BACH
+FORT WHITE	COLUMBIA	municipality	original;census;geonames	
+FOUNTAIN	BAY	place	geonames	
+FREEPORT	WALTON	municipality	original;census;geonames	
+FROSTPROOF	POLK	municipality	original;census;geonames	
+FRUITLAND PARK	LAKE	municipality	original;census;geonames	FRUITLAND PK
+GAINESVILLE	ALACHUA	municipality	original;census;geonames	GAINESAVILLE;GAINESVILE;GAINESVILLE FL;GAINESVILLLE;GAINESVLLE;GAINESVSILLE;GAINESWVILLE;GAINEVILLE;GAINSEVILLE;GAINSVILLE;GAINVESVILLE;GIANESVILLE;PAINESVILLE
+GENEVA	SEMINOLE	place	geonames	
+GEORGETOWN	PUTNAM	place	geonames	
+GIBSONTON	HILLSBOROUGH	place	geonames	
+GLEN RIDGE	PALM BEACH	municipality	census	
+GLEN SAINT MARY	BAKER	municipality	original;census;geonames	
+GLENWOOD	VOLUSIA	place	geonames	
+GOLDEN BEACH	DADE	municipality	original;census	GOLDEN BCH;HOLDEN BEACH
+GOLDENROD	SEMINOLE	place	geonames	
+GOLF	PALM BEACH	municipality	census	
+GONZALEZ	ESCAMBIA	place	geonames	
+GOODLAND	COLLIER	place	geonames	
+GOTHA	ORANGE	place	geonames	
+GRACEVILLE	JACKSON	municipality	original;census;geonames	GRACEVILL
+GRAHAM	BRADFORD	place	geonames	
+GRAND ISLAND	LAKE	place	geonames	
+GRAND RIDGE	JACKSON	municipality	original;census;geonames	
+GRANDIN	PUTNAM	place	geonames	
+GRANT	BREVARD	place	geonames	
+GRANT VALKARIA	BREVARD	municipality	original;census;observed	GRAND VALKARIA
+GREEN COVE SPRINGS	CLAY	municipality	original;census;geonames	GREEN COVE SPGS;GREEN COVE SPRGS;GREEN COVE SPRING;GREEN COVE SPRINGD
+GREENACRES	PALM BEACH	municipality	original;census;geonames;observed	GREENAACRES;GREENACES;GREENACRE;GREENACREAS;GREENACRESS;GRENNACRES
+GREENSBORO	GADSDEN	municipality	original;census;geonames	
+GREENVILLE	MADISON	municipality	original;census;geonames	GREENEVILLE;GREENVIKLE;GREENVILE;GREENVILLLE
+GREENWOOD	JACKSON	municipality	original;census;geonames	
+GRETNA	GADSDEN	municipality	original;census;geonames	
+GROVELAND	LAKE	municipality	original;census;geonames	
+GULF BREEZE	SANTA ROSA	municipality	original;census;geonames	GUL BREEZE;GULF BRREEZE
+GULF HAMMOCK	LEVY	place	geonames	
+GULF STREAM	PALM BEACH	municipality	original;census	
+GULFPORT	PINELLAS	municipality	original;census;observed	
+HAINES CITY	POLK	municipality	original;census;geonames	HAINE CITY;HAINES CIRY;HAINS CITY;HANES CITY;HANIES CITY;HAYNES CITY
+HALLANDALE	BROWARD	place	geonames	
+HALLANDALE BEACH	BROWARD	municipality	original;census;observed	HALLADALE BEACH;HALLANDAE BEACH;HALLANDALE BAECH;HALLANDALE BCH;HALLANDALLE BEACH;HALLANDE BEACH;HALLANDELE BEACH;HALLANDLE BEACH;HALLENDALE BEACH;HALLLANDALE BEACH
+HAMPTON	BRADFORD	municipality	original;census;geonames	
+HASTINGS	ST. JOHNS	place	geonames	
+HAVANA	GADSDEN	municipality	original;census;geonames	HAVANNA
+HAVERHILL	PALM BEACH	municipality	original;census	
+HAWTHORNE	ALACHUA	municipality	original;census;geonames	
+HERNANDO	CITRUS	place	geonames	
+HIALEAH	DADE	municipality	original;census;geonames	HIAEAH;HIAHLEAH;HIALEA;HIALEH;HIALEIH;HIALIAH;HIEALEAH;HILLEAH
+HIALEAH GARDENS	DADE	municipality	original;census;observed	HIALAEH GARDENS;HIALEAH GARDEN
+HIGH SPRINGS	ALACHUA	municipality	original;census;geonames	
+HIGHLAND BEACH	PALM BEACH	municipality	original;census;observed	HIGHLAND BCH
+HIGHLAND CITY	POLK	place	geonames	
+HIGHLAND PARK	POLK	municipality	original;census	
+HILLCREST HEIGHTS	POLK	municipality	census	
+HILLIARD	NASSAU	municipality	original;census;geonames	HILLLIARD
+HILLSBORO BEACH	BROWARD	municipality	original;census	HILLSBORO BCH;HILLSBORO BEAXH
+HOBE SOUND	MARTIN	place	geonames	
+HOLDER	CITRUS	place	geonames	
+HOLIDAY	PASCO	place	geonames	
+HOLLISTER	PUTNAM	place	geonames	
+HOLLY HILL	VOLUSIA	municipality	original;census;observed	
+HOLLYWOOD	BROWARD	municipality	original;census;geonames	HOLLIWOOD;HOLLLYWOOD;HOLLTYWOOD;HOLLWOOD;HOLLYHOOD;HOLLYOOD;HOLLYWOD;HOLLYWOOF;HOLLYWOOOD;HOLLYWWOD;HOLYWOOD
+HOLMES BEACH	MANATEE	municipality	original;census;geonames	HOLMES BCH
+HOLT	OKALOOSA	place	geonames	
+HOMELAND	POLK	place	geonames	
+HOMESTEAD	DADE	municipality	original;census;geonames	HOMESTAD;HOMESTEAF;HOMESTEARD;HOMESTEASD;HOMESTED;HOMESTREAD;HOMETEAD;HOMSTEAD
+HOMOSASSA	CITRUS	place	geonames	
+HOMOSASSA SPRINGS	CITRUS	place	geonames	
+HORSESHOE BEACH	DIXIE	municipality	original;census;geonames	HORSESHOE BCH
+HOSFORD	LIBERTY	place	geonames	
+HOWEY IN THE HILLS	LAKE	municipality	original;census;geonames	HOWEY IN THE HILL;HOWIE IN THE HILLS
+HUDSON	PASCO	place	original;geonames	
+HURLBURT FIELD	OKALOOSA	place	geonames	
+HYPOLUXO	PALM BEACH	municipality	original;census	
+IMMOKALEE	COLLIER	place	geonames	
+INDIALANTIC	BREVARD	municipality	original;census;geonames	INDIATLANTIC
+INDIAN CREEK	DADE	municipality	original;census	
+INDIAN HARBOUR BEACH	BREVARD	municipality	original;census;observed	INDIAN HARBOR BEACH;INDIAN HARBOUR BCH;INDIAN HARBOUR BEAC;INDIAN HARBUR BEACH
+INDIAN LAKE ESTATES	POLK	place	geonames	
+INDIAN RIVER SHORES	INDIAN RIVER	municipality	original;census	
+INDIAN ROCKS BEACH	PINELLAS	municipality	original;census;geonames	INDIAN ROCK BEACH;INDIAN ROCKS BCH;INDIN ROCKS BEACH
+INDIAN SHORES	PINELLAS	municipality	original;census;observed	
+INDIANTOWN	MARTIN	municipality	original;census;geonames	
+INGLIS	LEVY	municipality	original;census;geonames	
+INLET BEACH	WALTON	place	original	
+INTERCESSION CITY	OSCEOLA	place	geonames	
+INTERLACHEN	PUTNAM	municipality	original;census;geonames	
+INVERNESS	CITRUS	municipality	original;census;geonames	INVENESS;INVERESS;INVERNES;INVERNSESS
+ISLAMORADA	MONROE	municipality	census;geonames	ISLAMORADA VILLAGE OF ISLANDS
+ISLAND GROVE	ALACHUA	place	geonames	
+ISTACHATTA	HERNANDO	place	geonames	
+JACKSONVILLE	DUVAL	municipality	original;census;geonames;observed	JACKASONVILLE;JACKDONVILLE;JACKONVILLE;JACKOSNVILLE;JACKSONEVILLE;JACKSONIVLLE;JACKSONSVILLE;JACKSONVILE;JACKSONVILEE;JACKSONVILL;JACKSONVILLIE;JACKSONVILLLE;JACKSONVILOLE;JACKSONVLLE;JACKSOVILLE;JACKSOVNILLE;JACLKSONVILLE;JACLSONVILLE;JACSONVILLE;JAKCSONVILLE;JAVKSONVILLE
+JACKSONVILLE BEACH	DUVAL	municipality	original;census;geonames	JACKSONVILLE BCH;JACKSONVILLE EACH;JACKSOVILLE BEACH
+JACOB CITY	JACKSON	municipality	census	
+JASPER	HAMILTON	municipality	original;census;geonames	
+JAY	SANTA ROSA	municipality	original;census;geonames	
+JENNINGS	HAMILTON	municipality	original;census;geonames	
+JENSEN BEACH	MARTIN	place	geonames	
+JUNO BEACH	PALM BEACH	municipality	original;census;observed	
+JUPITER	PALM BEACH	municipality	original;census;geonames	JUITER
+JUPITER INLET COLONY	PALM BEACH	municipality	original;census	
+JUPITER ISLAND	MARTIN	municipality	census	
+KATHLEEN	POLK	place	geonames	
+KENANSVILLE	OSCEOLA	place	geonames	
+KENNETH CITY	PINELLAS	municipality	original;census;observed	
+KEY BISCAYNE	DADE	municipality	original;census;geonames	KAY BISCAYNE;KEY BICAYNE;KEY BISACYNE;KEY BISCANE;KEY BISCANYNE;KEY BISCASYNE;KEY BISCAYE;KEY BISCYANE;KEY BSICAYNE
+KEY COLONY BEACH	MONROE	municipality	original;census;geonames	KEY COLONY BCH
+KEY LARGO	MONROE	place	geonames	
+KEY WEST	MONROE	municipality	original;census;geonames	KEY WEAT
+KEYSTONE HEIGHTS	CLAY	municipality	original;census;geonames	KEYSTONE HEIGTHS;KEYSTONE HTS
+KILLARNEY	ORANGE	place	geonames	
+KISSIMMEE	OSCEOLA	municipality	original;census;geonames	KIKSSIMMEE;KISIIMMEE;KISIMMEE;KISSEIMMEE;KISSEMMEE;KISSIIMMEE;KISSIMEE;KISSIMEEE;KISSIMME;KISSIMMEEE;KISSIMMIE;KISSIMMIEE;KISSIMMMEE;KISSMMEE;KISSSIMMEE
+LA CROSSE	ALACHUA	municipality	original;census;geonames	
+LABELLE	HENDRY	municipality	original;census;geonames	
+LACOOCHEE	PASCO	place	geonames	
+LADY LAKE	LAKE	municipality	original;census;geonames	LADY LAKES
+LAKE ALFRED	POLK	municipality	original;census;geonames	
+LAKE BUENA VISTA	ORANGE	municipality	original;census	
+LAKE BUTLER	UNION	municipality	original;census;geonames	
+LAKE CITY	COLUMBIA	municipality	original;census;geonames	
+LAKE CLARKE SHORES	PALM BEACH	municipality	original;census;observed	
+LAKE COMO	PUTNAM	place	geonames	
+LAKE GENEVA	CLAY	place	geonames	
+LAKE HAMILTON	POLK	municipality	original;census;geonames	LAKE HAMITLON
+LAKE HARBOR	PALM BEACH	place	geonames	
+LAKE HELEN	VOLUSIA	municipality	original;census;geonames	LAKE HELLEN
+LAKE MARY	SEMINOLE	municipality	original;census;geonames	LAKE MART;LAKE MERY
+LAKE MONROE	SEMINOLE	place	geonames	
+LAKE PANASOFFKEE	SUMTER	place	geonames	
+LAKE PARK	PALM BEACH	municipality	original;census	
+LAKE PLACID	HIGHLANDS	municipality	original;census;geonames	
+LAKE WALES	POLK	municipality	original;census;geonames	LAKE WAILES;LAKE WLES
+LAKE WORTH	PALM BEACH	place	geonames	
+LAKE WORTH BEACH	PALM BEACH	municipality	original;census	LAKE WORTH BCH;LAKE WORTH BEACK
+LAKELAND	POLK	municipality	original;census;geonames	
+LAKESHORE	POLK	place	geonames	
+LAKEWOOD RANCH	MANATEE	place	original	LACKWOOD RANCH;LAKEWOOD RANCE;LAKEWOOD RCH;LAKEWOOD RNCH;LAKEWOOE RANCH
+LAMONT	JEFFERSON	place	geonames	
+LANARK VILLAGE	FRANKLIN	place	geonames	
+LAND O LAKES	PASCO	place	original;geonames	LAND O LAKE;LAND OF LAKES;LANDON LAKES;LANK O LAKES
+LANTANA	PALM BEACH	municipality	original;census;observed	
+LARGO	PINELLAS	municipality	original;census;geonames;observed	
+LAUDERDALE BY THE SEA	BROWARD	municipality	census	
+LAUDERDALE LAKES	BROWARD	municipality	original;census;observed	LAUDARDALE LAKES;LAUDERDALE LAKE;LAUDERDALES LAKES;LAUDERSALE LAKES;LAUDUDERDALE LAKES;LAURDERDALE LAKES
+LAUDERHILL	BROWARD	municipality	original;census;observed	LAUDERDHILL;LAUDERHIL;LAUDERHILLL;LAUDERILL
+LAUREL	SARASOTA	place	geonames	
+LAUREL HILL	OKALOOSA	municipality	original;census;geonames	LUAREL HILL
+LAWTEY	BRADFORD	municipality	original;census;geonames	
+LAYTON	MONROE	municipality	census	
+LAZY LAKE	BROWARD	municipality	census	
+LECANTO	CITRUS	place	geonames	
+LEE	MADISON	municipality	original;census;geonames	
+LEESBURG	LAKE	municipality	original;census;geonames	LEEBURG;LEEESBURG;LEESSBURG
+LEHIGH ACRES	LEE	place	geonames	
+LIGHTHOUSE POINT	BROWARD	municipality	original;census;observed	LIGHHOUSE POINT;LIGHTHOUSE POINTE;LIGHTHOUSE PT;LIGTHOUSE POINT
+LITHIA	HILLSBOROUGH	place	geonames	
+LIVE OAK	SUWANNEE	municipality	original;census;geonames	
+LLOYD	JEFFERSON	place	geonames	
+LOCHLOOSA	ALACHUA	place	geonames	
+LONG KEY	MONROE	place	geonames	
+LONGBOAT KEY	MANATEE	municipality	original;census;geonames	
+LONGWOOD	SEMINOLE	municipality	original;census;geonames	LONGWOED
+LORIDA	HIGHLANDS	place	geonames	
+LOUGHMAN	POLK	place	geonames	
+LOWELL	MARION	place	geonames	
+LOXAHATCHEE	PALM BEACH	place	original;geonames	LOXACHACHEE;LOXAHACHEE;LOXAHATCHEEE;LOXAHATCHER;LOXAHTACHEE;LOXAHTATCHEE;LOXAHTCHEE;LOXHATCHEE
+LOXAHATCHEE GROVES	PALM BEACH	municipality	original;census	
+LULU	COLUMBIA	place	geonames	
+LUTZ	HILLSBOROUGH	place	original;geonames	
+LYNN HAVEN	BAY	municipality	original;census;geonames	LYNN HEAVEN
+MACCLENNY	BAKER	municipality	original;census;geonames	MACCLEANY
+MADEIRA BEACH	PINELLAS	municipality	original;census;observed	MADEIRA BCH;MADEIRA BREACH;MADERIA BEACH;MADIERA BEACH
+MADISON	MADISON	municipality	census;geonames	
+MAITLAND	ORANGE	municipality	original;census;geonames	MAINTLAND;MAITAND;MAITLALND
+MALABAR	BREVARD	municipality	original;census;geonames	
+MALONE	JACKSON	municipality	original;census;geonames	
+MANALAPAN	PALM BEACH	municipality	original;census	
+MANASOTA	MANATEE	place	geonames	
+MANGO	HILLSBOROUGH	place	geonames	
+MANGONIA PARK	PALM BEACH	municipality	original;census	
+MARATHON	MONROE	municipality	original;census;geonames	
+MARATHON SHORES	MONROE	place	geonames	
+MARCO ISLAND	COLLIER	municipality	original;census;geonames	MARCO IALAND;MARCO ISALND
+MARGATE	BROWARD	municipality	original;census;geonames;observed	MAGATE;MARGARE;MARGARTE;MARGETE;MARGRATE
+MARIANNA	JACKSON	municipality	original;census;geonames	
+MARINELAND	FLAGLER	municipality	census	
+MARY ESTHER	OKALOOSA	municipality	original;census;geonames	MART ESTHER
+MASCOTTE	LAKE	municipality	original;census;geonames	MACOTTE;MASCOTT
+MAYO	LAFAYETTE	municipality	original;census;geonames	
+MC ALPIN	SUWANNEE	place	geonames	
+MC DAVID	ESCAMBIA	place	geonames	
+MC INTOSH	MARION	municipality	original;census;geonames	
+MEDLEY	DADE	municipality	original;census	
+MELBOURNE	BREVARD	municipality	original;census;geonames	MELBORNE;MELBOUNE;MELBOURME;MELBOURN;MELBURNE;MELOURNE
+MELBOURNE BEACH	BREVARD	municipality	original;census;geonames	MELBOURE BEACH;MELBOUREN BEACH;MELBOURNE BCH;MELBOURNE BEACG
+MELBOURNE VILLAGE	BREVARD	municipality	original;census	
+MELROSE	PUTNAM	place	geonames	
+MERRITT ISLAND	BREVARD	place	geonames	
+MEXICO BEACH	BAY	municipality	original;census;geonames	MEXICO BCH
+MIAMI	DADE	municipality	original;census;geonames;observed	MIAIMI;MIAMAI
+MIAMI BEACH	DADE	municipality	original;census;geonames	MAIMI BEACH;MIAIM BEACH;MIAM BEACH;MIAMI BAECH;MIAMI BCH;MIAMI BEACHE;MIAMI BEEACH
+MIAMI GARDENS	DADE	municipality	original;census;geonames;observed	MAIMI GARDENS;MAMI GARDENS;MIAMI GAARDENS;MIAMI GADEN;MIAMI GARDEN;MIAMI GARDES;MIAMI GRADENS
+MIAMI LAKES	DADE	municipality	original;census;observed	MAIMI LAKES;MIAMI LAKE
+MIAMI SHORES	DADE	municipality	original;census;observed	MIAMI SHORES VILLAGE
+MIAMI SPRINGS	DADE	municipality	original;census	MIAMI SORINGS;MIAMI SPRING;MIAMI SPRNGS
+MICANOPY	ALACHUA	municipality	original;census;geonames	
+MICCO	BREVARD	place	observed	
+MID FLORIDA	SEMINOLE	place	geonames	
+MIDDLEBURG	CLAY	place	original;geonames	MIDDDLEBURG;MIDDLEBERG;MIDDLEBURGE;MIDDLEBURY
+MIDWAY	GADSDEN	municipality	original;census;geonames	
+MILLIGAN	OKALOOSA	place	geonames	
+MILTON	SANTA ROSA	municipality	original;census;geonames	
+MIMS	BREVARD	place	geonames	
+MINNEOLA	LAKE	municipality	original;census;geonames	MINEOLA;MINNNEOLA
+MIRAMAR	BROWARD	municipality	original;census;observed	MIARAMAR;MIMAMAR;MIRAMAMR;MIRAMER;MIRAMIR;MIRAMRAR;MIRANAR;MIRARMAR;MIRIAMAR;MIRIMAR;MIRMAR
+MIRAMAR BEACH	WALTON	place	geonames	
+MOLINO	ESCAMBIA	place	geonames	
+MONTICELLO	JEFFERSON	municipality	original;census;geonames	
+MONTVERDE	LAKE	municipality	original;census;geonames	MONTEVERDE
+MOORE HAVEN	GLADES	municipality	original;census;geonames	
+MORRISTON	LEVY	place	geonames	
+MOSSY HEAD	WALTON	place	geonames	
+MOUNT DORA	LAKE	municipality	original;census;geonames	NOUNT DORA
+MULBERRY	POLK	municipality	original;census;geonames	MULBERY
+MURDOCK	CHARLOTTE	place	geonames	
+MYAKKA CITY	MANATEE	place	geonames	
+NALCREST	POLK	place	geonames	
+NAPLES	COLLIER	municipality	original;census;geonames	NALES;NAPES;NAPLE;NAPPLES
+NAVARRE	SANTA ROSA	place	original;geonames	NARVARRE;NAVAVRRE;NAVERRE
+NEPTUNE BEACH	DUVAL	municipality	original;census;geonames	NEPTUNE BCH
+NEW PORT RICHEY	PASCO	municipality	original;census;geonames	NEW PORT RICHE;NEW PORT RICHEYY;NEW PORT RICHIE;NEW PORT RICHY;NEW PT RICHEY;NEWPORT RITCHEY
+NEW SMYRNA BEACH	VOLUSIA	municipality	original;census;geonames	NEW SMRYNA BEACH;NEW SMYNA BEACH;NEW SMYNRA BEACH;NEW SMYRMA BEACH;NEW SMYRNA BCH;NEW SMYRNA BEAC;NEW SYMRNA BEACH
+NEWBERRY	ALACHUA	municipality	original;census;geonames	NEWBERYY
+NICEVILLE	OKALOOSA	municipality	original;census;geonames	NICECVILLE;NICEIVILLE;NICEVILE
+NICHOLS	POLK	place	geonames	
+NOBLETON	HERNANDO	place	geonames	
+NOCATEE	DESOTO	place	geonames	
+NOKOMIS	SARASOTA	place	original;geonames	NOKIMIS
+NOMA	HOLMES	municipality	original;census;geonames	
+NORTH BAY VILLAGE	DADE	municipality	original;census	N BAY VILLAGE;NORTH BAY VILLGE
+NORTH FORT MYERS	LEE	place	geonames	N FORT MYERS
+NORTH LAUDERDALE	BROWARD	municipality	original;census;observed	N LAUDERDALE;NORT LAUDERDALE;NORTH LAUDEDALE;NORTH LAURDERDALE
+NORTH MIAMI	DADE	municipality	original;census;observed	N MIAMI;NOERTH MIAMI;NORHT MIAMI;NORT MIAMI;NORTH MAIMI
+NORTH MIAMI BEACH	DADE	municipality	original;census;geonames;observed	N MIAMI BEACH;NORT MIAMI BEACH;NORTH MIAMI BCH;NORTH MIAMI BEA;NORTH MIAMI BEACH F;NORTH MIAMI BEACH FL;NORTH MIAMI BEAH;NOTH MIAMI BEACH
+NORTH PALM BEACH	PALM BEACH	municipality	original;census;geonames	N PALM BEACH;NORTH PALM BCH;NORTH PALM BEAACH;NORTRH PALM BEACH
+NORTH PORT	SARASOTA	municipality	original;census;geonames	N PORT;NORT PORT
+NORTH REDINGTON BEACH	PINELLAS	municipality	census;observed	N REDINGTON BEACH
+O BRIEN	SUWANNEE	place	geonames	
+OAK HILL	VOLUSIA	municipality	original;census;geonames	
+OAKLAND	ORANGE	municipality	original;census;geonames	OAKLND
+OAKLAND PARK	BROWARD	municipality	original;census;observed	OAKALND PARK;OAKLAND OARK;OAKLEND PARK;OKLAND PARK
+OCALA	MARION	municipality	original;census;geonames	
+OCEAN BREEZE	MARTIN	municipality	original;census	
+OCEAN RIDGE	PALM BEACH	municipality	original;census;observed	
+OCHOPEE	COLLIER	place	geonames	
+OCKLAWAHA	MARION	place	geonames	
+OCOEE	ORANGE	municipality	original;census;geonames	OCOCEE
+ODESSA	HILLSBOROUGH	place	original;geonames	ODDESSA;ODESA;ODESS;ODESSSA
+OKAHUMPKA	LAKE	place	geonames	
+OKEECHOBEE	OKEECHOBEE	municipality	original;census;geonames	OKECHOBEE;OKEECHOBEEE
+OLD TOWN	DIXIE	place	geonames	
+OLDSMAR	PINELLAS	municipality	original;census;geonames	OLDMAR;OLDSMARE;OLDSNAR;OLSMAR
+OLUSTEE	BAKER	place	geonames	
+ONA	HARDEE	place	geonames	
+ONECO	MANATEE	place	geonames	
+OPA LOCKA	DADE	municipality	original;census;geonames;observed	
+ORANGE CITY	VOLUSIA	municipality	original;census;geonames	ORANG CITY
+ORANGE LAKE	MARION	place	geonames	
+ORANGE PARK	CLAY	municipality	original;census;geonames	ORANG PARK;ORANGE PAKR;ORANGE PARKE;ORANGE PRK
+ORANGE SPRINGS	MARION	place	geonames	
+ORCHID	INDIAN RIVER	municipality	original;census	
+ORLANDO	ORANGE	municipality	original;census;geonames	0RLANDO;OLANDO;ORANDO;ORLADO;ORLAND;ORLAND0;ORLANDNO;ORLANDO S;ORLANDON;ORLANFO;ORLANO
+ORMOND BEACH	VOLUSIA	municipality	original;census;geonames	ALMOND BEACH;ARMOND BEACH;ORMOND BCH;ORMOND BEAACH;ORMOND BEACJ;ORMOND BRACH;ORMUND BEACH;ORNOND BEACH
+OSPREY	SARASOTA	place	geonames	
+OSTEEN	VOLUSIA	place	geonames	
+OTTER CREEK	LEVY	municipality	original;census;geonames	
+OVIEDO	SEMINOLE	municipality	original;census;geonames	OVEDO
+OXFORD	SUMTER	place	geonames	
+OZONA	PINELLAS	place	geonames	
+PACE	SANTA ROSA	place	original;observed	
+PAHOKEE	PALM BEACH	municipality	original;census;geonames	
+PAISLEY	LAKE	place	geonames	
+PALATKA	PUTNAM	municipality	original;census;geonames	
+PALM BAY	BREVARD	municipality	original;census;geonames	
+PALM BEACH	PALM BEACH	municipality	original;census;geonames	PALM BCH;PALM BEAC
+PALM BEACH GARDENS	PALM BEACH	municipality	original;census;geonames	PALM BCH GARDENS;PALM BEACG GARDENS;PALM BEACH GAEDENS;PALM BEACH GARDE;PALM BEACH GARDE S;PALM BEACH GARDEN;PALM BEACH GARDENS F;PALM BEACH GRDNS;PALM BEAH GARDENS;PAM BEACH GARDENS;PLAM BEACH GARDENS
+PALM BEACH SHORES	PALM BEACH	municipality	original;census	
+PALM CITY	MARTIN	place	geonames	
+PALM COAST	FLAGLER	municipality	original;census;geonames	PAKM COAST;PALM COSST
+PALM HARBOR	PINELLAS	place	original;geonames	PALM HABOR;PALM HARBOUR;PALM HRBOR;PLAM HARBOR
+PALM SHORES	BREVARD	municipality	original;census	
+PALM SPRINGS	PALM BEACH	municipality	original;census;observed	PALM SPRING;PALM SPRINS
+PALMDALE	GLADES	place	geonames	
+PALMETTO	MANATEE	municipality	original;census;geonames	PALETTO;PAMETTO
+PALMETTO BAY	DADE	municipality	original;census	PALLMETTO BAY;PALMETO BAY;PAMETTO BAY;PAOMETTO BAY;PLAMETTO BAY
+PANACEA	WAKULLA	place	geonames	
+PANAMA CITY	BAY	municipality	original;census;geonames;observed	PANAMA CIT;PANORAMA CITY
+PANAMA CITY BEACH	BAY	municipality	original;census;geonames;observed	PAAMA CITY BEACH;PANAMA CITY BCH;PANAMA CITY BEA;PANAMA CITY BEAH;PANAMA CTY BEACH
+PARKER	BAY	municipality	original;census	
+PARKLAND	BROWARD	municipality	original;census;observed	BARKLAND;PAKLAND;PARKAND
+PARRISH	MANATEE	place	original;geonames	PARISH;PARRRISH
+PATRICK AFB	BREVARD	place	geonames	
+PAXTON	WALTON	municipality	census;geonames	
+PEMBROKE PARK	BROWARD	municipality	original;census	
+PEMBROKE PINES	BROWARD	municipality	original;census;geonames;observed	PEMBOKE PINES;PEMBORKE PINES;PEMBRO PINES;PEMBROKE PINE;PEMBROKE PINEF;PEMBROKE PINS;PEMBROKE PNES;PEMBROKE PNS;PEMBROKE PONES;PEMBROKRE PINES;PEMBROOK PINES;PEMBROOKE PINES;PEMEBROKE PINES;PEMMBROKE PINES;PEMPBROKE PINES;PEMPROKE PINES;PENBROKE PINES;PERBROKE PINES;PMBROKE PINES;PRMBROKE PINES;TEMBROKE PINES
+PENNEY FARMS	CLAY	municipality	census;geonames	
+PENSACOLA	ESCAMBIA	municipality	original;census;geonames	PENACOLA;PENSCOLA
+PENSACOLA BEACH	ESCAMBIA	place	observed	
+PERDIDO KEY	ESCAMBIA	place	observed	
+PERRY	TAYLOR	municipality	original;census;geonames	
+PIERSON	VOLUSIA	municipality	original;census;geonames	PEIERSON
+PINECREST	DADE	municipality	original;census	PINCECREST;PINESCREST;PINRCREST
+PINELAND	LEE	place	geonames	
+PINELLAS PARK	PINELLAS	municipality	original;census;geonames	PINELLLAS PARK
+PINETTA	MADISON	place	geonames	
+PLACIDA	CHARLOTTE	place	geonames	
+PLANT CITY	HILLSBOROUGH	municipality	original;census;geonames	PLAN CITY;PLANC CITY
+PLANTATION	BROWARD	municipality	original;census;geonames;observed	PLAINTATION;PLANATATION;PLANATION;PLANTATATION;PLANTATIION;PLANTATIOM;PLANTATIOON;PLATATION
+PLYMOUTH	ORANGE	place	geonames	
+POINCIANA	POLK	place	observed	
+POLK CITY	POLK	municipality	original;census;geonames	
+POMONA PARK	PUTNAM	municipality	original;census;geonames	
+POMPANO BEACH	BROWARD	municipality	original;census;geonames	PAMPANO BEACH;POMANO BEACH;POMAPANO BEACH;POMAPNO BEACH;POMPANO BAECH;POMPANO BCH;POMPANO BEAH;POMPANO BEAHC;POMPANO BECAH;POMPANO BECH;POMPAO BEACH;POMPNO BEACH;POPANO BEACH
+PONCE DE LEON	WALTON	municipality	original;census;geonames	
+PONCE INLET	VOLUSIA	municipality	original;census;observed	
+PONTE VEDRA	ST. JOHNS	place	geonames	
+PONTE VEDRA BEACH	ST. JOHNS	place	geonames	
+PORT CHARLOTTE	CHARLOTTE	place	geonames;observed	
+PORT LABELLE	HENDRY	place	observed	
+PORT ORANGE	VOLUSIA	municipality	original;census;geonames	FORT ORANGE;PORT ORNAGE
+PORT RICHEY	PASCO	municipality	original;census;geonames	PORT RICHIE
+PORT SAINT JOE	GULF	municipality	original;census;geonames	PORT SAINT JE
+PORT SAINT LUCIE	ST. LUCIE	municipality	original;census;geonames	POR SAINT LUCIE;PORT SAINT LOUCIE;PORT SAINT LUCE;PORT SAINT LUCIA;PORT SAINT LUCIIE;PORT SAINT LUCUE;PORT SAINT LUICE;PORT SANT LUCIE;PORT STE LUCIE;POST SAINT LUCIE;PT SAINT LUCIE
+PORT SALERNO	MARTIN	place	geonames	
+PUNTA GORDA	CHARLOTTE	municipality	original;census;geonames	OUNTA GORDA;PUBTA GORDA;PUNTA GIRDA;PUNTA GORA;PUNTA GORDE
+PUTNAM HALL	PUTNAM	place	geonames	
+QUINCY	GADSDEN	municipality	original;census;geonames	
+RAIFORD	UNION	municipality	original;census;geonames	RAEFORD
+REDDICK	MARION	municipality	original;census;geonames	
+REDINGTON BEACH	PINELLAS	municipality	original;census	
+REDINGTON SHORES	PINELLAS	municipality	original;census	REDDINGTON SHORES;REDJNGTON SHORES
+RIVER RANCH	POLK	place	geonames	
+RIVERVIEW	HILLSBOROUGH	place	original;geonames	RIVERVIW;RVERVIEW
+RIVIERA BEACH	PALM BEACH	municipality	original;census;observed	RIVERA BEACH;RIVERIA BEACH;RIVIERA BCH;RIVIERA BRACH;RIVIREA BEACH
+ROCKLEDGE	BREVARD	municipality	original;census;geonames	ROCKLEEDGE
+ROSELAND	INDIAN RIVER	place	geonames	
+ROSEMARY BEACH	WALTON	place	geonames	
+ROTONDA WEST	CHARLOTTE	place	geonames	
+ROYAL PALM BEACH	PALM BEACH	municipality	original;census;geonames;observed	ROAYL PALM BEACH;ROYAL PALM BAECH;ROYAL PALM BCH;ROYAL PALM BECH;ROYAL PAM BEACH;ROYAL PLM BEACH
+RUSKIN	HILLSBOROUGH	place	geonames	
+SAFETY HARBOR	PINELLAS	municipality	original;census;geonames	SAFETY HATBOR;SAFTEY HARBOR;SAFTY HARBOR
+SAINT AUGUSTINE	ST. JOHNS	municipality	original;census;geonames	AUGUSTINE;SAINT AGUSTINE;SAINT AUGESTINE;SAINT AUGUSITNE;SAINT AUGUSTIINE;SAINT AUGUSTIN;SAINT AUGUSTUNE;SAINT AUGUTINE;STAUGUSTINE
+SAINT AUGUSTINE BEACH	ST. JOHNS	municipality	original;census	SAINT AUGUSTINE BCH
+SAINT CLOUD	OSCEOLA	municipality	original;census;geonames	SAINT CLOUF;SAINT CLOULD;STCLOUD
+SAINT JAMES CITY	LEE	place	geonames	
+SAINT JOHNS	ST. JOHNS	place	geonames	
+SAINT LEO	PASCO	municipality	original;census;geonames	
+SAINT LUCIE VILLAGE	ST. LUCIE	municipality	census	
+SAINT MARKS	WAKULLA	municipality	original;census;geonames	
+SAINT PETE BEACH	PINELLAS	municipality	original;census	SAINT PETE BCH
+SAINT PETERSBURG	PINELLAS	municipality	original;census;geonames	SAINT PERTERBURG;SAINT PERTERSBURG;SAINT PETERBSURG;SAINT PETERBURG;SAINT PETEREBURG;SAINT PETERSBERG;SAINT PETERSBRUG;SAINT PETERSBUG;SAINT PETERSBUIRG;SAINT PETERSBURGE;SAINT PETERSBURGH;SAINT PETESBURG;SAINT PETESRBURG;SAINT PTERSBURG;STETERSBURG;STPETERSBURG
+SALEM	TAYLOR	place	geonames	
+SAN ANTONIO	PASCO	municipality	original;census;geonames	
+SAN MATEO	PUTNAM	place	geonames	
+SANDERSON	BAKER	place	geonames	
+SANFORD	SEMINOLE	municipality	original;census;geonames	SANDFORD;SANFOTD;STANFORD
+SANIBEL	LEE	municipality	original;census;geonames	
+SANTA ROSA BEACH	WALTON	place	original;geonames	SAN ROSA BEACH;SANA ROSA BEACH;SANTA ROSA BCH;SANTA ROSA BEAC;STA ROSA BEACH
+SARASOTA	SARASOTA	municipality	original;census;geonames	SARASAOTA;SARASOA;SARASOT;SARASOTS;SARASTOTA;SARATOTA;SAROSOTA;SARSOTA;SATASOTA
+SATELLITE BEACH	BREVARD	municipality	original;census;geonames	SATALITE BEACH;SATALLITE BEACH;SATELITE BEACH;SATELLIE BEACH;SATELLITA BEACH;SATELLITE BCH;SATELLITTE BEACH;SATILLITE BEACH
+SATSUMA	PUTNAM	place	geonames	
+SCOTTSMOOR	BREVARD	place	geonames	
+SEA RANCH LAKES	BROWARD	municipality	original;census	
+SEBASTIAN	INDIAN RIVER	municipality	original;census;geonames	SEBASTIEN;SEBASTION
+SEBRING	HIGHLANDS	municipality	original;census;geonames	SEBRIG;SEDRING
+SEFFNER	HILLSBOROUGH	place	geonames	
+SEMINOLE	PINELLAS	municipality	original;census;geonames;observed	SAMINOLE;SEMIBOLE;SEMNOLE
+SEVILLE	VOLUSIA	place	geonames	
+SEWALLS POINT	MARTIN	municipality	original;census	SEWALLS PT
+SHADY GROVE	TAYLOR	place	geonames	
+SHALIMAR	OKALOOSA	municipality	original;census;geonames	
+SHARPES	BREVARD	place	geonames	
+SILVER SPRINGS	MARION	place	geonames	
+SNEADS	JACKSON	municipality	original;census;geonames	
+SOPCHOPPY	WAKULLA	municipality	original;census;geonames	
+SORRENTO	LAKE	place	geonames	
+SOUTH BAY	PINELLAS	municipality	original;census;geonames	
+SOUTH DAYTONA	VOLUSIA	municipality	original;census;observed	S DAYTONA;SOUTH DAYTONS
+SOUTH MIAMI	DADE	municipality	original;census;observed	S MIAMI
+SOUTH PALM BEACH	PALM BEACH	municipality	original;census;observed	S PALM BEACH
+SOUTH PASADENA	PINELLAS	municipality	original;census;observed	S PASADENA;SOUTH PASADINA
+SOUTHPORT	BAY	place	observed	
+SOUTHWEST RANCHES	BROWARD	municipality	original;census	S WEST RANCHES
+SPARR	MARION	place	geonames	
+SPRING HILL	HERNANDO	place	geonames	
+SPRINGFIELD	BAY	municipality	original;census	SPRIINGFIELD
+STARKE	BRADFORD	municipality	original;census;geonames	STARK
+STEINHATCHEE	TAYLOR	place	geonames	
+STUART	MARTIN	municipality	original;census;geonames	STUAT;STURT
+SUMATRA	LIBERTY	place	geonames	
+SUMMERFIELD	MARION	place	geonames	
+SUMMERLAND KEY	MONROE	place	geonames	
+SUMTERVILLE	SUMTER	place	geonames	
+SUN CITY	HILLSBOROUGH	place	geonames	
+SUN CITY CENTER	HILLSBOROUGH	place	geonames	
+SUNNY ISLES BEACH	DADE	municipality	original;census;observed	SANNY ISLES BEACH;SUNNY AISLES BEACH;SUNNY ILES BEACH;SUNNY ILSES BEACH;SUNNY ISLE BEACH;SUNNY ISLES BCH;SUNNY ISLES BEAH;SUNNY ISLES BECH;SUNNY ISLES EACH;SUNNY ISLESE BEACH;SUNNY ISLSE BEACH
+SUNRISE	BROWARD	municipality	original;census;observed	SUNRIAE;SUNRICE;SUNRRISE;SUNRTSE
+SURFSIDE	DADE	municipality	original;census	SURFFIDE
+SUWANNEE	DIXIE	place	geonames	
+SWEETWATER	DADE	municipality	original;census	
+SYDNEY	HILLSBOROUGH	place	geonames	
+TALLAHASSEE	LEON	municipality	original;census;geonames	TALLAHASEE;TALLAHASSE;TALLAHASSEEE;TALLAHASSSEE;TALLHASSEE
+TALLEVAST	MANATEE	place	geonames	
+TAMARAC	BROWARD	municipality	original;census;observed	TAMAAC;TAMARACK;TAMARC;TAMERAC;TAMRAC
+TAMPA	HILLSBOROUGH	municipality	original;census;geonames	
+TANGERINE	ORANGE	place	geonames	
+TARPON SPRINGS	PINELLAS	municipality	original;census;geonames	TARNPON SPRINGS;TARPO SPRINGS;TARPON SPGS;TARPON SPRGS;TARPON SPRIN;TARPON SPRING;TARPON SPRINS;TARPONS SPRINGS
+TAVARES	LAKE	municipality	original;census;geonames	TAVERES
+TAVERNIER	MONROE	place	geonames	
+TELOGIA	LIBERTY	place	geonames	
+TEMPLE TERRACE	HILLSBOROUGH	municipality	original;census;observed	TEMPE TERRACE;TEMPLE TERACE;TEMPLE TERRAE
+TEQUESTA	PALM BEACH	municipality	original;census	TEQUESA;TEQUESPA;TEQUEST;TEQUETA
+TERRA CEIA	MANATEE	place	geonames	
+THE VILLAGES	SUMTER	place	original;geonames	THE VILAGES;THE VILLAGE;THE VILLIAGES;THE VLLAGES
+THONOTOSASSA	HILLSBOROUGH	place	geonames	
+TITUSVILLE	BREVARD	municipality	original;census;geonames	TITIUSVILLE;TITUSVILE;TITUVILLE
+TREASURE ISLAND	PINELLAS	municipality	original;census;observed	TREASURE ISALND;TRESURE ISLAND
+TRENTON	GILCHRIST	municipality	original;census;geonames	RENTON
+TRILBY	PASCO	place	geonames	
+UMATILLA	LAKE	municipality	original;census;geonames	
+VALPARAISO	OKALOOSA	municipality	original;census;geonames	VALPARASO
+VALRICO	HILLSBOROUGH	place	original;geonames	VALEICO;VARICO
+VENICE	SARASOTA	municipality	original;census;geonames	VENICIE
+VENUS	HIGHLANDS	place	geonames	
+VERNON	WASHINGTON	municipality	original;census;geonames	
+VERO BEACH	INDIAN RIVER	municipality	original;census;geonames	VERO BCH;VERO BECH;VERO VEACH
+VIRGINIA GARDENS	DADE	municipality	original;census	VIRGINI GARDENS
+WABASSO	INDIAN RIVER	place	geonames	
+WACISSA	JEFFERSON	place	geonames	
+WALDO	ALACHUA	municipality	original;census;geonames	
+WALNUT HILL	ESCAMBIA	place	observed	
+WAUCHULA	HARDEE	municipality	original;census;geonames	WACHULA
+WAUSAU	WASHINGTON	municipality	original;census;geonames	
+WAVERLY	POLK	place	geonames	
+WEBSTER	SUMTER	municipality	original;census;geonames	
+WEEKI WACHEE	HERNANDO	place	observed	
+WEIRSDALE	MARION	place	geonames	
+WELAKA	PUTNAM	municipality	original;census;geonames	
+WELLBORN	SUWANNEE	place	geonames	
+WELLINGTON	PALM BEACH	municipality	original;census;geonames;observed	ELLINGTON;WELINGTON;WELLIGTON;WELLINGON;WELLINGTN;WELLINGTONE;WELLINTON;WELLLINGTON
+WESLEY CHAPEL	PASCO	place	original;geonames	WELSEY CHAPEL;WESELY CHAPEL;WESEY CHAPEL;WESLET CHAPEL;WESLEY CHAPER;WESLEY CHAPLE;WESLEY CHAPPEL;WESLY CHAPEL;WESTEY CHAPEL;WESTLEY CHAPEL;WESTLY CHAPEL
+WEST MELBOURNE	BREVARD	municipality	original;census;observed	W MELBOURNE;WEST MELBORNE;WEST MELBOUNE;WEST MELBOUNRE;WEST MELOUBRNE
+WEST MIAMI	DADE	municipality	original;census	
+WEST PALM BEACH	PALM BEACH	municipality	original;census;geonames;observed	W PALM BEACH;WEST PALM BACH;WEST PALM BCH;WEST PALM BEAC;WEST PALM BEAH;WEST PALM BECH;WEST PALM BEQACH;WEST PALM PEACH;WEST PLAM BEACH
+WEST PARK	BROWARD	municipality	original;census;observed	
+WESTLAKE	PALM BEACH	municipality	original;census;observed	WESLAKE
+WESTON	BROWARD	municipality	original;census;observed	
+WESTVILLE	HOLMES	municipality	original;census;geonames	
+WEWAHITCHKA	GULF	municipality	original;census;geonames	
+WHITE SPRINGS	HAMILTON	municipality	original;census;geonames	
+WILDWOOD	SUMTER	municipality	original;census;geonames	WILDOOD
+WILLISTON	LEVY	municipality	original;census;geonames	WILISTON;WILLSTON
+WILTON MANORS	BROWARD	municipality	original;census	WILTON MANOR;WILTON MAONORS
+WIMAUMA	HILLSBOROUGH	place	geonames	
+WINDERMERE	ORANGE	municipality	original;census;geonames	WINDEMERE;WINDEREMERE;WINDERMER;WINDERMERD;WINDERMEREE;WINDERMIRE;WINDERMRE;WINDERNERE;WINDRMERE;WINTERMERE
+WINTER BEACH	INDIAN RIVER	place	geonames	
+WINTER GARDEN	ORANGE	municipality	original;census;geonames	WINDER GARDEN;WINTER GARDEIN;WINTER GARDENS;WINTER GARDER;WINTER GARGEN;WINTER GARNDE;WINTER GRADEN;WINTERGARDREN;WINYER GARDEN
+WINTER HAVEN	POLK	municipality	original;census;geonames	WINTE HAVEN;WINTER HAVE;WINTER HAVENE;WINTER HEAVEN
+WINTER PARK	ORANGE	municipality	original;census;geonames	WINTE PARK;WINTER PARKS;WINTER PATK;WINTERE PARK
+WINTER SPRINGS	SEMINOLE	municipality	original;census;geonames	WINTER SPGS;WINTERSPRING
+WOODVILLE	LEON	place	geonames	
+WORTHINGTON SPRINGS	UNION	municipality	original;census;geonames	WORTINGTON SPRINGS
+YALAHA	LAKE	place	geonames	
+YANKEETOWN	LEVY	municipality	original;census;geonames	
+YOUNGSTOWN	BAY	place	geonames	
+YULEE	NASSAU	place	geonames	
+ZELLWOOD	ORANGE	place	geonames	
+ZEPHYRHILLS	PASCO	municipality	original;census;geonames	ZEHPYRHILLS;ZEPHERHILLS;ZEPHREHILLS;ZEPHRHILLS;ZEPHRYHILLS;ZEPHYHILLS;ZEPHYRHILL;ZEPHYRHILLIS;ZEPHYRILLS
+ZOLFO SPRINGS	HARDEE	municipality	original;census;geonames	
