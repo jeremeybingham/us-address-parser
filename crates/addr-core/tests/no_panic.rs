@@ -3,7 +3,7 @@
 
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
-use addr_core::{Fields, KeyOptions, ParseError, ParsedAddress, Parser};
+use addr_core::{Fields, KeyOptions, ParseError, ParseOptions, ParsedAddress, Parser};
 use proptest::prelude::*;
 
 /// Address-shaped fragments, so generated input reaches the tagger rules
@@ -105,6 +105,27 @@ proptest! {
         let p = Parser::new();
         let f = Fields { line1, line2, city, state, zip };
         check(p.parse_fields(&f));
+    }
+
+    /// A default_state hint never panics and never fills the state.
+    #[test]
+    fn hinted_parser_never_panics_or_fills_state(
+        s in address_like(), st in prop::sample::select(&["FL", "AL", "ny", "Texas", "DC", "PR"][..]),
+    ) {
+        let hinted = Parser::with_options(ParseOptions {
+            default_state: Some(st.to_string()),
+        }).unwrap();
+        let plain = Parser::new();
+        if let (Ok(a), Ok(b)) = (hinted.parse(&s), plain.parse(&s)) {
+            prop_assert_eq!(a.state, b.state);
+            prop_assert_eq!(a.zip5.clone(), b.zip5.clone());
+            // Only the hint's own reading differs; with a state or a known
+            // ZIP the two parses are identical.
+            if b.state.is_some() {
+                prop_assert_eq!(a, b);
+            }
+        }
+        check(hinted.parse(&s));
     }
 
     #[test]

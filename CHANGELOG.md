@@ -4,6 +4,26 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### `default_state`: a state hint for lookups (Milestone 6, item 30)
+
+- `ParseOptions { default_state }` and `Parser::with_options` (fails with
+  `OptionsError::UnknownDefaultState` for anything that is not a US state,
+  DC or territory), `addr parse` and `parse-file --default-state ST`, and a
+  `default_state` field on corpus cases.
+- When the input names no state and has no known ZIP, a city is looked up in
+  the hinted state (`281 EVELYN DR DOTHAN` with `AL` finds DOTHAN, which the
+  blind benchmark's largest remaining error class needed), and the state's
+  pack readings apply (`CR` is CIRCLE and `SR` is STATE ROAD with `FL`).
+- It never fills `state`: `missing_state` still fires and the key keeps its
+  `k1n` form. New warning `default_state_applied` (`Warning::ALL` is 19) when
+  the hint decided a place match or a reading. The input's own state, or a
+  known ZIP, always wins and the hint is then ignored.
+- Corpus `ds-001` to `ds-007`. On the 9,314 Florida auction rows with the
+  state and ZIP removed, `--default-state FL` finds a place for 8,828 rows
+  (1,273 without the hint); the components of only 72 rows change (a lone
+  city word becomes a city, and `155 OCEAN LANE DR 1007, KEY BISCAYNE` finds
+  its comma city).
+
 ### Florida pack: communities, spellings and ZIP pairs from five DBPR exports
 
 - `tools/packs/dbpr.py` reads the DBPR parquet and board CSV exports;

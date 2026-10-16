@@ -217,7 +217,7 @@ Planned additions (Milestone 6 unless noted; decisions 22 to 24):
 ```rust
 a.tag();                 // TaggedAddress: joined components keyed by usaddress label + address type
 a.address_type();        // AddressType: Street, PoBox, RuralRoute, Military, GeneralDelivery, Dual, Unknown
-let p = Parser::with_options(ParseOptions { default_state: Some(state), ..Default::default() });
+let p = Parser::with_options(ParseOptions { default_state: Some(state) })?;   // done (item 30)
 let p = Parser::new().with_custom_layer(CustomLayer::from_toml(&text)?);   // Milestone 9
 ```
 
@@ -231,8 +231,15 @@ classification and also maps to usaddress's three values (`Street Address`,
 and spans by an emitter, so they follow the emitter rule (read-only, no
 re-parsing).
 
-`ParseOptions::default_state` is a hint for place-list lookups only (decision
-24); it never fills `state`, so the key is unaffected.
+`ParseOptions::default_state` (done, item 30) is a hint for lookups only
+(decision 24): when the input names no state and has no known ZIP, a city is
+looked up in that state (`281 EVELYN DR DOTHAN`, with no commas, finds
+DOTHAN), and the state's pack readings apply (`CR` is CIRCLE, `SR` is STATE
+ROAD in Florida). It never fills `state`, so `missing_state` still fires and
+the key keeps its `k1n` form; `default_state_applied` says when it decided a
+place or a reading. It takes a USPS code or a state name and fails with
+`OptionsError` for anything that is not a state, DC or territory (so not a
+military `AE`).
 
 Cargo features: `rayon` (parallel `parse_many`), `corpus` (the golden-corpus
 runner, pulls in serde), `crf` (reserved). The default build has no runtime
@@ -299,7 +306,7 @@ does include the city.
 - `addr parse "<address>"` prints one JSON record (components, warnings, key, slug, USPS and RESO output); `--pretty`, `--usps`, `--usaddress`, field options (`--line1` ... `--zip`), or one address per stdin line.
 - `addr parse-file IN.csv --column NAME [--line2 ...] [-o OUT.csv]` appends `addr_`-prefixed columns.
 - `addr corpus test [--dir DIR] [--verbose] [--update-baseline]` runs the golden corpus and prints the accuracy report.
-- Planned: `--default-state ST` on `parse` and `parse-file` (Milestone 6, item 30; decision 24), and `--custom-layer PATH` on `parse`, `parse-file` and `corpus test`, plus `addr layer check PATH` to validate a layer file (Milestone 9, item 49).
+- `--default-state ST` on `parse` and `parse-file` (item 30; decision 24). Planned: `--custom-layer PATH` on `parse`, `parse-file` and `corpus test`, plus `addr layer check PATH` to validate a layer file (Milestone 9, item 49).
 
 ---
 
@@ -499,6 +506,14 @@ wrapper does not change when it is filled.
     `missing_state` are unchanged. Corpus cases for each shape (`fl-*`: the
     auction rows with no state). Closes the `--default-state` item in
     section 11.
+    **Done:** `ParseOptions { default_state }`, `Parser::with_options`
+    (`OptionsError` for a non-state), `Warning::DefaultStateApplied`
+    (`ALL` is 19), `addr parse` and `parse-file --default-state`, and a
+    `default_state` field on corpus cases. The hint is used for the place
+    context in the tagger (a comma-less city: `281 EVELYN DR DOTHAN`), for
+    `place` in `place::resolve`, and for the state-dependent suffix and
+    highway readings (`CR`, `SR`) in assembly, only when the input has no
+    state and no known ZIP. Corpus `ds-001` to `ds-007`.
 31. **`tag()` and `address_type()`** (decision 23): an emitter in
     `emit/usaddress.rs` (or a sibling) that joins tokens by label and
     classifies the address; warning `repeated_label`; golden cases for
@@ -666,8 +681,8 @@ state (state token or ZIP prefix), then look up places in that state.
 - Queens-style hyphenated house numbers, Puerto Rico urbanizations
   (backlog).
 - `--default-state` for `addr parse-file` (most of the 1,700 auction rows
-  with no state). Planned as item 30 (decision 24); it does not need a
-  pack.
+  with no state). *Done* (item 30, decision 24): `ParseOptions::default_state`
+  and `--default-state`.
 - `ST`/`FT`/`MT` vs `SAINT`/`FORT`/`MOUNT` in place names, and suffix
   abbreviations inside place names (`ALTAMONTE SPGS`). *Done*: the place
   comparison rule (`lexicon/place_key.rs`).

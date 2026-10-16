@@ -16,7 +16,8 @@ use std::path::{Path, PathBuf};
 use serde::Deserialize;
 
 use crate::{
-    Directional, Fields, Highway, KeyOptions, Lexicons, MatchKind, ParsedAddress, Parser, Warning,
+    Directional, Fields, Highway, KeyOptions, Lexicons, MatchKind, ParseOptions, ParsedAddress,
+    Parser, Warning,
 };
 
 #[derive(Debug, Deserialize)]
@@ -27,6 +28,8 @@ pub struct Case {
     lines: Option<Vec<String>>,
     fields: Option<CaseFields>,
     expect: Expect,
+    /// `ParseOptions::default_state` for this case; absent means none.
+    default_state: Option<String>,
     #[serde(default)]
     warnings: Vec<String>,
     /// Property-level key (`KeyOptions::property()`), or `"none"` when the
@@ -497,6 +500,18 @@ fn validate(cases: &[(String, Case)], errors: &mut Vec<String>) {
 }
 
 pub(crate) fn parse_case(parser: &Parser, c: &Case) -> Option<ParsedAddress> {
+    // A case with its own `default_state` is parsed with it.
+    let own;
+    let parser = match &c.default_state {
+        Some(s) => {
+            own = Parser::with_options(ParseOptions {
+                default_state: Some(s.clone()),
+            })
+            .ok()?;
+            &own
+        }
+        None => parser,
+    };
     let result = if let Some(s) = &c.input {
         parser.parse(s)
     } else if let Some(lines) = &c.lines {

@@ -529,12 +529,18 @@ pub enum Warning {
     /// addresses that are fine (decision 30). `ParsedAddress::place` is
     /// still set in every state.
     ZipCityMismatch,
+    /// The input names no state (and no known ZIP) and the parser was given
+    /// a `default_state` ([`crate::ParseOptions`]) that decided a place
+    /// match or a state-dependent reading. A hint, never a fill: `state`
+    /// stays empty and the key is unchanged (`docs/design.md` section 13,
+    /// decision 24).
+    DefaultStateApplied,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 18] = [
+    pub const ALL: [Warning; 19] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -553,6 +559,7 @@ impl Warning {
         Warning::MissingZip,
         Warning::InvalidZip,
         Warning::ZipCityMismatch,
+        Warning::DefaultStateApplied,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -577,6 +584,7 @@ impl Warning {
             Warning::MissingZip => "missing_zip",
             Warning::InvalidZip => "invalid_zip",
             Warning::ZipCityMismatch => "zip_city_mismatch",
+            Warning::DefaultStateApplied => "default_state_applied",
         }
     }
 }

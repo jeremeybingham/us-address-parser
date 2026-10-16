@@ -1,10 +1,10 @@
 //! `addr` command-line tool.
 //!
 //! ```text
-//! addr parse "<address>" [--pretty] [--usps | --usaddress]
+//! addr parse "<address>" [--pretty] [--usps | --usaddress] [--default-state ST]
 //! addr parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! addr parse            (no argument or "-": one address per stdin line, JSONL out)
-//! addr parse-file IN.csv --column NAME [-o OUT.csv]
+//! addr parse-file IN.csv --column NAME [-o OUT.csv] [--default-state ST]
 //! addr corpus test [--dir DIR] [--verbose] [--update-baseline]
 //! ```
 //!
@@ -12,18 +12,21 @@
 
 mod json;
 
-use addr_core::{corpus, Fields, ParseError, ParsedAddress, Parser};
+use addr_core::{corpus, Fields, ParseError, ParseOptions, ParsedAddress, Parser};
 use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:
-  addr parse \"<address>\" [--pretty] [--usps | --usaddress]
+  addr parse \"<address>\" [--pretty] [--usps | --usaddress] [--default-state ST]
   addr parse --line1 X [--line2 X] [--city X] [--state X] [--zip X] [--pretty] [--usps]
+                  [--default-state ST]
   addr parse [-]                 read one address per line from stdin
                                  (--usaddress: tokens with usaddress labels)
   addr parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
-                  [--zip NAME] [-o OUT.csv]
+                  [--zip NAME] [-o OUT.csv] [--default-state ST]
+                                 --default-state: look cities up in ST when the
+                                 input names no state (a hint, never a fill)
   addr corpus test [--dir DIR] [--verbose] [--update-baseline]
                                  run the golden corpus (default dir: tests/corpus)";
 
@@ -108,13 +111,29 @@ impl Opts {
     }
 }
 
+/// The parser for the options given: `--default-state ST` is a hint for
+/// lookups when the input names no state.
+fn parser_for(o: &Opts) -> Result<Parser, CliError> {
+    Parser::with_options(ParseOptions {
+        default_state: o.value("--default-state").map(str::to_string),
+    })
+    .map_err(|e| CliError::Usage(e.to_string()))
+}
+
 fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     let o = Opts::parse(
         args,
-        &["--line1", "--line2", "--city", "--state", "--zip"],
+        &[
+            "--line1",
+            "--line2",
+            "--city",
+            "--state",
+            "--zip",
+            "--default-state",
+        ],
         &["--pretty", "--usps", "--usaddress"],
     )?;
-    let parser = Parser::new();
+    let parser = parser_for(&o)?;
     let fields = Fields {
         line1: o.value("--line1").map(str::to_string),
         line2: o.value("--line2").map(str::to_string),
@@ -122,7 +141,7 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
         state: o.value("--state").map(str::to_string),
         zip: o.value("--zip").map(str::to_string),
     };
-    let have_fields = !o.values.is_empty();
+    let have_fields = o.values.iter().any(|(k, _)| k != "--default-state");
     let out = io::stdout();
     let mut out = out.lock();
     if have_fields {
@@ -195,7 +214,15 @@ fn print_parsed(out: &mut impl Write, a: &ParsedAddress, o: &Opts) -> io::Result
 fn parse_file_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     let o = Opts::parse(
         args,
-        &["--column", "--line2", "--city", "--state", "--zip", "-o"],
+        &[
+            "--column",
+            "--line2",
+            "--city",
+            "--state",
+            "--zip",
+            "-o",
+            "--default-state",
+        ],
         &[],
     )?;
     let [input] = o.positional.as_slice() else {
@@ -238,7 +265,7 @@ fn parse_file_cmd(args: &[String]) -> Result<ExitCode, CliError> {
         .write_record(&head)
         .map_err(|e| CliError::Failed(e.to_string()))?;
 
-    let parser = Parser::new();
+    let parser = parser_for(&o)?;
     let mut empty_rows = 0usize;
     for rec in reader.records() {
         let rec = rec.map_err(|e| CliError::Failed(e.to_string()))?;

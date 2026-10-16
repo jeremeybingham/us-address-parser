@@ -40,6 +40,7 @@ pub(crate) fn assemble(
     toks: &[Token],
     tagged: Tagged,
     lex: &Lexicons,
+    hint: Option<&'static str>,
     source: &SourceText<'_>,
 ) {
     let Tagged { tags, warnings } = tagged;
@@ -59,7 +60,10 @@ pub(crate) fn assemble(
         }
     }
 
-    let state = address_state(&runs, lex);
+    // The address's own state; with none, the parser's `default_state`.
+    let own_state = address_state(&runs, lex);
+    let state = own_state.or(hint);
+    let hinted = own_state.is_none() && hint.is_some();
     let mut unparsed: Vec<String> = Vec::new();
     let mut highway_state = None;
     let mut highway_prefix = None;
@@ -132,6 +136,9 @@ pub(crate) fn assemble(
                 };
                 if let Some(l) = &l {
                     observed(addr, l.kind);
+                    if hinted && lex.highway(&text).map(|b| b.value) != Some(l.value) {
+                        addr.diagnostics.warn(Warning::DefaultStateApplied);
+                    }
                 }
                 highway_prefix = l.map(|l| l.value);
                 record(addr, Component::Highway);
@@ -285,11 +292,15 @@ pub(crate) fn assemble(
     // CIRCLE in Florida). The state written on the address wins; with none,
     // the ZIP's.
     if let Some(text) = suffix_text {
-        let state = addr.state.map(|s| s.code()).or_else(|| {
+        let state = own_state.or_else(|| {
             let z = lex.zip_places(addr.zip5.as_deref()?)?;
             Some(z.main().state())
         });
+        let state = state.or(hint);
         if let Some(l) = state.and_then(|st| lex.suffix_in(st, &text)) {
+            if hinted && lex.suffix(&text).map(|b| b.value) != Some(l.value) {
+                addr.diagnostics.warn(Warning::DefaultStateApplied);
+            }
             addr.street_suffix = Some(l.value);
         }
     }
