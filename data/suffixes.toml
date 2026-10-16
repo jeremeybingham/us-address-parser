@@ -287,6 +287,9 @@ forms = ["DIV", "DIVIDE", "DV", "DVD"]
 name = "DRIVE"
 abbr = "DR"
 forms = ["DR", "DRIV", "DRIVE", "DRV"]
+# observed: DBPR licensee data, Florida ("9839 EVERGLADES DRT"; the same
+# street in the same ZIP is written DR or DRIVE on 7 other lines)
+observed = ["DRT"]
 
 [[suffix]]
 name = "DRIVES"
@@ -567,7 +570,8 @@ abbr = "LN"
 forms = ["LANE", "LN"]
 # observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
 # not in the current Appendix C1
-observed = ["LA", "LANES"]
+# DBPR licensee data, Florida: LNE ("2038 TAMARRON LNE", 3 lines)
+observed = ["LA", "LANES", "LNE"]
 
 [[suffix]]
 name = "LIGHT"

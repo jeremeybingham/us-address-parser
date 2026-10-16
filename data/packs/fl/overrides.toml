@@ -6,6 +6,12 @@
 # (its state, or with no state its ZIP's). Tagging does not change, only the
 # suffix value. The spelling stays non-standard (`non_standard_abbreviation`).
 #
+# Each [[highway]] entry adds a highway prefix spelling the base table lacks
+# (data/special.toml) in Florida, so the address is tagged as a highway and
+# not a street name. `highway` is a prefix's standard name; `kind` is
+# `variant` (Pub 28 lists the spelling) or `observed` (it does not; raises
+# `non_standard_abbreviation`). The base table's spellings are not changed.
+#
 # Written by hand; each entry names its evidence.
 
 [[suffix]]
@@ -17,3 +23,25 @@
 # (data/special.toml).
 spelling = "CR"
 suffix = "CIRCLE"
+
+[[highway]]
+# Pub 28 Appendix F writes SR 220 as STATE ROAD 220 and SR MM as STATE ROUTE
+# MM, so SR is state-dependent and is left out of the base table
+# (data/special.toml). In Florida the state's roads are State Roads. In the
+# DBPR licensee data (docs/packs/fl.md), 139 of 445,252 Florida street lines
+# have SR before a route number (`22200 SR 60`, `177 N SR 51`); none writes
+# STATE ROUTE. Appendix F spells SR as STATE ROAD, so the spelling is a
+# listed variant and raises no non-standard warning.
+spelling = "SR"
+highway = "STATE ROAD"
+kind = "variant"
+
+[[highway]]
+# CTY is COUNTY (CO and CNTY are already county spellings in the base
+# table, Appendix F). 5 Florida street lines write CTY HWY before a route
+# number (`3709 CTY HWY 214`, `1584 N CTY HWY 393`); CTY is also CITY
+# (`PANAMA CTY BCH`), so this applies only before a route number, where the
+# tagger reads a highway prefix. Not in Appendix F: observed.
+spelling = "CTY HWY"
+highway = "COUNTY HIGHWAY"
+kind = "observed"

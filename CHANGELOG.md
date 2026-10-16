@@ -4,6 +4,46 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Florida: communities and spellings still missing after the national list (item 28)
+
+- `tools/packs/measure_fl_places.py` lists the cities in the DBPR export that
+  match no place. After the national list 2,957 rows (849 cities) did.
+- The pack gains `places_added.tsv` (19 communities: `COCONUT GROVE`,
+  `VIERA`, `HARMONY`, `CHAMPIONS GATE`, `UNIVERSITY PARK`, `NORTH VENICE`,
+  `HUTCHINSON ISLAND`, `SINGER ISLAND`, ...) and `variants_added.tsv` (16
+  spellings of known places: `PT CHARLOTTE`, `STPETE BEACH`, `LA BELLE`,
+  ...), both hand-kept with the number of addresses behind each row and read
+  add-only by `build.rs`. A variant of a place only the national list has is
+  added after it. `zips_observed.tsv` is rerun with the new places (239
+  pairs, was 218). Pack version 2026.10.3.
+- Unmatched rows: 2,957 to 1,348. Corpus `fl-024` to `fl-027`; `fl-016` uses
+  `LAUDERDALE BY THE S` now that `LAUDERDALE BY THE SE` is a variant.
+
+### Rarer misspellings and the penthouse shape (item 27)
+
+- Observed spellings `DRT` (DR), `LNE` (LANE) and `SU` (SUITE), from the
+  DBPR export; they raise `non_standard_abbreviation`.
+- A penthouse right after a designator is one unit: `APT PH 5213` is unit
+  `PH5213`, `UNIT PH6` stays `PH6`, and `SUITE PH` is `STE PH` (decision
+  31; 162 DBPR lines). It used to come out as a designator with no number
+  plus a second PH unit and `missing_unit_number`. Corpus `rg-098` to
+  `rg-105`.
+
+### Florida: `SR` is STATE ROAD, `CTY HWY` is COUNTY HIGHWAY
+
+- The Florida pack's `overrides.toml` can add highway prefix spellings
+  (`[[highway]]`: `spelling`, `highway`, `kind`), read through the new
+  `Lexicons::highway_in(state, spelling)`. Add-only: a spelling the base
+  table has is an error. The tagger and the assembler pass the address's
+  state (its own, or the ZIP's).
+- `SR` before a route number is State Road in Florida (139 DBPR rows), a
+  listed variant: `22200 SR 60` is highway `STATE ROAD 60`. Elsewhere it
+  stays a street name. `CTY HWY` (5 rows) is COUNTY HIGHWAY, flagged
+  non-standard. `CTY RD` has no evidence and is not added. Corpus `fl-020` to
+  `fl-023`.
+- The `k1` key of such an address changes (`SR 51` becomes `STATE ROAD 51`
+  in the name segment). The key format is unchanged.
+
 ### The parser reads the national place list in every state
 
 - `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52

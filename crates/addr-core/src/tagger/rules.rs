@@ -1052,6 +1052,15 @@ impl Tagger<'_> {
             && self.lex.directional(self.text(k + 1)).is_some()
     }
 
+    /// Whether the tokens in `r` are the penthouse designator.
+    fn is_penthouse(&self, r: &Range<usize>) -> bool {
+        r.len() == 1
+            && self
+                .lex
+                .unit(self.text(r.start))
+                .is_some_and(|u| u.value.abbr() == "PH")
+    }
+
     /// Pub 28 section 237 and Appendix F: a highway prefix and route right
     /// after the house number (and an optional predirectional). Appendix F
     /// also names a state before the prefix (`KY STATE HIGHWAY 1`), or before
@@ -1059,8 +1068,13 @@ impl Tagger<'_> {
     /// keeps NE as the predirectional.
     fn highway_at(&self, i: usize, hi: usize) -> Option<HighwayAt> {
         let lex = self.lex;
+        // A state pack may add prefix spellings (`SR` in Florida).
+        let state = self.places.map(|c| c.state);
         let try_at = |p: usize| {
-            let (l, w) = longest_at(self.toks, p, hi, |s| lex.highway(s))?;
+            let (l, w) = longest_at(self.toks, p, hi, |s| match state {
+                Some(st) => lex.highway_in(st, s),
+                None => lex.highway(s),
+            })?;
             let route = p + w;
             // Appendix F allows letter routes (`STATE ROUTE MM`); taken only
             // after a county prefix (`COUNTY ROAD J`), where a letter is
@@ -1322,6 +1336,21 @@ impl Tagger<'_> {
             // A designator with nothing after it: "... TRL UNIT".
             if let Some((u, w)) = longest_ending(self.toks, floor + 1, j, |s| lex.unit(s)) {
                 if j - w > name_lo + 1 {
+                    // A penthouse right after a designator is its number
+                    // (`APT PH 5213`, `SUITE PH`; design.md decision 31).
+                    if let Some((ty, num)) = found.last_mut() {
+                        if u.value.abbr() != "PH" && ty.start == j && self.is_penthouse(ty) {
+                            let end = if num.start == num.end {
+                                ty.end
+                            } else {
+                                num.end
+                            };
+                            *num = ty.start..end;
+                            *ty = j - w..j;
+                            j -= w;
+                            continue;
+                        }
+                    }
                     if u.value.range_required() {
                         self.warn(Warning::MissingUnitNumber);
                         self.incomplete = Some(last);

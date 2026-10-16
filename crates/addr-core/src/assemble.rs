@@ -15,6 +15,23 @@ use crate::types::{
     Warning,
 };
 
+/// The state of the address before it is assembled: the tagged state, else
+/// the main place's state for the tagged ZIP. A state pack reads some
+/// spellings differently (`SR` is STATE ROAD in Florida).
+fn address_state(runs: &[(Tag, &[Token])], lex: &Lexicons) -> Option<&'static str> {
+    let text_of = |tag: Tag| {
+        runs.iter()
+            .find(|(t, _)| *t == tag)
+            .map(|(_, run)| join(run))
+    };
+    if let Some(l) = text_of(Tag::State).and_then(|t| lex.state(&t)) {
+        return Some(l.value.code());
+    }
+    let text = text_of(Tag::Zip)?;
+    let (z5, _) = zip_parts(&text)?;
+    Some(lex.zip_places(z5)?.main().state())
+}
+
 /// Original text for a span (single-line input or one field).
 pub(crate) type SourceText<'a> = dyn Fn(&Span) -> Option<&'a str> + 'a;
 
@@ -42,6 +59,7 @@ pub(crate) fn assemble(
         }
     }
 
+    let state = address_state(&runs, lex);
     let mut unparsed: Vec<String> = Vec::new();
     let mut highway_state = None;
     let mut highway_prefix = None;
@@ -107,7 +125,11 @@ pub(crate) fn assemble(
                 record(addr, Component::Highway);
             }
             Tag::HighwayPrefix => {
-                let l = lex.highway(&text);
+                // A state pack may add prefix spellings (`SR` in Florida).
+                let l = match state {
+                    Some(st) => lex.highway_in(st, &text),
+                    None => lex.highway(&text),
+                };
                 if let Some(l) = &l {
                     observed(addr, l.kind);
                 }
@@ -143,6 +165,19 @@ pub(crate) fn assemble(
                 }
             }
             Tag::UnitNumber(n) => {
+                // A penthouse after a designator is one value: `APT PH 5213`
+                // is `APT PH5213` (design.md decision 31).
+                let text = match run {
+                    [first, rest @ ..]
+                        if !rest.is_empty()
+                            && lex
+                                .unit(&first.text)
+                                .is_some_and(|u| u.value.abbr() == "PH") =>
+                    {
+                        run.iter().map(|t| t.text.as_str()).collect()
+                    }
+                    _ => text,
+                };
                 if n == 0 {
                     set_once(&mut addr.unit_number, text);
                     record(addr, Component::UnitNumber);

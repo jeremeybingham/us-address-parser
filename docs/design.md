@@ -441,17 +441,30 @@ To do, in order:
     `SR` before a route number is State Road in Florida, and `CTY RD`, `CO
     RD` are county roads. Adds a highway override to the pack's
     `overrides.toml` (today it only reads suffixes), with evidence counts
-    from the DBPR export. **(any time)**
+    from the DBPR export. **(any time)** **Done:** `[[highway]]` entries
+    (`SR` is STATE ROAD, a listed variant; `CTY HWY` is COUNTY HIGHWAY,
+    observed) read through `Lexicons::highway_in`; `CO RD` already worked and
+    `CTY RD` has no evidence, so it is not added. Corpus `fl-020` to `fl-023`;
+    `docs/packs/fl.md`.
 27. **Florida: rarer misspellings and the penthouse shape.** `DRT`, `LNE`,
     `SU` as observed spellings, and a penthouse after a designator read as
     one unit (`APT PH 5213` is `APT PH5213`; decision 31). **(any time)**
+    **Done:** the three spellings are `observed` entries in the base tables
+    (they are general typos, not Florida rules), and the tagger joins a PH
+    right after a designator into that designator's value. Corpus `rg-098`
+    to `rg-105`; `docs/packs/fl.md`.
 28. **Florida: communities still missing after the national list.** Item
     24 adds Census places (including unincorporated CDPs such as `TRINITY`
     and `CITRUS SPRINGS`) for Florida, so remeasure the DBPR rows with no
     place match first, then add what is left (`COCONUT GROVE`, and so on)
     to the pack, with county and ZIPs. Needs a source for added rows: a
     hand-kept `places_added.tsv` beside the export, or a change to
-    auction-tracker's list and a re-export.
+    auction-tracker's list and a re-export. **Done:** hand-kept
+    `places_added.tsv` (19 communities) and `variants_added.tsv` (16
+    spellings) beside the pack, chosen with `tools/packs/measure_fl_places.py`
+    (at least 10 distinct addresses, one main ZIP); the observed-ZIP table
+    rerun with them. Unmatched rows went from 2,957 to 1,348. Corpus
+    `fl-024` to `fl-027`; `docs/packs/fl.md`.
 29. **Rerun the comparisons and make the CRF call.** Rerun the usaddress
     comparison and the blind geocode benchmark; record the results in
     `docs/usaddress-comparison.md` and the go or no-go for Milestone 7's
@@ -937,7 +950,7 @@ revisit if they cause friction.
     PH6` and `SUITE PH` (162 DBPR rows) give a designator with no number
     plus a PH unit today. They become one unit: the designator with `PH`
     joined to the number (`APT PH5213`, `UNIT PH6`; `SUITE PH` is `STE
-    PH`). Item 27.
+    PH`). Item 27 (done).
 
 ### Open decisions (for the author)
 
