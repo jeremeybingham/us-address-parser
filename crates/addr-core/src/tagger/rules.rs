@@ -1059,8 +1059,13 @@ impl Tagger<'_> {
     /// keeps NE as the predirectional.
     fn highway_at(&self, i: usize, hi: usize) -> Option<HighwayAt> {
         let lex = self.lex;
+        // A state pack may add prefix spellings (`SR` in Florida).
+        let state = self.places.map(|c| c.state);
         let try_at = |p: usize| {
-            let (l, w) = longest_at(self.toks, p, hi, |s| lex.highway(s))?;
+            let (l, w) = longest_at(self.toks, p, hi, |s| match state {
+                Some(st) => lex.highway_in(st, s),
+                None => lex.highway(s),
+            })?;
             let route = p + w;
             // Appendix F allows letter routes (`STATE ROUTE MM`); taken only
             // after a county prefix (`COUNTY ROAD J`), where a letter is

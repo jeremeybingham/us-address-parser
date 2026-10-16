@@ -4,6 +4,21 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Florida: `SR` is STATE ROAD, `CTY HWY` is COUNTY HIGHWAY
+
+- The Florida pack's `overrides.toml` can add highway prefix spellings
+  (`[[highway]]`: `spelling`, `highway`, `kind`), read through the new
+  `Lexicons::highway_in(state, spelling)`. Add-only: a spelling the base
+  table has is an error. The tagger and the assembler pass the address's
+  state (its own, or the ZIP's).
+- `SR` before a route number is State Road in Florida (139 DBPR rows), a
+  listed variant: `22200 SR 60` is highway `STATE ROAD 60`. Elsewhere it
+  stays a street name. `CTY HWY` (5 rows) is COUNTY HIGHWAY, flagged
+  non-standard. `CTY RD` has no evidence and is not added. Corpus `fl-020` to
+  `fl-023`.
+- The `k1` key of such an address changes (`SR 51` becomes `STATE ROAD 51`
+  in the name segment). The key format is unchanged.
+
 ### The parser reads the national place list in every state
 
 - `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52

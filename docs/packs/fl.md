@@ -16,7 +16,7 @@ address exists or can receive mail.
 | `places.tsv` | 665 places (411 municipalities, 254 other places), 998 variants | `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 1,473 ZIPs (107 shared with a second place) | `zip`, `place` (the main place), `shared` |
 | `zips_observed.tsv` | 218 more (ZIP, place) pairs: 175 ZIPs, 123 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
-| `overrides.toml` | 1 suffix spelling | `[[suffix]]` `spelling`, `suffix` |
+| `overrides.toml` | 1 suffix spelling, 2 highway prefix spellings | `[[suffix]]` `spelling`, `suffix`; `[[highway]]` `spelling`, `highway`, `kind` |
 
 - `name` is the place as auction-tracker spells it: upper case, `SAINT`
   written out (`PORT SAINT LUCIE`), no punctuation (`OPA LOCKA`).
@@ -32,8 +32,8 @@ address exists or can receive mail.
 - `zips_observed.tsv` adds places to a ZIP's shared places, from real
   addresses (below). `build.rs` fails on a pair `zips.tsv` already has, a
   ZIP it does not have, or an unknown place.
-- `overrides.toml` reads a suffix spelling as another suffix in Florida
-  (below).
+- `overrides.toml` reads a suffix spelling as another suffix in Florida,
+  and adds highway prefix spellings (below).
 
 ## Sources and licenses
 
@@ -135,6 +135,21 @@ matches it anyway.
   with none its ZIP's) `CR` is CIR, still with `non_standard_abbreviation`.
   `CR` before a route number stays COUNTY ROAD. Corpus `fl-017` to
   `fl-019`.
+- **`SR` is STATE ROAD, `CTY HWY` is COUNTY HIGHWAY** (`overrides.toml`
+  `[[highway]]`; item 26). Appendix F writes `SR 220` as `STATE ROAD 220`
+  and `SR MM` as `STATE ROUTE MM`, so `SR` is left out of the base table. In
+  the export 139 Florida street lines have `SR` before a route number
+  (`22200 SR 60`, `177 N SR 51`) and none writes STATE ROUTE, so in Florida
+  the tagger reads `SR 60` as a highway and the USPS output is `STATE ROAD
+  60`. It is a listed variant, with no warning. Outside Florida `SR 60` stays
+  a street name as written. `CTY HWY` (5 rows, `3709 CTY HWY 214`) is
+  COUNTY HIGHWAY, raising `non_standard_abbreviation`. `CO RD`, `CO HWY` and
+  `CNTY RD` were already county spellings in the base table. `CTY RD` has no
+  row in the export (0 of 445,252) or the auction listings, so it is not
+  added. Not covered: a letter route (`SR E 70`, 1 row) and `SR` run into
+  its number (`SR200`). The tagger and the assembler ask `Lexicons::
+  highway_in` with the address's state (its own, or the ZIP's). Corpus
+  `fl-020` to `fl-023`.
 
 ## To do
 
@@ -163,12 +178,6 @@ to 28 in `docs/design.md` section 10, and the decisions are in its section
   penthouse written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE
   PH`; 162 rows) gives a designator with no number plus a PH unit; it is to
   be read as one unit (`APT PH5213`; `docs/design.md` decision 31).
-- **`SR` and county road names** (item 26). `SR` before a route number is
-  State Road in Florida (`SR 54`; 143 rows), left out of the base tables
-  because it is State Route elsewhere (Appendix F). County road spellings
-  such as `CTY RD` and `CO RD` (19 rows) are not highway prefixes yet. Both
-  belong in `overrides.toml` or the highway table, with evidence like the
-  `CR` entry's.
 
 ## Versioning
 

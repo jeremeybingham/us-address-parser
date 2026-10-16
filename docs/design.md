@@ -441,7 +441,11 @@ To do, in order:
     `SR` before a route number is State Road in Florida, and `CTY RD`, `CO
     RD` are county roads. Adds a highway override to the pack's
     `overrides.toml` (today it only reads suffixes), with evidence counts
-    from the DBPR export. **(any time)**
+    from the DBPR export. **(any time)** **Done:** `[[highway]]` entries
+    (`SR` is STATE ROAD, a listed variant; `CTY HWY` is COUNTY HIGHWAY,
+    observed) read through `Lexicons::highway_in`; `CO RD` already worked and
+    `CTY RD` has no evidence, so it is not added. Corpus `fl-020` to `fl-023`;
+    `docs/packs/fl.md`.
 27. **Florida: rarer misspellings and the penthouse shape.** `DRT`, `LNE`,
     `SU` as observed spellings, and a penthouse after a designator read as
     one unit (`APT PH 5213` is `APT PH5213`; decision 31). **(any time)**

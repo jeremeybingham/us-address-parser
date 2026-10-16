@@ -355,6 +355,22 @@ impl Lexicons {
         })
     }
 
+    /// Highway prefix as read in `state` (a USPS code): a state pack may add
+    /// a spelling the base table lacks (`SR` is STATE ROAD in Florida, STATE
+    /// ROUTE elsewhere), as [`MatchKind::Variant`] or [`MatchKind::Observed`]
+    /// as the pack says. Otherwise the same as [`Self::highway`].
+    pub fn highway_in(&self, state: &str, s: &str) -> Option<Lookup<HighwayPrefix>> {
+        let key = format!("{state}|{}", normalize_key(s));
+        let Some(&(i, kind)) = find(tables::PACK_HIGHWAY_INDEX, &key) else {
+            return self.highway(s);
+        };
+        let standard = *tables::HIGHWAYS.get(usize::from(i))?;
+        Some(Lookup {
+            value: HighwayPrefix { standard },
+            kind,
+        })
+    }
+
     /// Military delivery-line type: `"PSC"`, `"Postal Service Center"` -> PSC.
     pub fn military(&self, s: &str) -> Option<Lookup<MilitaryKind>> {
         let (value, kind) = *find(tables::MILITARY_INDEX, &normalize_key(s))?;
@@ -829,6 +845,30 @@ mod tests {
         assert!(z.contains(&bellview));
         // The pack's ZIP table is not touched: 32507 is still PENSACOLA.
         assert_eq!(LEX.zip_places("32507").unwrap().main().name(), "PENSACOLA");
+    }
+
+    #[cfg(feature = "state-fl")]
+    #[test]
+    fn pack_highway_override() {
+        // SR is not in the base table (State Road in Florida, State Route
+        // elsewhere); the Florida pack reads it as STATE ROAD.
+        assert!(LEX.highway("SR").is_none());
+        let fl = LEX.highway_in("FL", "sr").unwrap();
+        assert_eq!(
+            (fl.value.standard(), fl.kind),
+            ("STATE ROAD", MatchKind::Variant)
+        );
+        assert!(LEX.highway_in("OH", "SR").is_none());
+        let cty = LEX.highway_in("FL", "CTY HWY").unwrap();
+        assert_eq!(
+            (cty.value.standard(), cty.kind),
+            ("COUNTY HIGHWAY", MatchKind::Observed)
+        );
+        // A base spelling reads the same in every state.
+        assert_eq!(
+            LEX.highway_in("FL", "CO RD").unwrap().value.standard(),
+            "COUNTY ROAD"
+        );
     }
 
     #[cfg(feature = "state-fl")]
