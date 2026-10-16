@@ -4,6 +4,16 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### National place list: builder and data (`data/places/`)
+
+- `tools/places/build_us.py` builds `data/places/places.tsv` (50,376 places
+  in the 50 states, DC and Puerto Rico: Census places and active county
+  subdivisions, plus GeoNames postal names) and `zips.tsv` (41,154 ZIPs).
+  The cleaned names, the 87.4% city coverage on the blind benchmark, and
+  what the builder settles (one county per place, the 462 newer places,
+  Puerto Rico) are in `docs/places.md`. Data only: the parser does not read
+  it yet (items 24 commit 2 and 25).
+
 ### Slug follows the street for dual addresses
 
 - `slug()` of an address with a street and a PO Box now names the street and

@@ -148,7 +148,7 @@ tools/
   corpus/emit_expect.py     # writes emitter expectations into corpus cases from the specs
   compare/                  # usaddress comparison and training-overlap scripts
   packs/                    # Florida pack export and observed-ZIP scripts
-  places/                   # (planned, item 24) national place list builder
+  places/                   # build_us.py: national place list from Census and GeoNames data
   calibrate/                # (planned, item 38) confidence fitting
   train/                    # (planned, Milestone 7, if built) CRF training scripts
 models/                     # (planned, Milestone 7) CRF model; README only
@@ -399,7 +399,7 @@ To do, in order:
 24. **National place data** (`data/places/`, feature `places-us`, on by
     default). Data only: no parser behavior changes, so the PR is the
     builder, its checks and the compiled tables.
-    - Commit 1: `tools/places/build_us.py` and its output, from the Census
+    - Commit 1 (done): `tools/places/build_us.py` and its output, from the Census
       2024 Gazetteer (places and county subdivisions, public domain), the
       Census 2020 place-by-county list and GeoNames `US.zip` (CC BY 4.0).
       Source files are in `local-data/places/` (gitignored; URLs, dates and
