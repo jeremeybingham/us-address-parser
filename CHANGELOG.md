@@ -4,6 +4,23 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### `tag()` and `address_type()` (Milestone 6, item 31, commit 1)
+
+- `ParsedAddress::tag()` is the counterpart of `usaddress.tag()`: tokens that
+  share a usaddress label are joined with a space in input order, with the
+  ends of each value stripped of spaces, commas and semicolons. Unlike
+  usaddress it never fails: a label in two separate runs (two units) is
+  joined and reported (`TaggedAddress::repeated_labels`, new
+  `Warning::RepeatedLabel` / `repeated_label`, which `tag()` reports and
+  `Diagnostics` never carries). Tokens the parse did not place are left out.
+- `ParsedAddress::address_type()`: `Street`, `PoBox`, `RuralRoute`,
+  `Military`, `GeneralDelivery`, `Dual` or `Unknown`.
+  `TaggedAddress::usaddress_type()` gives usaddress's `Street Address`, `PO
+  Box` or `Ambiguous` by its rule, so a dual address is a Street Address and
+  a rural route a PO Box, as there.
+- `addr parse --tag`; corpus fields `address_type`, `tag`, `tag_repeated`;
+  corpus `tg-001` to `tg-008`.
+
 ### `default_state`: a state hint for lookups (Milestone 6, item 30)
 
 - `ParseOptions { default_state }` and `Parser::with_options` (fails with

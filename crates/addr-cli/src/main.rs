@@ -1,7 +1,7 @@
 //! `addr` command-line tool.
 //!
 //! ```text
-//! addr parse "<address>" [--pretty] [--usps | --usaddress] [--default-state ST]
+//! addr parse "<address>" [--pretty] [--usps | --usaddress | --tag] [--default-state ST]
 //! addr parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! addr parse            (no argument or "-": one address per stdin line, JSONL out)
 //! addr parse-file IN.csv --column NAME [-o OUT.csv] [--default-state ST]
@@ -18,11 +18,12 @@ use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:
-  addr parse \"<address>\" [--pretty] [--usps | --usaddress] [--default-state ST]
+  addr parse \"<address>\" [--pretty] [--usps | --usaddress | --tag] [--default-state ST]
   addr parse --line1 X [--line2 X] [--city X] [--state X] [--zip X] [--pretty] [--usps]
                   [--default-state ST]
   addr parse [-]                 read one address per line from stdin
-                                 (--usaddress: tokens with usaddress labels)
+                                 (--usaddress: tokens with usaddress labels;
+                                 --tag: joined by label, like usaddress.tag())
   addr parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
                   [--zip NAME] [-o OUT.csv] [--default-state ST]
                                  --default-state: look cities up in ST when the
@@ -131,7 +132,7 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
             "--zip",
             "--default-state",
         ],
-        &["--pretty", "--usps", "--usaddress"],
+        &["--pretty", "--usps", "--usaddress", "--tag"],
     )?;
     let parser = parser_for(&o)?;
     let fields = Fields {
@@ -171,6 +172,8 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
                         if o.has("--usaddress") {
                             let v = json::usaddress_record(&line, &[]);
                             writeln!(out, "{v}")?;
+                        } else if o.has("--tag") {
+                            writeln!(out, "{}", json::tag_record(&line, None))?;
                         }
                     }
                 }
@@ -200,6 +203,8 @@ fn print_parsed(out: &mut impl Write, a: &ParsedAddress, o: &Opts) -> io::Result
     }
     let v = if o.has("--usaddress") {
         json::usaddress_record(&a.source.original, &a.to_usaddress_tags())
+    } else if o.has("--tag") {
+        json::tag_record(&a.source.original, Some(a))
     } else {
         json::record(a)
     };

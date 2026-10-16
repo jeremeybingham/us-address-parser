@@ -76,6 +76,16 @@ Emitter expectations are optional record keys, checked only when present
 - `usps`: `{"line1": ..., "line2": ..., "last_line": ...}` from
   `to_usps()`; an omitted part must be empty.
 
+- `address_type`: the expected `ParsedAddress::address_type().code()`:
+  `street`, `po_box`, `rural_route`, `military`, `general_delivery`, `dual`
+  or `unknown`. Absent means not checked.
+
+- `tag`: the expected `ParsedAddress::tag()`, an object from usaddress label
+  to joined value (`{"AddressNumber": "123", "StreetName": "Main"}`); a label
+  not listed must be absent. `tag_repeated` lists the labels `tag()` joined
+  from separate runs (two units give `OccupancyType` and
+  `OccupancyIdentifier`). Absent `tag` means not checked.
+
 - `default_state`: a state (code or name) passed as
   `ParseOptions::default_state` for this case, so the hint cases (`ds-*`) can
   run in the one corpus. Absent means no hint.

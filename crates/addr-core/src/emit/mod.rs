@@ -9,5 +9,5 @@ mod usps;
 
 pub use key::KeyOptions;
 pub use reso::ResoAddress;
-pub use usaddress::UsaddressTag;
+pub use usaddress::{AddressType, TaggedAddress, UsaddressTag};
 pub use usps::UspsAddress;
