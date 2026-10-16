@@ -103,8 +103,10 @@ modeled. Over all in-scope addresses (the `cargo test` figure): 99.76% of
 ### Geocode benchmark (blind)
 
 The test split of the [geocoding address-parsing benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)
-(30,622 addresses, one line, no commas, street addresses only), run locally
-from `local-data/` because it has no license. Neither parser trained on it.
+(30,622 addresses, one line, no commas, street addresses only). It states
+no license, so it is kept in the gitignored `local-data/` directory with the
+run commands and reports, and is never committed. Neither parser trained on
+it.
 
 | | Ours, before | Ours, after | usaddress 0.5.16 |
 |---|---|---|---|
@@ -176,5 +178,5 @@ Still open:
 
 - The place list (state packs) for the remaining city cases.
 - The geocode benchmark is the blind test; rerun it after each rule change
-  (`local-data/README.md`). A hand-labeled sample (100 to 200 rows) of the
+  (commands in the local, uncommitted `local-data/README.md`). A hand-labeled sample (100 to 200 rows) of the
   Florida files would add a blind test on the data this library targets.

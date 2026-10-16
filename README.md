@@ -1,19 +1,14 @@
 # us-address-parser
 
-A Rust-core US address parser with a Python wrapper. It parses US address
-strings (or pre-split fields) into components, emits **USPS Publication 28**
-style and **RESO Data Dictionary** output, and produces database-ready
-identifiers (a stable canonical match key and a URL-safe slug).
+A Rust-core US address parser, with a Python wrapper planned. It parses US
+address strings (or pre-split fields) into components, emits **USPS
+Publication 28** style and **RESO Data Dictionary** output, and produces
+database-ready identifiers (a stable canonical match key and a URL-safe slug).
 
-> **Status: Milestones 0 to 2 done (parser).** `Parser::parse`, `parse_fields` and
-> `parse_many` parse single-line and multi-field input into components, with
-> spans into the original text and diagnostics. The rules and their sources
-> are in [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md). `ParsedAddress::key` gives the
-> canonical match key ([`docs/key-format.md`](docs/key-format.md)). `ParsedAddress::to_usps`
-> gives Pub 28 style lines (layout rules checked against the live Pub 28
-> text; see the notes). `ParsedAddress::to_reso` gives RESO Data Dictionary 2.0 address fields
-> ([`docs/reso-mapping.md`](docs/reso-mapping.md)). `ParsedAddress::slug` gives a display-only URL slug. See
-> [`docs/design.md`](docs/design.md) for the milestone plan.
+> **Status:** the Rust library and the `addr` CLI work: parser, key, USPS,
+> RESO and slug emitters, a 258-case golden corpus and a comparison with
+> usaddress. The Python wrapper (Milestone 5) is next. Nothing is published
+> yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
 
 ## This is not an address validator
 
@@ -27,9 +22,9 @@ CASS-certified data, which is out of scope.
 - Parse single-line and multi-field (line1, line2, city, state, zip) input.
 - Emit USPS Pub 28 style and RESO field-name output.
 - Produce a versioned canonical match key (`k1:...`) and a URL-safe slug.
-- Report diagnostics (warnings, unparsed remainder, confidence) instead of
-  failing on partial parses; an error is returned only for unusable input
-  such as an empty string.
+- Report diagnostics (warnings with stable codes, unparsed remainder)
+  instead of failing on partial parses; an error is returned only for
+  unusable input such as an empty string.
 - Usable from Rust and from Python (PyO3) with no C library or runtime data
   download.
 
@@ -39,44 +34,65 @@ Validation or deliverability, geocoding, fuzzy matching, address correction,
 international addresses, ZIP-to-city/county lookups, and runtime-configurable
 lexicons.
 
+## Rust usage
+
+```rust
+use addr_core::{KeyOptions, Parser};
+
+let parser = Parser::new();
+let a = parser.parse("123 north main street apt 4, Miami FL 33101")?;
+assert_eq!(a.street_name.as_deref(), Some("MAIN"));
+assert_eq!(a.unit_number.as_deref(), Some("4"));
+
+a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
+a.to_reso();                      // RESO Data Dictionary 2.0 fields
+a.key(KeyOptions::property());    // Some("k1:S|123|N|MAIN|ST||FL|33101")
+a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
+a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
+```
+
+`Parser::parse_fields` takes pre-split fields (`Fields`), and
+`Parser::parse_many` parses a batch (in parallel with the `rayon` feature).
+
+## CLI
+
+```sh
+cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101" --pretty
+cargo run -p addr-cli -- parse-file in.csv --column address -o out.csv
+cargo run -p addr-cli -- corpus test
+```
+
+`addr --help` lists every option.
+
 ## Layout
 
 ```
 crates/addr-core/   pure Rust library (no Python dependency)
 crates/addr-cli/    `addr` command-line tool
-crates/addr-py/     PyO3 bindings, built with maturin (placeholder)
+crates/addr-py/     PyO3 bindings (planned, Milestone 5)
 data/               lexicon tables (Pub 28 suffixes, units, states, ...),
                     compiled into static tables by addr-core's build.rs
 tests/corpus/       labeled golden corpus (JSONL)
+tests/external/     usaddress's labeled test files (MIT)
+tools/              corpus and comparison scripts
 docs/               design and format specs
 ```
 
-## Rust usage (target API)
+## Documentation
 
-```rust
-use addr_core::Parser;
-
-let parser = Parser::new();
-let parsed = parser.parse("123 north main street apt 4, Miami FL 33101")?;
-assert_eq!(parsed.street_name.as_deref(), Some("MAIN"));
-assert_eq!(parsed.unit_number.as_deref(), Some("4"));
-
-// Lexicon lookups:
-let lex = addr_core::Lexicons::builtin();
-assert_eq!(lex.suffix("Avenue").unwrap().value.abbr(), "AVE");
-assert_eq!(lex.state("Fla.").unwrap().value.code(), "FL");
-
-// parsed.to_usps(); parsed.to_reso(); parsed.key(...);
-// parsed.slug() -> "123-n-main-st-apt-4-miami-fl-33101" (display only; use key() for joins)
-```
+- [`docs/design.md`](docs/design.md): goals, decisions, milestones, open items
+- [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md): sources for every table and rule
+- [`docs/key-format.md`](docs/key-format.md): the `k1` key and the slug
+- [`docs/reso-mapping.md`](docs/reso-mapping.md): RESO field mapping
+- [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md): accuracy against usaddress
 
 ## Development
 
 ```sh
 cargo fmt --check
-cargo clippy --all-targets -- -D warnings
+cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-features
-cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101" --pretty
+cargo bench -p addr-core --bench parse
 ```
 
 ## License

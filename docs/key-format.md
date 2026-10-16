@@ -45,7 +45,7 @@ k1:G|<state>|<zip5>
   building name, anything in
   `diagnostics`.
   - City is noisy and the field most likely to be corrected later; leaving it
-    out keeps stored keys stable (design 6.4).
+    out keeps stored keys stable (design section 6).
   - ZIP+4 varies within one building.
 
 ## Strong and partial keys
