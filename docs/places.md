@@ -129,17 +129,24 @@ no places or no ZIPs.
 - For every other state a name, variant or ZIP that would lead to two places
   is a build error, as in a pack. Names, counties and kinds are checked the
   same way.
-- Until the parser reads the national layer (design.md item 25), lookups
-  (`Lexicons::place`, `zip_places`, `places`) return only states with a pack.
-  The rest is in the tables and costs binary size, nothing else.
+- The parser reads the national layer for every state (design.md item 25):
+  `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52. So
+  the Florida behaviors work everywhere: a city on a line with no commas, a
+  street versus a city before a ZIP, a city run into the street, a cut-off
+  city completed from the ZIP, and the place from the ZIP.
+  `zip_city_mismatch` stays limited to states with a curated pack
+  (`Lexicons::has_pack`; decision 30), because the list names one place per
+  ZIP, and its place equals the written city on only 75.8% of the
+  benchmark's addresses.
 
 The tables are packed records in `OUT_DIR`, read with `include_bytes!`
 (`emit_places` in `build.rs` has the layout), not tables of `&str`. A
 `&str` table costs a pointer and a relocation per string: the first version
-added 13.4 MB to the `addr` binary. Packed, the national list adds **2.7
-MB** (stripped release binary 1.57 MB without it, 4.29 MB with it; the
-tables are 2.9 MB before linking: names 0.53, keys 0.87, index 0.68, rows
-0.45, ZIPs 0.37). `build.rs` takes about 2 seconds more.
+added 13.4 MB to the `addr` binary. Packed, the national list adds **2.9
+MB** (stripped release binary 1.57 MB without it, 4.49 MB with it; the
+tables are 3.1 MB before linking: names 0.53, keys 0.87, index 0.68, rows
+0.45, ZIPs 0.37, and 0.2 for the any-state name index that `is_place`
+uses). `build.rs` takes about 2 seconds more.
 
 ## Coverage
 

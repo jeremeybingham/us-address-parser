@@ -4,6 +4,20 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### The parser reads the national place list in every state
+
+- `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52
+  states; the place behaviors that worked only in Florida (a city on a line
+  with no commas, a street versus a city before a ZIP, a city run into the
+  street, a cut-off city completed from the ZIP, the place from the ZIP) now
+  work everywhere. `ParsedAddress::place` is set in every state.
+- `zip_city_mismatch` is still raised only in states with a curated pack
+  (`Lexicons::has_pack`); documented on the warning (decision 30).
+- Blind geocode benchmark, whole address (coarse): 85.7% to 96.1%
+  (usaddress 88.2%); `PlaceName` tokens 87.6% to 96.8%. Corpus
+  `pl-001` to `pl-008`; `fl-013` and `fl-019` now name their place. Parse
+  time: corpus +6.5%, single addresses unchanged.
+
 ### National place list: compiled in (feature `places-us`)
 
 - `build.rs` compiles `data/places/` under the state packs; `places-us` is on

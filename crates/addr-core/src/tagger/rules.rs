@@ -206,8 +206,8 @@ impl Tagger<'_> {
         }
     }
 
-    /// The pack for the last line: the state tagged there when a pack
-    /// covers it, else the state of the ZIP's main place.
+    /// The place context for the last line: the state tagged there, else the
+    /// state of the ZIP's main place.
     fn place_ctx(&self, state: Option<Range<usize>>, zip: Option<usize>) -> Option<PlaceCtx> {
         let zip = zip
             .and_then(|k| zip_parts(self.text(k)))
@@ -216,9 +216,6 @@ impl Tagger<'_> {
             Some(r) => self.lex.state(&join(&self.toks[r]))?.value.code(),
             None => zip?.main().state(),
         };
-        if !self.lex.has_pack(state) {
-            return None;
-        }
         let zip = zip.filter(|z| z.main().state() == state);
         Some(PlaceCtx { state, zip })
     }

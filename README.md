@@ -65,8 +65,9 @@ city. `city` always keeps what the input said. Florida is the first pack
 Under the packs sits a national list (`data/places/`, cargo feature
 `places-us`, on by default): 50,375 places and 41,154 ZIPs for the 50 states,
 DC and Puerto Rico, built from the Census Gazetteer and GeoNames postal codes.
-It adds the places a Florida pack lacks. The parser does not read it for other
-states yet. Sources, licenses and how it is built:
+The parser uses it in every state, with a curated pack (Florida) on top; the
+city-versus-ZIP warning (`zip_city_mismatch`) is raised only where a pack
+exists. Sources, licenses and how it is built:
 [`docs/places.md`](docs/places.md). The ZIP-to-place data is GeoNames,
 (c) GeoNames, CC BY 4.0 (<https://www.geonames.org/>), and is not a
 statement that an address exists or can receive mail.

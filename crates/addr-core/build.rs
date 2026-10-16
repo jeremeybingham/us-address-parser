@@ -934,6 +934,10 @@ fn le8(v: usize, what: &str) -> Result<u8> {
 ///   order.
 /// - `place_index.bin`, 10 bytes per key: key offset u32, key length u8,
 ///   0 standard or 1 variant, row u32. Sorted by key.
+/// - `place_any.bin`, 4 bytes per standard (not variant) key: its record
+///   number in `place_index.bin`, sorted by the key without its `STATE|`
+///   prefix, so "is this a place in any state" is one search, not one per
+///   state.
 /// - `zip_index.bin`, 9 bytes per ZIP: the 5 ASCII digits, main place row
 ///   u32. Sorted by ZIP. `ZIP_SHARED` lists the few ZIPs with shared places.
 fn emit_places(
@@ -991,6 +995,20 @@ fn emit_places(
         keys.push_str(k);
     }
 
+    let mut any: Vec<(&str, usize)> = t
+        .index
+        .iter()
+        .enumerate()
+        .filter(|(_, (_, (_, kind)))| *kind == "Standard")
+        .map(|(n, (k, _))| (&k[3..], n))
+        .collect();
+    any.sort_unstable();
+    let any: Vec<u8> = any
+        .into_iter()
+        .map(|(_, n)| le32(n, "key number"))
+        .collect::<Result<Vec<_>>>()?
+        .concat();
+
     let mut zips = Vec::new();
     let mut shared = Vec::new();
     for (z, (main, others)) in &t.zips {
@@ -1005,6 +1023,7 @@ fn emit_places(
     write("place_rows.bin", &rows)?;
     write("place_keys.txt", keys.as_bytes())?;
     write("place_index.bin", &index)?;
+    write("place_any.bin", &any)?;
     write("zip_index.bin", &zips)?;
 
     writeln!(out, "/// State packs compiled in.").ok();
@@ -1038,6 +1057,7 @@ fn emit_places(
     for (name, file) in [
         ("PLACE_ROWS", "place_rows.bin"),
         ("PLACE_INDEX", "place_index.bin"),
+        ("PLACE_ANY", "place_any.bin"),
         ("ZIP_INDEX", "zip_index.bin"),
     ] {
         writeln!(

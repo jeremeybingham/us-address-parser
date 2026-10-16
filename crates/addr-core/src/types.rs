@@ -176,7 +176,8 @@ impl fmt::Display for StateCode {
     }
 }
 
-/// A city, town or community from a state pack (`data/packs/`,
+/// A city, town or community from the national place list (`data/places/`,
+/// `docs/places.md`) or a curated state pack (`data/packs/`,
 /// `docs/packs/`). Obtain one with [`crate::Lexicons::place`] or
 /// [`crate::Lexicons::zip_places`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -193,7 +194,7 @@ impl Place {
         self.state
     }
 
-    /// The place's standard name, as the pack spells it: `"PORT SAINT LUCIE"`.
+    /// The place's standard name, as the list spells it: `"PORT SAINT LUCIE"`.
     pub fn name(&self) -> &'static str {
         self.name
     }
@@ -518,9 +519,15 @@ pub enum Warning {
     MissingZip,
     /// A ZIP that is not 5 digits, or ZIP+4 that is not 4 digits.
     InvalidZip,
-    /// The city is a known place, but the state pack does not list the ZIP
-    /// for it (`docs/design.md` section 13, decision 14). A disagreement
-    /// with the pack's data, not a finding that the address is wrong.
+    /// The city is a known place, but the place list does not give the ZIP
+    /// to it (`docs/design.md` section 13, decision 14). A disagreement
+    /// with the data, not a finding that the address is wrong.
+    ///
+    /// Only raised in a state with a curated pack (`Lexicons::has_pack`;
+    /// Florida today). The national list names one place per ZIP and many
+    /// ZIPs are used by several, so elsewhere the warning would fire on
+    /// addresses that are fine (decision 30). `ParsedAddress::place` is
+    /// still set in every state.
     ZipCityMismatch,
 }
 

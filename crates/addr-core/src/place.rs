@@ -1,11 +1,15 @@
 //! Place resolution (Milestone 5; `docs/design.md` section 13, decisions 13
 //! and 14).
 //!
-//! Runs after assembly. Names the place the city stands for, from the state
-//! packs compiled into [`Lexicons`], or the ZIP's main place when there is no
+//! Runs after assembly. Names the place the city stands for, from the place
+//! lists compiled into [`Lexicons`] (the national list for every state, with
+//! a curated state pack above it), or the ZIP's main place when there is no
 //! city. [`ParsedAddress::city`] is never changed: the match is reported in
-//! [`ParsedAddress::place`], beside it. A city the pack knows whose ZIP the
-//! pack does not list for it gets [`Warning::ZipCityMismatch`].
+//! [`ParsedAddress::place`], beside it. A city the list knows whose ZIP the
+//! list does not give it gets [`Warning::ZipCityMismatch`], but only in a state
+//! with a curated pack: the national list names one place per ZIP, and many
+//! ZIPs are used by several, so the warning would fire too often elsewhere
+//! (design.md decision 30).
 
 use crate::lexicon::{Lexicons, MatchKind, ZipPlaces};
 use crate::types::{ParsedAddress, Place, PlaceMatch, PlaceSource, Warning};
@@ -18,9 +22,6 @@ pub(crate) fn resolve(addr: &mut ParsedAddress, lex: &Lexicons) {
         (None, Some(z)) => z.main().state(),
         (None, None) => return,
     };
-    if !lex.has_pack(state) {
-        return;
-    }
     let zip = zip.filter(|z| z.main().state() == state);
     let Some(city) = addr.city.as_deref() else {
         if addr.military_post_office.is_none() {
@@ -38,7 +39,7 @@ pub(crate) fn resolve(addr: &mut ParsedAddress, lex: &Lexicons) {
         })
     });
     if let (Some(m), Some(z)) = (found, zip) {
-        if !z.contains(&m.place) {
+        if lex.has_pack(state) && !z.contains(&m.place) {
             addr.diagnostics.warn(Warning::ZipCityMismatch);
         }
     }
@@ -135,8 +136,12 @@ mod tests {
             place("WINGATE ST 32507"),
             Some(("PENSACOLA", PlaceSource::Zip))
         );
-        // No pack for the state, or no city and no ZIP.
-        assert_eq!(place("1 MAIN ST, ATLANTA, GA 30301"), None);
+        // The national list covers a state with no pack; with no city and
+        // no ZIP there is nothing to name.
+        assert_eq!(
+            place("1 MAIN ST, ATLANTA, GA 30301"),
+            Some(("ATLANTA", PlaceSource::Name))
+        );
         assert_eq!(
             place("1 MAIN ST, MIAMI, FL"),
             Some(("MIAMI", PlaceSource::Name))
@@ -153,6 +158,13 @@ mod tests {
             .parse("1 MAIN ST, AVENTURA, FL 33180")
             .unwrap();
         assert!(!a.diagnostics.has(&Warning::ZipCityMismatch));
+        // Outside a curated-pack state the ZIP names one place only, so a
+        // different city is not flagged (decision 30).
+        let a = Parser::new()
+            .parse("1 MAIN ST, ST LOUIS, MO 63301")
+            .unwrap();
+        assert!(!a.diagnostics.has(&Warning::ZipCityMismatch));
+        assert_eq!(a.place.unwrap().place.name(), "SAINT LOUIS");
         // An unknown city is not a mismatch.
         let a = Parser::new()
             .parse("1 MAIN ST, SINGER ISLAND, FL 33404")

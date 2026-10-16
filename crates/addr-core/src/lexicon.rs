@@ -114,13 +114,6 @@ mod tables {
 
 pub use tables::{MAX_FORM_WORDS, MAX_PLACE_WORDS};
 
-/// Whether lookups may return places of `state`. The national list is
-/// compiled in for every state (feature `places-us`), but only states with a
-/// curated pack are read until the parser uses it (design.md item 25).
-fn readable(state: &str) -> bool {
-    tables::PACK_STATES.contains(&state)
-}
-
 // The place tables are packed binary files written by build.rs (see
 // `emit_places` there for the layout), so a lookup is a binary search over
 // byte records with no pointers to relocate. Every read is bounds-checked and
@@ -198,6 +191,20 @@ fn find_place(key: &str) -> Option<(u32, MatchKind)> {
     Some((le32(r, 6)?, kind))
 }
 
+/// Whether a key (without its `STATE|`) is the standard name of a place in
+/// any state.
+fn any_place(key: &str) -> bool {
+    let at = |n: usize| {
+        let r = record(
+            tables::PLACE_INDEX,
+            KEY_LEN,
+            usize::try_from(le32(tables::PLACE_ANY, n * 4)?).ok()?,
+        )?;
+        pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?.get(3..)
+    };
+    search(tables::PLACE_ANY.len() / 4, |n| Some(at(n)?.cmp(key))).is_some()
+}
+
 /// A ZIP's main place row and shared place rows.
 fn find_zip(zip5: &str) -> Option<(u32, &'static [u32])> {
     let index = tables::ZIP_INDEX;
@@ -209,8 +216,8 @@ fn find_zip(zip5: &str) -> Option<(u32, &'static [u32])> {
     Some((main, shared))
 }
 
-/// The places a ZIP belongs to, from the state packs: its main place, and
-/// any place it shares with (the ZIP straddles a boundary).
+/// The places a ZIP belongs to: its main place, and any place it shares with
+/// (the ZIP straddles a boundary; only a state pack lists shared places).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ZipPlaces {
     main: Place,
@@ -405,7 +412,10 @@ impl Lexicons {
         })
     }
 
-    /// Whether a state pack for `state` (a USPS code) is compiled in.
+    /// Whether a curated state pack for `state` (a USPS code) is compiled in.
+    /// Every state has the national list; a pack adds spellings seen in real
+    /// data and shared ZIPs, which is what makes a city that disagrees with
+    /// its ZIP worth a warning (`Warning::ZipCityMismatch`).
     pub fn has_pack(&self, state: &str) -> bool {
         tables::PACK_STATES.contains(&state)
     }
@@ -413,37 +423,32 @@ impl Lexicons {
     /// A place in `state` (a USPS code) by name or a listed spelling:
     /// `"W Palm Bch"` -> WEST PALM BEACH ([`MatchKind::Standard`]),
     /// `"BOCA RATOM"` -> BOCA RATON ([`MatchKind::Variant`]). `None` when
-    /// no compiled-in pack lists it.
+    /// neither the national list nor a pack has it.
     pub fn place(&self, state: &str, s: &str) -> Option<Lookup<Place>> {
         let key = format!("{state}|{}", self.place_key(s));
         let (i, kind) = find_place(&key)?;
-        let value = place_row(i).filter(|p| readable(p.state))?;
+        let value = place_row(i)?;
         Some(Lookup { value, kind })
     }
 
     /// Whether `s` names a place (by name, not a listed misspelling) in any
-    /// compiled-in pack.
+    /// state.
     pub fn is_place(&self, s: &str) -> bool {
-        tables::PACK_STATES.iter().any(|st| {
-            self.place(st, s)
-                .is_some_and(|l| l.kind == MatchKind::Standard)
-        })
+        any_place(&self.place_key(s))
     }
 
-    /// The places a 5-digit ZIP belongs to, from the compiled-in packs.
+    /// The places a 5-digit ZIP belongs to.
     pub fn zip_places(&self, zip5: &str) -> Option<ZipPlaces> {
         let (main, shared) = find_zip(zip5)?;
         Some(ZipPlaces {
-            main: place_row(main).filter(|p| readable(p.state))?,
+            main: place_row(main)?,
             shared,
         })
     }
 
-    /// All places in the compiled-in packs, in table order.
+    /// All places, in table order.
     pub fn places(&self) -> impl Iterator<Item = Place> {
-        (0..tables::PLACE_ROWS.len() / ROW_LEN)
-            .filter_map(|i| place_row(u32::try_from(i).ok()?))
-            .filter(|p| readable(p.state))
+        (0..tables::PLACE_ROWS.len() / ROW_LEN).filter_map(|i| place_row(u32::try_from(i).ok()?))
     }
 
     /// All street suffixes, in table order.
@@ -753,16 +758,15 @@ mod tests {
         );
         assert!(LEX.has_pack("FL"));
         assert!(!LEX.has_pack("GA"));
-        // The pack's 665 places, plus the national list's 405 Census places
-        // it lacks when that is compiled in.
-        assert_eq!(
-            LEX.places().count(),
+        assert_eq!(LEX.places().filter(|p| p.state() == "FL").count(), {
+            // The pack's 665 places, plus the national list's 405 Census
+            // places it lacks when that is compiled in.
             if cfg!(feature = "places-us") {
                 1070
             } else {
                 665
             }
-        );
+        });
     }
 
     #[cfg(feature = "places-us")]
@@ -778,11 +782,17 @@ mod tests {
         );
         assert!(find_zip("63101").is_some());
         assert!(find_zip("6310").is_none() && find_zip("631011").is_none());
-        // ... but lookups read only states with a pack until the parser uses
-        // it (design.md item 25).
-        assert_eq!(LEX.place("MO", "ST LOUIS"), None);
-        assert_eq!(LEX.zip_places("63101"), None);
-        assert!(LEX.places().all(|p| p.state() == "FL"));
+        // ... and lookups read every state.
+        let stl = LEX.place("MO", "ST LOUIS").unwrap();
+        assert_eq!(
+            (stl.value.name(), stl.kind),
+            ("SAINT LOUIS", MatchKind::Standard)
+        );
+        assert_eq!(LEX.zip_places("63101").unwrap().main().state(), "MO");
+        assert!(LEX.is_place("LA GRANGE PARK"));
+        assert!(!LEX.is_place("LA GRANGE PARKK"));
+        assert!(LEX.places().any(|p| p.state() == "MO"));
+        assert!(!LEX.has_pack("MO"));
     }
 
     #[cfg(all(feature = "places-us", feature = "state-fl"))]
@@ -846,7 +856,9 @@ mod tests {
         let shared = LEX.zip_places("33180").unwrap();
         assert!(shared.contains(&aventura));
         assert_ne!(shared.main(), aventura);
-        assert!(LEX.zip_places("10001").is_none());
+        // The national list covers every state; no ZIP, no place.
+        assert_eq!(LEX.zip_places("10001").unwrap().main().state(), "NY");
+        assert!(LEX.zip_places("00000").is_none());
         // Every place is found by its own name.
         for p in LEX.places() {
             assert_eq!(LEX.place(p.state(), p.name()).unwrap().value, p);
