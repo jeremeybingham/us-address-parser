@@ -153,7 +153,7 @@ to 28 in `docs/design.md` section 10, and the decisions are in its section
   `DRT` (1 row) and `LNE` (3), and the unit designator `SU` (16, `SU B`). A
   penthouse written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE
   PH`; 162 rows) gives a designator with no number plus a PH unit; it is to
-  be read as one unit (`APT PH5213`; `docs/design.md` decision 26).
+  be read as one unit (`APT PH5213`; `docs/design.md` decision 31).
 - **`SR` and county road names** (item 26). `SR` before a route number is
   State Road in Florida (`SR 54`; 143 rows), left out of the base tables
   because it is State Route elsewhere (Appendix F). County road spellings

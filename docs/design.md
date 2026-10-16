@@ -19,10 +19,20 @@ rule parser, the key, USPS, RESO and slug emitters, the golden corpus, the
 place list, is in progress: the Florida pack is built and used (293 corpus
 cases, all passing), and the national list's source data is downloaded.
 **Next (section 10): item 23, the dual-address slug, then items 24 and 25,
-the national place list.** After Milestone 5 comes the Python wrapper
-(Milestone 6), then calibrated confidence (Milestone 7; decision 22).
+the national place list.** After Milestone 5 come the usaddress-shaped
+features and the Python wrapper (Milestone 6), then calibrated confidence
+(Milestone 7; decision 27); the custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the open decisions and the unscheduled backlog.
+
+**Added 2026-10-16 (usaddress feature review):** a feature comparison with
+usaddress (`docs/usaddress-comparison.md`, "Feature comparison") found gaps
+in the Python surface, in customization, and in a few input and output
+shapes. They are now planned or open as: `tag()` and `address_type` and
+`default_state` in Milestone 6 (items 30 to 32), a runtime **custom layer**
+(section 11, "Custom layer"; decision 22) and optional dataframe helpers in
+Milestone 9, and open decisions (intersections, trailing country,
+display and long forms) in section 13.
 
 ---
 
@@ -44,7 +54,10 @@ source of domain knowledge; what carried over is in `docs/prior-art.md`.
 - **Address validation or deliverability.** Pub 28 formatting is not the same as a deliverable address; real validation needs CASS-certified data. The README states this plainly.
 - Geocoding, fuzzy matching, address correction, international addresses.
 - Correcting addresses. The place list (Milestone 5) can fill a missing city from the ZIP or flag a city that disagrees with its ZIP, but the parsed `city` stays what the input said; the place match is reported beside it (section 13, decision 13).
-- Runtime-configurable lexicons (fixed at compile time in v1).
+- Runtime-configurable *shipped* lexicons: the Pub 28 tables and the state
+  packs are fixed at compile time. User customization is a separate,
+  add-only **custom layer** (section 11; Milestone 9), not an edit of those
+  tables.
 
 ---
 
@@ -94,11 +107,11 @@ they cause friction.
 | 4 | Geographic scope | US-wide grammar. Place data in layers (section 11): a national place list generated from public data, plus curated state packs, Florida first (Milestone 5). Other pack contents (road patterns) are deferred. |
 | 5 | Canonical key | Unit inclusion is an explicit option (default off, property level); the key carries a version prefix. City and ZIP+4 excluded. Spec in `docs/key-format.md`. |
 | 6 | Error model | Always return a `ParsedAddress` with diagnostics; `Result` only for unusable input (empty). |
-| 7 | Lexicon extensibility | Fixed at compile time in v1. |
+| 7 | Lexicon extensibility | Shipped lexicons and state packs are fixed at compile time. Users customize through an add-only runtime **custom layer** in the state-pack format (section 11; decision 22), planned for Milestone 9. |
 | 8 | Data sources | USPS Pub 28 and the RESO Data Dictionary; provenance of each table documented. |
-| 9 | Python surface *(default)* | Typed objects plus `to_dict()`; no pandas/Polars dependency. |
+| 9 | Python surface *(default)* | Typed objects plus `to_dict()`, and a usaddress-shaped `tag()` with `address_type` (decision 23). No pandas/Polars dependency in the core wheel; optional dataframe helpers come later as extras (decision 26). |
 | 10 | Distribution *(default)* | abi3 wheels; library, model, and key-format versions tracked independently. |
-| 11 | Compatibility | Own schema; optional usaddress-compatible tag output (`to_usaddress_tags()`, done). |
+| 11 | Compatibility | Own schema; optional usaddress-compatible output: per-token labels (`to_usaddress_tags()`, done) and joined components with an address type (`tag()`, planned; decision 23). |
 | 12 | License | MIT OR Apache-2.0 (confirmed 2026-10-15). |
 | 13 | Component spans | Byte ranges into the **original** input, not the cleaned text. `clean.rs` keeps a map from cleaned to original offsets. For multi-field input a span also names its field. |
 | 14 | Multi-field input | `parse_fields` tags each field on its own, using the field as a strong signal (the city field is the city). When city, state and ZIP are all empty, `line1` and `line2` are read like one line (a street line plus a `CITY, ST ZIP` line). |
@@ -136,7 +149,7 @@ tools/
   compare/                  # usaddress comparison and training-overlap scripts
   packs/                    # Florida pack export and observed-ZIP scripts
   places/                   # (planned, item 24) national place list builder
-  calibrate/                # (planned, item 35) confidence fitting
+  calibrate/                # (planned, item 38) confidence fitting
   train/                    # (planned, Milestone 7, if built) CRF training scripts
 models/                     # (planned, Milestone 7) CRF model; README only
 .github/workflows/ci.yml    # fmt, clippy, test, corpus report
@@ -199,9 +212,33 @@ a.slug();                // Option<String>, display only
 a.to_usaddress_tags();   // tokens with usaddress labels
 ```
 
+Planned additions (Milestone 6 unless noted; decisions 22 to 24):
+
+```rust
+a.tag();                 // TaggedAddress: joined components keyed by usaddress label + address type
+a.address_type();        // AddressType: Street, PoBox, RuralRoute, Military, GeneralDelivery, Dual, Unknown
+let p = Parser::with_options(ParseOptions { default_state: Some(state), ..Default::default() });
+let p = Parser::new().with_custom_layer(CustomLayer::from_toml(&text)?);   // Milestone 9
+```
+
+`tag()` is the counterpart of `usaddress.tag()`: tokens that share a label
+are joined with a space in input order (`StreetName` for `MARTIN LUTHER KING`),
+and unlike usaddress it never fails on a repeated or split label (no
+`RepeatedLabelError`); a label that appears in two separate runs is joined
+and a warning (`repeated_label`) says so. `address_type()` is the finer
+classification and also maps to usaddress's three values (`Street Address`,
+`PO Box`, `Ambiguous`) for migration. Both are built from the parsed fields
+and spans by an emitter, so they follow the emitter rule (read-only, no
+re-parsing).
+
+`ParseOptions::default_state` is a hint for place-list lookups only (decision
+24); it never fills `state`, so the key is unaffected.
+
 Cargo features: `rayon` (parallel `parse_many`), `corpus` (the golden-corpus
 runner, pulls in serde), `crf` (reserved). The default build has no runtime
-dependencies.
+dependencies. The custom layer's loader (`CustomLayer::from_toml`) takes text
+and adds only a TOML parser dependency under a `custom-layer` feature; the
+core never reads files, so the CLI and the Python wrapper do the file I/O.
 
 ---
 
@@ -235,10 +272,25 @@ does include the city.
 - Typed Rust-backed objects exposing the same fields, plus `to_dict()`. Ship type stubs (`.pyi`) and `py.typed`.
 - `parse(str)`, `parse_fields(...)`, and **`parse_many(list[str])`**, which releases the GIL during Rust work.
 - Emitters: `to_usps()`, `to_reso()`, `key()`, `slug()`, `to_usaddress_tags()`.
+- **usaddress-shaped functions** for migration: `tag(str)` returns
+  `(dict[str, str], address_type)` like `usaddress.tag`, with the same label
+  names and the same three `address_type` strings, plus the finer
+  `address_type()` of the parsed object; `parse_tokens(str)` (or the existing
+  `to_usaddress_tags()`) returns `[(token, label)]` like `usaddress.parse`.
+  Differences from usaddress are documented in a migration guide in the
+  package README: no `RepeatedLabelError`, a `repeated_label` warning
+  instead; labels for shapes this library does not model are absent
+  (`docs/usaddress-comparison.md`, "Feature comparison").
+- `parse(..., default_state="FL")` / `Parser(default_state=...)` (decision 24)
+  and, from Milestone 9, `Parser(custom_layer=path_or_text)`.
 - `place` (name, state, county, kind, source) or `None`, as the CLI prints it.
 - `confidence` is exposed as `float | None`: `None` until it is calibrated (Milestone 7), then `None` only where no score applies, such as a placeholder.
 - Errors map to Python exceptions only for unusable input.
-- No required runtime dependencies. No pandas/Polars dependency; document a short recipe instead.
+- No required runtime dependencies. No pandas/Polars dependency in the base
+  wheel; the README documents a short recipe first. Optional helpers come
+  later (Milestone 9, item 50; decision 26) as pure-Python extras
+  (`us-address-parser[pandas]`, `[polars]`) that import the dataframe library
+  lazily and call `parse_many` underneath.
 
 ---
 
@@ -247,6 +299,7 @@ does include the city.
 - `addr parse "<address>"` prints one JSON record (components, warnings, key, slug, USPS and RESO output); `--pretty`, `--usps`, `--usaddress`, field options (`--line1` ... `--zip`), or one address per stdin line.
 - `addr parse-file IN.csv --column NAME [--line2 ...] [-o OUT.csv]` appends `addr_`-prefixed columns.
 - `addr corpus test [--dir DIR] [--verbose] [--update-baseline]` runs the golden corpus and prints the accuracy report.
+- Planned: `--default-state ST` on `parse` and `parse-file` (Milestone 6, item 30; decision 24), and `--custom-layer PATH` on `parse`, `parse-file` and `corpus test`, plus `addr layer check PATH` to validate a layer file (Milestone 9, item 49).
 
 ---
 
@@ -358,7 +411,7 @@ To do, in order:
       (`PR.zip`, a separate GeoNames file) is in this pass.
     - Commit 2: `build.rs` compiles `data/places/` behind `places-us`, with
       the same checks as the packs, and merges it under the Florida pack
-      (decision 24: the pack wins for Florida; national rows only add
+      (decision 29: the pack wins for Florida; national rows only add
       places it lacks). Record the compiled size (expected 1.5 to 2 MB) and
       build time.
     - Commit 3: GeoNames attribution in `NOTICE` and the README's place
@@ -367,7 +420,7 @@ To do, in order:
     the national layer for every state, so the Florida behaviors (city on
     one line, street versus city before a ZIP, cut-off cities, place from
     the ZIP) work everywhere. `zip_city_mismatch` stays limited to states
-    with a curated pack (decision 25); document that on the warning. Corpus
+    with a curated pack (decision 30); document that on the warning. Corpus
     cases
     from other states for each shape (`ST LOUIS`, `NORTH LITTLE ROCK`,
     `LA GRANGE PARK`, `ROARING BROOK TWP`); rerun `cargo bench` and record
@@ -379,7 +432,7 @@ To do, in order:
     from the DBPR export. **(any time)**
 27. **Florida: rarer misspellings and the penthouse shape.** `DRT`, `LNE`,
     `SU` as observed spellings, and a penthouse after a designator read as
-    one unit (`APT PH 5213` is `APT PH5213`; decision 26). **(any time)**
+    one unit (`APT PH 5213` is `APT PH5213`; decision 31). **(any time)**
 28. **Florida: communities still missing after the national list.** Item
     24 adds Census places (including unincorporated CDPs such as `TRINITY`
     and `CITRUS SPRINGS`) for Florida, so remeasure the DBPR rows with no
@@ -392,41 +445,69 @@ To do, in order:
     `docs/usaddress-comparison.md` and the go or no-go for Milestone 7's
     CRF items as a decision in section 13. Docs only.
 
-### Milestone 6: Python wrapper
+### Milestone 6: usaddress-shaped features, then the Python wrapper
 
-Before calibrated confidence (decision 22): `confidence` is already in the
-API as `float | None`, so the wrapper does not change when it is filled.
+Core work first, so Python exposes finished features (items 30 to 32), then
+the wrapper (items 33 to 35). The wrapper comes before calibrated confidence
+(decision 27): `confidence` is already in the API as `float | None`, so the
+wrapper does not change when it is filled.
 
-30. **The wrapper and its tests.**
+30. **`ParseOptions::default_state`** (decision 24): a state hint for
+    place-list lookups when the input has no state and no ZIP;
+    `Parser::with_options`, `addr --default-state`, a warning
+    `default_state_applied` when the hint decided a place match
+    (`Warning::ALL` grows by one). It never fills `state`, so keys and
+    `missing_state` are unchanged. Corpus cases for each shape (`fl-*`: the
+    auction rows with no state). Closes the `--default-state` item in
+    section 11.
+31. **`tag()` and `address_type()`** (decision 23): an emitter in
+    `emit/usaddress.rs` (or a sibling) that joins tokens by label and
+    classifies the address; warning `repeated_label`; golden cases for
+    street, PO Box, rural, military, general delivery, dual and unknown
+    shapes.
+    - Commit 1: the emitter, the warning and the golden cases.
+    - Commit 2: a check against `usaddress.tag()` on the vendored test files
+      (extend `tools/compare/compare_usaddress.py`) that reports where the
+      joined dicts differ.
+32. **Migration notes** for users coming from usaddress: the "Coming from
+    usaddress" section in the README, and the same in
+    `crates/addr-py/README.md`, from `docs/usaddress-comparison.md`
+    ("Feature comparison"): label names, the unmodeled labels,
+    `RepeatedLabelError`, and the extra outputs. Docs only; it can ride
+    with item 31 if small.
+33. **The wrapper and its tests.**
     - Commit 1: `crates/addr-py/Cargo.toml`, `pyproject.toml` (maturin),
       `src/lib.rs` with `parse`, `parse_fields`, the `ParsedAddress` object,
-      `to_dict()` and the emitters (section 7); add to the workspace.
+      `to_dict()`, the emitters, `tag`, `parse_tokens`, `address_type` and
+      `default_state` (section 7); add to the workspace.
     - Commit 2: the `us_address_parser` package: `__init__.py`,
       `__init__.pyi`, `py.typed`.
-    - Commit 3: `crates/addr-py/tests/test_basic.py`; a CI job that runs
-      `maturin develop` and `pytest` on Linux.
-31. **`parse_many`**, releasing the GIL during the Rust work, with
+    - Commit 3: `crates/addr-py/tests/test_basic.py` and
+      `test_usaddress_compat.py` (`tag` and `parse_tokens` against
+      `usaddress` when it is installed); a CI job that runs `maturin
+      develop` and `pytest` on Linux.
+34. **`parse_many`**, releasing the GIL during the Rust work, with
     `test_batch.py`, a benchmark against a Python loop of `parse`, and the
     pandas recipe in the package README.
-32. **Wheels.** `.github/workflows/wheels.yml`: abi3 wheels for Linux,
+35. **Wheels.** `.github/workflows/wheels.yml`: abi3 wheels for Linux,
     macOS and Windows, built and tested on every pull request. No
-    publishing yet (item 43).
+    publishing yet (item 46).
 
 ### Milestone 7: calibrated confidence, then the CRF fallback if item 29 says go
 
 Calibrated confidence (decision 12):
 
-33. **Blind Florida sample** **(author)**: hand-label 100 to 200 rows of the
+36. **Blind Florida sample** **(author)**: hand-label 100 to 200 rows of the
     private Florida files, stored in `local-data/` with the labeling
     conventions of `tests/corpus/README.md`. It is calibration data and a
     blind test on the data this library targets. The rows never leave
     `local-data/`; only numbers fitted from them ship.
-34. **Record the tagger's uncertain decisions.** The tagger notes which
+37. **Record the tagger's uncertain decisions.** The tagger notes which
     uncertain rules settled a boundary (city by comma, by the no-comma
     suffix split or by the place list; a state with no ZIP; a bare unit; a
     house-number letter rule). Internal (`pub(crate)`), with unit tests; no
-    output or key changes. Can start before item 33.
-35. **Fit and ship the score.**
+    output or key changes. Can start before item 36.
+38. **Fit and ship the score.**
     - Commit 1: `tools/calibrate/` fits each path's accuracy (a fixed table
       or a small logistic model) on the golden corpus, usaddress's test
       files and the Florida sample.
@@ -437,32 +518,78 @@ Calibrated confidence (decision 12):
 
 CRF fallback (only if item 29 says go):
 
-36. **Spike: does a CRFsuite model trained on usaddress data load in
+39. **Spike: does a CRFsuite model trained on usaddress data load in
     `crfs`?** Result recorded in section 13; if not, pick a compatible
     export path before going further.
-37. `tools/train/`: export labeled data, train with parserator or
+40. `tools/train/`: export labeled data, train with parserator or
     python-crfsuite, write the model file.
-38. `models/`: the model file plus `README.md` with provenance, version and
+41. `models/`: the model file plus `README.md` with provenance, version and
     training date (usaddress MIT attribution).
-39. `src/tagger/crf.rs` using `crfs`, behind feature `crf`, with the model
+42. `src/tagger/crf.rs` using `crfs`, behind feature `crf`, with the model
     embedded by `include_bytes!`. Its sequence probability feeds
-    `confidence`, recalibrated with item 35's tools and report.
+    `confidence`, recalibrated with item 38's tools and report.
+
+**The CRF is an accuracy fallback, not the customization mechanism.** The
+model is trained offline in Python on labeled data and shipped as a fixed
+file. Fixing one misparse means labeling examples and retraining, which needs
+the Python toolchain and a set of labeled addresses, and a retrained model can
+change other parses. User customization is the custom layer (section 11,
+Milestone 9), which works with or without a CRF. The two compose: the layer's
+rules and lexicons run in the rule stage and the place lookups, before and
+around the CRF, so a layer entry takes effect whichever tagger finishes the
+parse. A user-trained model file is a possible later tier of the same layer
+(Milestone 9, item 52), not part of this milestone.
 
 ### Milestone 8: hardening and release
 
-40. **Fuzz targets** (cargo-fuzz) for the tokenizer and assembler.
+43. **Fuzz targets** (cargo-fuzz) for the tokenizer and assembler.
     **(any time)**
-41. **Re-check every lexicon table and the USPS emitter rules against the
+44. **Re-check every lexicon table and the USPS emitter rules against the
     live Pub 28 pages** (`docs/usps-pub28-notes.md`, "Verification
     status"). Last before release, so the check covers the final tables.
-42. **Rename for publishing:** crates and Python package to
+45. **Rename for publishing:** crates and Python package to
     `us-address-parser` / `us_address_parser` (decision 2), and copy
     `data/` into the `addr-core` crate (`build.rs` already looks for a
     crate-local `data/` first); `cargo package` must succeed. Check that the
     names are free on crates.io and PyPI early **(any time)**, so a taken
     name is found before more docs use it.
-43. **Publishing:** crates.io and PyPI workflows; turn the CHANGELOG's
+46. **Publishing:** crates.io and PyPI workflows; turn the CHANGELOG's
     "Unreleased" into the first release.
+
+### Milestone 9: customization and extras (after Milestone 6; may run beside 7 and 8)
+
+Features that make the library adaptable to a user's own data. None of them
+changes the shipped data or the `k1` key format.
+
+47. **Custom layer, format and loader** (section 11, "Custom layer"; decision
+    22): `CustomLayer` in `addr-core` (feature `custom-layer`), built from
+    TOML text with the same table shapes as a state pack (`pack.toml`,
+    `places.tsv`, `zips.tsv`, `overrides.toml`) plus `aliases.toml` for
+    suffix, unit, directional and city spellings. Validation errors name the
+    file, line and rule; add-only conflicts are errors. Applied through the
+    `Lexicons` interface, so the tagger gains no layer-specific logic.
+48. **Layer provenance in output:** `Diagnostics::custom_layer` (name,
+    version, content fingerprint) records which layer produced a parse; no
+    per-parse warning is added. Documented in `docs/key-format.md`: the key
+    depends on the layer in use, so users who store keys must keep the layer
+    fixed or re-key.
+49. **CLI and Python access:** `addr --custom-layer PATH`, `addr layer check
+    PATH`, `Parser(custom_layer=...)` and a test suite that runs the golden
+    corpus with a sample layer (`tests/corpus/layers/`).
+50. **Dataframe helpers (optional extras):** `us_address_parser.pandas.parse_column`
+    and `us_address_parser.polars.parse_column` (plus a Polars expression
+    namespace if it proves cheap) returning component columns, key, slug and
+    `confidence`; implemented over `parse_many`; imported lazily; tests skip
+    when the library is absent; extras `[pandas]` and `[polars]`. Decision 26.
+51. **Optional emitters, if wanted** (the display-form and long-form open
+    decisions in section 13): a mixed-case display form and a long-form
+    (unabbreviated) form, one pull request each. **(author)**: not started
+    until decided.
+52. **User model file (only after Milestone 7 and only if wanted):** a layer
+    may name a CRF model file for the `crf` feature to load at run time
+    (`crfs` reads a model from bytes; to be verified in item 39). Training
+    stays in `tools/train/`; the layer records the model's version, which
+    `Diagnostics::model_version` reports.
 
 ---
 
@@ -496,7 +623,7 @@ data/packs/fl/
 Layering is add-only: a later layer adds names, variants and ZIPs and
 never replaces or removes an earlier entry; a conflict fails the build.
 Where a state has a curated pack, the pack wins and national rows for that
-state only add places it lacks (section 13, decision 24).
+state only add places it lacks (section 13, decision 29).
 Packs are fixed at compile time (section 3, decision 7); there are no user
 packs loaded from a directory. State selection is two-pass: find the
 state (state token or ZIP prefix), then look up places in that state.
@@ -519,7 +646,8 @@ state (state token or ZIP prefix), then look up places in that state.
 - Queens-style hyphenated house numbers, Puerto Rico urbanizations
   (backlog).
 - `--default-state` for `addr parse-file` (most of the 1,700 auction rows
-  with no state; backlog).
+  with no state). Planned as item 30 (decision 24); it does not need a
+  pack.
 - `ST`/`FT`/`MT` vs `SAINT`/`FORT`/`MOUNT` in place names, and suffix
   abbreviations inside place names (`ALTAMONTE SPGS`). *Done*: the place
   comparison rule (`lexicon/place_key.rs`).
@@ -529,9 +657,71 @@ compile-time packs, the pack version recorded in `pack.toml` but not yet in
 output, and GeoNames (CC BY 4.0) as the ZIP source. Still open, in the
 backlog (section 13):
 
-- Whether packs may ship their own model weights (suggest no initially; reserve a manifest field).
+- Whether packs may ship their own model weights (suggest no for shipped
+  packs; reserve a manifest field, and allow it only in a user's custom
+  layer, Milestone 9 item 52).
 - A required golden-test corpus per pack, enforced in CI (`addr pack test`).
-- Reporting the pack version in output.
+  The custom layer reuses it: `addr corpus test --custom-layer`.
+- Reporting the pack version in output. For the custom layer the fingerprint
+  is reported (Milestone 9, item 48); shipped packs may follow.
+
+### Custom layer (user customization; Milestone 9)
+
+The same idea as a state pack, owned by the user and loaded at run time.
+Settled in decision 22; the design:
+
+**What it is.** A directory (or in-memory text) in the state-pack format:
+`layer.toml` (name, version, notes; same fields as `pack.toml`), and any of
+`places.tsv`, `zips.tsv`, `overrides.toml`, plus `aliases.toml`. It is a
+fourth lexicon layer, above the state packs (section 11 list), reached only
+through the `Lexicons` interface.
+
+**What it can hold** (each entry needs an `evidence` or `note` field, as
+`overrides.toml` does):
+
+| File | Content | Example |
+|---|---|---|
+| `aliases.toml` | Extra spellings of a street suffix, unit type, directional or state name | `[suffix] "PKY" = "PKWY"`; `[unit] "SUITE#" = "STE"` |
+| `places.tsv` | Extra places and variant spellings (abbreviation or typo) | a local community the national list lacks |
+| `zips.tsv` | ZIP to place, shared places | `33101 = MIAMI` |
+| `overrides.toml` | Read a base suffix as another in one state (as the Florida pack's `CR`) | `[ [override] state = "TX", spelling = "RR", suffix = "RANCH ROAD" ]` |
+| `layer.toml` | Optional `default_state` and a named list of `treat_as_unit_words` or `ignore_words` | `ignore_words = ["USA"]` |
+
+**Rules.**
+- *Add-only* (decision 18): a layer adds names, variants, aliases and ZIPs
+  and never replaces or removes an entry of the base or a state pack. A
+  conflict is an error at load, naming the entry. The single exception is the
+  state-scoped `overrides.toml` reading, as decision 20 already allows.
+- *Deterministic and pure:* a layer is data, not code. The same layer and
+  input give the same output on every platform.
+- *Validated at load:* unknown keys, bad state codes, duplicate or
+  conflicting entries and malformed rows are errors, never panics and never
+  silently ignored. A bad layer fails to load; parsing never starts with a
+  half-loaded one.
+- *Tagger unchanged:* no layer-specific logic in the tagger (CLAUDE.md rule).
+  Lookups go through `Lexicons`, which merges base, pack and layer.
+- *Provenance:* `Diagnostics::custom_layer` carries the layer's name,
+  version and content fingerprint (Milestone 9, item 48).
+- *I/O outside the core:* `addr-core` takes layer text; the CLI and the
+  Python wrapper read files.
+
+**Effect on the key.** A layer can change how a string is read (an alias moves
+a token from street name to suffix), so it can change the `k1` key of an
+input. The key format does not change (no `k2`); the key is a function of the
+parse, which is a function of the layer. Users who store keys keep the layer
+fixed or re-key; the fingerprint says which layer produced a stored key.
+`docs/key-format.md` gets a short note when item 48 lands.
+
+**What it does not do.** It does not change the grammar (new address shapes
+need code), the output formats, or the key format, and it does not validate
+or correct addresses. Rare shapes it cannot express (intersections, landmarks)
+are the open decisions in section 13.
+
+**Relation to the CRF.** The layer is the customization path; the CRF is an
+accuracy fallback (Milestone 7). A layer works with the rule tagger alone and
+still applies when a CRF is built (it feeds the rule stage and the place
+lookups). A user-trained CRF model is a possible later tier of the layer
+(item 52).
 
 **Design-now constraints:** keep all lexicon access behind the `Lexicons`
 interface; keep the key independent of city (section 6); keep diagnostics
@@ -549,16 +739,23 @@ extensible; no state-specific rule in the tagger.
   usaddress scores 100% by construction). Details:
   `docs/usaddress-comparison.md`.
 - **Model format compatibility** between CRFsuite-trained models and `crfs`
-  must be verified before any CRF work (item 36, a spike).
+  must be verified before any CRF work (item 39, a spike).
 - **Key stability.** `k1` is signed off and stored keys depend on it. Parser
   fixes can still change the key an input produces; each such change is
   recorded in `docs/key-format.md`.
 - **Licensing.** Keep MIT attribution for vendored usaddress test data and
   any usaddress-derived training data. Unlicensed test data (the geocode
   benchmark) stays in `local-data/` and is never committed.
-- **Fuzzing** does not exist yet (item 40, any time); proptest covers the
+- **Fuzzing** does not exist yet (item 43, any time); proptest covers the
   never-panic rule meanwhile.
 - **Python boundary overhead** for single-address calls; recommend `parse_many` in the docs.
+- **Migration friction from usaddress.** Users expect `tag()`, the label names
+  and an `address_type`, and a way to adapt the parser to odd data. Without
+  them, accuracy parity alone will not move users. Mitigation: Milestone 6
+  items 30 to 32 and the custom layer (Milestone 9).
+- **Custom layer and key stability.** A layer can change a parse and so a
+  key. Mitigation: add-only layers, a fingerprint in diagnostics, and a
+  documented rule that stored keys need a fixed layer (section 11).
 
 ---
 
@@ -594,7 +791,7 @@ extensible; no state-specific rule in the tagger.
     0.0 to 1.0: the chance that the whole parse (every component) is right,
     calibrated so that of the addresses scored 0.9, about 90% are right on a
     labeled set the rules were not tuned on. It stays `None` until it is
-    calibrated (Milestone 7, items 33 to 35). Plan:
+    calibrated (Milestone 7, items 36 to 38). Plan:
     - The rule tagger has no native probability, so the score comes from
       the decisions it had to make: which warnings fired, and which uncertain
       rules settled a boundary (city found by a comma, by the no-comma
@@ -664,35 +861,67 @@ extensible; no state-specific rule in the tagger.
     places (`zips_observed.tsv`, `tools/packs/observe_fl_zips.py`);
     `zip_city_mismatch` on that data fell from 5.4% to 0.4% of rows.
 
+### Decisions recorded 2026-10-16 (usaddress feature review)
+
+From the feature comparison in `docs/usaddress-comparison.md`. Decisions 22
+to 24 and 26 are drafted from the author's stated intent and recommendations;
+revisit if they cause friction.
+
+22. **Customization is a runtime custom layer in the state-pack format, not a
+    model.** Users add aliases, places, ZIPs and state-scoped suffix readings
+    in a layer loaded at run time (section 11, "Custom layer"; Milestone 9).
+    It is add-only, deterministic and validated at load, and goes through the
+    `Lexicons` interface. This narrows decisions 7 and 18 ("no user packs from
+    a directory"): shipped data stays fixed at compile time, but the user layer
+    is loaded at run time. Rejected as the primary mechanism: retraining the
+    CRF (needs the Python toolchain and labeled data, and moves other parses),
+    and an editable copy of the shipped tables.
+23. **`tag()` and `address_type()` are core emitters.** `tag()` joins tokens
+    by usaddress label, `address_type()` classifies the address (finer than
+    usaddress's three values and mapped to them for migration). Neither fails
+    on a repeated label (warning `repeated_label`). Python exposes both
+    (Milestone 6, item 31).
+24. **`default_state` is a lookup hint, never a fill.** When the input has no
+    state and no ZIP, the place list uses the hint to find the city; `state`
+    stays empty, `missing_state` still fires and the key is unchanged
+    (consistent with decision 13). A warning `default_state_applied` fires
+    when the hint decided a place match. Available as a parse option, a CLI
+    flag and a layer setting.
+25. **Out-of-scope usaddress labels are documented, not hidden.** The README
+    and the migration notes list the labels this library does not model
+    (the open decisions below decide which, if any, to add).
+26. **Dataframe helpers are welcome, later, as optional extras.** The core
+    and the base wheel stay dependency-free; `[pandas]` and `[polars]` extras
+    wrap `parse_many` (Milestone 9, item 50). The README recipe comes first.
+
 ### Decisions recorded 2026-10-16 (planning review)
 
-22. **Python before calibrated confidence.** Milestone 5 used to end with
+27. **Python before calibrated confidence.** Milestone 5 used to end with
     calibration so the wrapper would ship with it. Nothing is published
     before Milestone 8, and `confidence` is already in the API (`None`
     until calibrated), so the wrapper does not depend on it; calibration
-    does depend on the hand-labeled Florida sample (item 33), which is the
+    does depend on the hand-labeled Florida sample (item 36), which is the
     author's work. Calibration moves to Milestone 7, ahead of the CRF items,
     which reuse its tools. Both still land before the first release.
-23. **One pull request per plan item.** Section 10 lists the remaining work
+28. **One pull request per plan item.** Section 10 lists the remaining work
     in build order as numbered items, each one pull request; commits within
     an item are listed where there are several. Open items found while
     building go into section 10 if they are scheduled, otherwise into the
     backlog below. `docs/packs/<st>.md` keeps the evidence for its state's
     items.
-
-24. **A curated pack wins over the national list for its state.** The
+29. **A curated pack wins over the national list for its state.** The
     national data has its own row for every Florida place, sometimes with
     another spelling (the Census's `Everglades` is the pack's `EVERGLADES
     CITY`) or another main ZIP. Where a state has a curated pack, the
     pack's places and ZIPs are used, and the national rows for that state
     only add places the pack lacks, matched by the place comparison rule.
     Add-only layering (decision 18) still holds. Item 24.
-25. **`zip_city_mismatch` only where a curated pack covers the state.**
+30. **`zip_city_mismatch` only where a curated pack covers the state.**
     GeoNames gives one place per ZIP; on that alone Florida fired on 5.4%
     of DBPR rows before the observed ZIP places (decision 21), so the
     national list would make the warning noisy. It fires only for states
     with a curated pack, and its docs say so. Item 25.
-26. **A penthouse after a designator is one unit.** `APT PH 5213`, `UNIT
+31. **A penthouse after a designator is one unit.** `APT PH 5213`, `UNIT
     PH6` and `SUITE PH` (162 DBPR rows) give a designator with no number
     plus a PH unit today. They become one unit: the designator with `PH`
     joined to the number (`APT PH5213`, `UNIT PH6`; `SUITE PH` is `STE
@@ -700,6 +929,31 @@ extensible; no state-specific rule in the tagger.
 
 ### Open decisions (for the author)
 
+- **Intersections** (`MAIN ST & 1ST AVE`): usaddress labels them
+  (`IntersectionSeparator`, a second street name and type); this library
+  puts the second street in `unparsed` today. Options: (a) leave as is and
+  add a warning `intersection_detected` so bulk users can route the rows;
+  (b) add `cross_street_*` fields and a RESO/USPS/key treatment (a key for
+  an intersection is a new shape, `k1` form letter `I`, or `None`). Recommend
+  (a) now and (b) only if real data shows the volume; the key would stay
+  `None` for intersections either way.
+- **Trailing country** (`USA`, `US`, `UNITED STATES`): recognize and ignore
+  it with a warning (`country_ignored`), rather than leave it in `unparsed`.
+  Cheap; recommend yes. Other countries stay out of scope.
+- **Recipient and name lines, landmarks, `CornerOf`, `NotAddress`:** stay
+  unmodeled. Recommend documenting them (decision 25) and letting the
+  existing `unparsed_remainder` warning carry the signal. `attention` keeps
+  covering ATTN and C/O (decision 7 of 2026-10-15).
+- **Mixed-case display form** (`123 N Main St`): `to_usps()` is uppercase by
+  Pub 28 and the cleaner uppercases input, so there is no display casing.
+  Options: none (spans let users recover the original case), or a
+  rule-based `to_display()` with exceptions (`PO Box`, `NE`, ordinals `1st`,
+  `McDonald`-style names left alone). Recommend deferring until asked for;
+  Milestone 9, item 51.
+- **Long-form (unabbreviated) form** (`123 North Main Street`): the tables
+  have `Directional::name()` and `StreetSuffix::name()`, so a `to_long_form()`
+  emitter is small. Not a Pub 28 form; label it as display only. Recommend
+  deferring with the display form (item 51).
 - **A city that is no known place, with a ZIP the pack knows** (`SINGER
   ISLAND`, `SAINT LUCIE COUNTY`): `place` is `None` today. auction-tracker
   uses the ZIP's place there. Filling it (source `zip`) would name the
@@ -715,9 +969,11 @@ when it is scheduled.
 - **Florida code** from the author **(author)**, to seed more corpus cases.
 - **Accuracy, not tied to packs** (`docs/usaddress-comparison.md`): named
   buildings without a building word (`THE GARRETT`), and highway modifiers
-  such as BUSINESS before a city on one line.
-- **`--default-state` for `addr parse-file`**: most of the 1,700 auction
-  rows with no state.
+  such as BUSINESS before a city on one line. The other gap against
+  usaddress, suffix-less streets running into the city, is mainly fixed by
+  the national place list (items 24 and 25).
+- **Intersections and trailing country** (open decisions above): scheduled
+  once decided.
 - **Other state-pack rules** (section 11): `RR` as Ranch Road in Texas,
   `PR 462` (Texas private road or Puerto Rico), `LEE ROAD 2004`-style
   county road names, Queens-style hyphenated house numbers, Puerto Rico
