@@ -4,6 +4,24 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Florida pack: observed ZIP places and `CR` as CIRCLE
+
+From the DBPR licensee export (decisions 20 and 21 of 2026-10-16 in
+`docs/design.md`; `docs/packs/fl.md`; corpus `fl-014` to `fl-019`).
+
+- `data/packs/fl/zips_observed.tsv`: 198 (ZIP, place) pairs seen in at least
+  10 distinct addresses (or 3 that are 5% of a small ZIP), added to the ZIPs'
+  shared places by `build.rs`. Built by `tools/packs/observe_fl_zips.py`.
+  `zip_city_mismatch` on the export fell from 23,878 rows to 1,871, and 59
+  more cut-off cities complete.
+- Pack `overrides.toml` and `Lexicons::suffix_in`: a pack may read a base
+  suffix spelling as another suffix. Florida reads `CR` as CIRCLE (CREEK
+  elsewhere); 333 rows changed, keys included. Pack version 2026.10.1.
+- `tools/corpus/emit_expect.py`: dual addresses key and map to RESO from the
+  street and their USPS line and slug are the PO Box alone; name words after
+  a highway route are kept. New `--check` mode, run in CI. 72 cases that
+  had no emitter expectations now have them.
+
 ### Rule fixes from the DBPR licensee data
 
 Run on about 445,000 Florida addresses from the DBPR real estate licensee

@@ -8,4 +8,7 @@ This product includes data from third parties under their own terms:
   (https://creativecommons.org/licenses/by/4.0/). Used for the ZIP-to-place
   tables in data/packs/ (see docs/packs/).
 - US Census Bureau Gazetteer files (public domain), used for place names.
+- Florida Department of Business and Professional Regulation licensee
+  addresses (public record), used for observed city and ZIP pairs and street
+  spellings in data/packs/fl/ (see docs/packs/fl.md).
 - usaddress test data (MIT, datamade), vendored in tests/external/usaddress/.

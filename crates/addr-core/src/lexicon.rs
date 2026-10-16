@@ -200,6 +200,25 @@ impl Lexicons {
         })
     }
 
+    /// Street suffix as read in `state` (a USPS code): a state pack may read
+    /// a spelling as another suffix (`CR` is CIRCLE in Florida, CREEK in the
+    /// base table), always as [`MatchKind::Observed`]. Otherwise the same as
+    /// [`Self::suffix`].
+    pub fn suffix_in(&self, state: &str, s: &str) -> Option<Lookup<StreetSuffix>> {
+        let key = format!("{state}|{}", normalize_key(s));
+        let Some(&i) = find(tables::PACK_SUFFIX_INDEX, &key) else {
+            return self.suffix(s);
+        };
+        let row = tables::SUFFIXES.get(usize::from(i))?;
+        Some(Lookup {
+            value: StreetSuffix {
+                abbr: row.abbr,
+                name: row.name,
+            },
+            kind: MatchKind::Observed,
+        })
+    }
+
     /// Directional: `"NORTH EAST"`, `"N.E."`, `"ne"` -> NE.
     pub fn directional(&self, s: &str) -> Option<Lookup<Directional>> {
         let (value, kind) = *find(tables::DIRECTIONAL_INDEX, &normalize_key(s))?;
@@ -651,6 +670,20 @@ mod tests {
     }
 
     #[cfg(feature = "state-fl")]
+    #[test]
+    fn pack_suffix_override() {
+        // CR is CREEK in the base table and CIRCLE in the Florida pack.
+        assert_eq!(LEX.suffix("CR").unwrap().value.abbr(), "CRK");
+        let fl = LEX.suffix_in("FL", "cr").unwrap();
+        assert_eq!(fl.value.abbr(), "CIR");
+        assert_eq!(fl.kind, MatchKind::Observed);
+        assert_eq!(LEX.suffix_in("CO", "CR").unwrap().value.abbr(), "CRK");
+        assert_eq!(LEX.suffix_in("FL", "CIRCLE").unwrap().value.abbr(), "CIR");
+        // An observed ZIP place (zips_observed.tsv): CORAL GABLES in 33134.
+        let gables = LEX.place("FL", "CORAL GABLES").unwrap().value;
+        assert!(LEX.zip_places("33134").unwrap().contains(&gables));
+    }
+
     #[test]
     fn zip_lookup() {
         let z = LEX.zip_places("32507").unwrap();

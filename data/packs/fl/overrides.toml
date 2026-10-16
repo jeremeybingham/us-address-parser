@@ -1,0 +1,19 @@
+# Florida pack overrides: spellings that mean something else in Florida than
+# in the base tables (docs/design.md section 11; docs/packs/fl.md).
+#
+# Each [[suffix]] entry reads a street suffix spelling the base table already
+# has (data/suffixes.toml) as another suffix when the address is in Florida
+# (its state, or with no state its ZIP's). Tagging does not change, only the
+# suffix value. The spelling stays non-standard (`non_standard_abbreviation`).
+#
+# Written by hand; each entry names its evidence.
+
+[[suffix]]
+# The base table has CR as an observed CREEK spelling (older C1
+# transcriptions). In the DBPR licensee data (docs/packs/fl.md), 333 Florida
+# street lines end a name with CR. For 277 of them the same street name in the
+# same ZIP is also written out as CIRCLE or CIR; for none as CREEK or CRK; the
+# other 56 have no other spelling. CR before a route number stays COUNTY ROAD
+# (data/special.toml).
+spelling = "CR"
+suffix = "CIRCLE"

@@ -59,7 +59,7 @@ fn run() -> Result<()> {
     let mut max_words = 1;
     let mut expand = Expand::new();
 
-    gen_suffixes(
+    let suffix_rows = gen_suffixes(
         &load(&dir, "suffixes.toml")?,
         &mut out,
         &mut max_words,
@@ -74,7 +74,7 @@ fn run() -> Result<()> {
     gen_units(&load(&dir, "units.toml")?, &mut out, &mut max_words)?;
     gen_states(&load(&dir, "states.toml")?, &mut out, &mut max_words)?;
     gen_special(&load(&dir, "special.toml")?, &mut out, &mut max_words)?;
-    gen_packs(&dir.join("packs"), &expand, &mut out)?;
+    gen_packs(&dir.join("packs"), &expand, &suffix_rows, &mut out)?;
 
     writeln!(
         out,
@@ -210,9 +210,18 @@ fn kind(form: &str, abbr: &str, name: &str) -> &'static str {
 
 // ---- tables --------------------------------------------------------------
 
-fn gen_suffixes(t: &Table, out: &mut String, mw: &mut usize, ex: &mut Expand) -> Result<()> {
+/// Suffix name -> (row, its Pub 28 and observed spellings).
+type SuffixRows = BTreeMap<String, (usize, Vec<String>)>;
+
+fn gen_suffixes(
+    t: &Table,
+    out: &mut String,
+    mw: &mut usize,
+    ex: &mut Expand,
+) -> Result<SuffixRows> {
     let rows = tables(t, "suffix", "suffixes.toml")?;
     let mut index = Index::default();
+    let mut by_name = SuffixRows::new();
     writeln!(out, "pub(crate) static SUFFIXES: &[SuffixRow] = &[").ok();
     let mut abbrs = Vec::new();
     for (i, r) in rows.iter().enumerate() {
@@ -239,10 +248,12 @@ fn gen_suffixes(t: &Table, out: &mut String, mw: &mut usize, ex: &mut Expand) ->
         for f in forms.iter().chain(&observed) {
             ex.insert(f.clone(), name.clone());
         }
+        let spellings = forms.iter().chain(&observed).cloned().collect();
+        by_name.insert(name.clone(), (i, spellings));
     }
     writeln!(out, "];\n").ok();
     index.emit(out, "SUFFIX_INDEX", "(u16, MatchKind)");
-    Ok(())
+    Ok(by_name)
 }
 
 fn gen_directionals(t: &Table, out: &mut String, mw: &mut usize, ex: &mut Expand) -> Result<()> {
@@ -560,7 +571,7 @@ fn list(s: &str) -> Vec<&str> {
 /// The state packs enabled by `state-<st>` features, in state order. Each
 /// adds places and ZIPs; nothing in a pack replaces another entry, and a
 /// spelling or ZIP that would lead to two places is a build error.
-fn gen_packs(dir: &Path, ex: &Expand, out: &mut String) -> Result<()> {
+fn gen_packs(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Result<()> {
     println!("cargo:rerun-if-changed={}", dir.display());
     let mut states = Vec::new();
     if let Ok(entries) = fs::read_dir(dir) {
@@ -577,6 +588,7 @@ fn gen_packs(dir: &Path, ex: &Expand, out: &mut String) -> Result<()> {
     let mut rows = Vec::new(); // PlaceRow literals
     let mut index: BTreeMap<String, (usize, &str)> = BTreeMap::new();
     let mut zips: BTreeMap<String, (usize, Vec<usize>)> = BTreeMap::new();
+    let mut pack_suffixes: BTreeMap<String, usize> = BTreeMap::new();
     let mut max_words = 1;
     for st in &states {
         let pdir = dir.join(st.to_lowercase());
@@ -654,6 +666,56 @@ fn gen_packs(dir: &Path, ex: &Expand, out: &mut String) -> Result<()> {
                 return Err(format!("{ctx}: ZIP listed twice"));
             }
         }
+        // Optional: places seen using a ZIP in real data, added to its
+        // shared places. Add-only, so a pair `zips.tsv` already has is an
+        // error.
+        let observed = pdir.join("zips_observed.tsv");
+        println!("cargo:rerun-if-changed={}", observed.display());
+        if observed.exists() {
+            for r in tsv(&observed, &["zip", "place", "addresses"])? {
+                let ctx = format!("packs/{} zips_observed.tsv {}", st.to_lowercase(), r[0]);
+                let p = place(&r[1], &ctx)?;
+                let Some((main, shared)) = zips.get_mut(&r[0]) else {
+                    return Err(format!("{ctx}: ZIP not in zips.tsv"));
+                };
+                if *main == p || shared.contains(&p) {
+                    return Err(format!("{ctx}: `{}` already uses this ZIP", r[1]));
+                }
+                shared.push(p);
+            }
+        }
+        // Optional: suffix spellings that mean another suffix in this
+        // state (`CR` is CIRCLE in Florida, CREEK in the base table). Only a
+        // spelling the base table already has, so tagging is unchanged.
+        let ofile = pdir.join("overrides.toml");
+        println!("cargo:rerun-if-changed={}", ofile.display());
+        if ofile.exists() {
+            let o = load(&pdir, "overrides.toml")?;
+            for (n, r) in tables(&o, "suffix", "overrides.toml")?.iter().enumerate() {
+                let ctx = format!(
+                    "packs/{} overrides.toml [[suffix]] #{}",
+                    st.to_lowercase(),
+                    n + 1
+                );
+                let spelling = key_str(r, "spelling", &ctx)?;
+                let target = key_str(r, "suffix", &ctx)?;
+                let Some((row, own)) = sfx.get(&target) else {
+                    return Err(format!("{ctx}: `{target}` is not a suffix name"));
+                };
+                if !ex.contains_key(&spelling) {
+                    return Err(format!("{ctx}: `{spelling}` is not a suffix spelling"));
+                }
+                if own.contains(&spelling) {
+                    return Err(format!("{ctx}: `{spelling}` already means {target}"));
+                }
+                if pack_suffixes
+                    .insert(format!("{st}|{spelling}"), *row)
+                    .is_some()
+                {
+                    return Err(format!("{ctx}: `{spelling}` listed twice"));
+                }
+            }
+        }
         if rows.len() == first {
             return Err(format!("packs/{}: no places", st.to_lowercase()));
         }
@@ -692,6 +754,20 @@ fn gen_packs(dir: &Path, ex: &Expand, out: &mut String) -> Result<()> {
     .ok();
     for (z, (main, shared)) in &zips {
         writeln!(out, "    ({z:?}, ({main}, &{shared:?})),").ok();
+    }
+    writeln!(out, "];\n").ok();
+    writeln!(
+        out,
+        "/// `STATE|spelling` -> suffix row, for a spelling a pack reads differently."
+    )
+    .ok();
+    writeln!(
+        out,
+        "pub(crate) static PACK_SUFFIX_INDEX: &[(&str, u16)] = &["
+    )
+    .ok();
+    for (k, row) in &pack_suffixes {
+        writeln!(out, "    ({k:?}, {row}),").ok();
     }
     writeln!(out, "];\n").ok();
     writeln!(out, "/// Most words in any place name or variant.").ok();

@@ -48,6 +48,9 @@ k1:G|<state>|<zip5>
   are now split out; streets cut across lines (`2781 NE` / `15 ST`) are
   joined. On about 445,000 Florida DBPR addresses, 1,385 property keys and
   2,055 unit-level keys changed.
+- **`CR` as CIRCLE in Florida** (2026-10-16, Florida pack `overrides.toml`):
+  a Florida street ending in `CR` keys with suffix `CIR`, not `CRK`. On the
+  DBPR Florida addresses, 333 keys changed.
 - **Not in the key:** city, ZIP+4, unit type, the attention line, the
   building name, anything in
   `diagnostics`.

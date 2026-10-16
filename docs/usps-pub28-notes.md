@@ -101,7 +101,9 @@ emitted.
   Choosing between them by position is the tagger's job.
 - State-dependent abbreviations (SR for State Road in Florida vs State Route
   elsewhere; RR for Ranch Road in Texas) are left out of the base tables, to
-  be added by state packs.
+  be added by state packs. A pack can also read a base spelling differently:
+  the Florida pack reads the observed CREEK spelling `CR` as CIRCLE
+  (`data/packs/fl/overrides.toml`; evidence in `docs/packs/fl.md`).
 
 ## Parser rules (Milestone 2)
 
