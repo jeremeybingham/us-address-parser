@@ -28,6 +28,33 @@ and Milestone 8, item 35), and the results.
 
 Test data: `tests/external/usaddress/` (MIT, pinned commit; see its README).
 
+## Feature comparison
+
+What each library offers, apart from accuracy (reviewed 2026-10-16; the
+plan items are in `docs/design.md`).
+
+| Area | usaddress | This library | Plan |
+|---|---|---|---|
+| Install and call | `pip install`; `parse`, `tag` | Rust crate and CLI; Python wrapper not built | Milestone 6 |
+| Token labels | `parse()` | `to_usaddress_tags()` | Done; `parse_tokens` in Python |
+| Joined components and type | `tag()` returns a dict and `Street Address` / `PO Box` / `Ambiguous`; raises `RepeatedLabelError` | None yet | `tag()`, `address_type()`; warning, not an error (decision 23) |
+| Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) | Done |
+| Default state | None | None | `default_state` hint (decision 24) |
+| Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug | Done |
+| Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; confidence planned | Milestone 5 |
+| Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit | Done |
+| Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer (decision 22, Milestone 9); a user model file later (item 46) |
+| Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed` | Open decisions in design section 13 |
+| Display casing, long form | Keeps input case | Uppercase only | Open decisions (Milestone 9, item 45) |
+| Batch and dataframes | Loop yourself | `parse_many` (parallel with `rayon`) | Pandas/Polars extras (decision 26, Milestone 9) |
+| Accuracy | Higher on suffix-less streets (84.8% vs 50.3% on the blind benchmark) | Higher with no city (99.0% vs 18.0%) | National place list (Milestone 5) |
+
+**Customization is not what the CRF is for.** The planned CRF (Milestone 7)
+raises accuracy on odd shapes, but a user fixes a misparse with it only by
+labeling data and retraining offline. The custom layer is the plan for
+adapting the parser: a few lines of aliases or places, no retraining, and the
+change is visible in review. The two compose.
+
 ## Label mapping
 
 | This parser | usaddress label |
