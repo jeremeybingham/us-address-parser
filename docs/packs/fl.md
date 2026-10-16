@@ -15,6 +15,8 @@ address exists or can receive mail.
 | `pack.toml` | | state, pack version, sources |
 | `places.tsv` | 665 places (411 municipalities, 254 other places), 998 variants | `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 1,473 ZIPs (107 shared with a second place) | `zip`, `place` (the main place), `shared` |
+| `zips_observed.tsv` | 198 more (ZIP, place) pairs: 157 ZIPs, 105 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
+| `overrides.toml` | 1 suffix spelling | `[[suffix]]` `spelling`, `suffix` |
 
 - `name` is the place as auction-tracker spells it: upper case, `SAINT`
   written out (`PORT SAINT LUCIE`), no punctuation (`OPA LOCKA`).
@@ -27,6 +29,11 @@ address exists or can receive mail.
   parser trusts a variant only in a city field or when the ZIP agrees.
 - `shared` lists places that also use a ZIP whose main place is another
   one (the ZIP straddles a boundary).
+- `zips_observed.tsv` adds places to a ZIP's shared places, from real
+  addresses (below). `build.rs` fails on a pair `zips.tsv` already has, a
+  ZIP it does not have, or an unknown place.
+- `overrides.toml` reads a suffix spelling as another suffix in Florida
+  (below).
 
 ## Sources and licenses
 
@@ -35,6 +42,8 @@ address exists or can receive mail.
 | Place list, county, kind, variants, shared ZIPs | auction-tracker `packages/radar/src/radar/data/cities_fl.json`, the author's checked list built from the sources below and from county auction and license data | MIT OR Apache-2.0 (the author's) |
 | Place names (`census` in `sources`) | US Census Bureau, 2024 Gazetteer Files, places, Florida (`census_fl_places_2024.txt` in auction-tracker) | Public domain |
 | ZIP to main place (`geonames` in `sources`) | GeoNames postal code export, `US.zip`, Florida rows (`geonames_fl_zip.txt` in auction-tracker), https://download.geonames.org/export/zip/ | CC BY 4.0, attribution in `NOTICE` |
+
+| Observed ZIP places (`zips_observed.tsv`), the `CR` override | Florida DBPR real estate licensee export, 2025-10-10 (`local-data/florida/dbpr_20251010_113032.parquet`, not committed): 445,252 Florida licensee addresses. Only city, ZIP and the parsed street key are used; names never leave the file | Florida public record (Chapter 119, Florida Statutes); approved as a source by the author, 2026-10-16 |
 
 `zips.tsv` is GeoNames data: each ZIP's main place is GeoNames' place name
 for it, copied as is. The `shared` column is from auction-tracker.
@@ -63,6 +72,26 @@ place: `BELLVIEW` was listed for BELLEVIEW (Marion County), but Bellview is
 a Census place in Escambia County (ZIP 32526). The fix belongs in
 auction-tracker's list too.
 
+`zips_observed.tsv` is built from the DBPR export:
+
+```sh
+cargo build --release -p addr-cli
+uv run --with pyarrow python tools/packs/observe_fl_zips.py \
+    local-data/florida/dbpr_20251010_113032.parquet
+```
+
+It parses the Florida rows with `addr parse-file` and keeps a (ZIP, place)
+pair that `zips.tsv` does not have when the city is a pack name or listed
+variant and either at least 10 distinct street addresses use it, or at
+least 3 that are at least 5% of the ZIP's addresses (small and PO Box ZIPs,
+`MADEIRA BEACH` in 33738). Fewer stay out: they are mostly a nearby big
+city written for a suburb (`ORLANDO` in Saint Cloud's 34771), which the
+warning should still flag. Pairs are found against `zips.tsv`, not against
+the warning, so a rerun gives the same table. Of 1,514 pairs the export has
+that `zips.tsv` lacks, 198 pass, covering 17,238 addresses.
+
+`overrides.toml` is written by hand; each entry names its evidence.
+
 `build.rs` then compiles the files and fails the build on a name or variant
 that leads to two places. A variant that the place comparison rule already
 covers (`ALTAMONTE SPGS`, `N MIAMI`) is dropped there, since the name
@@ -89,6 +118,43 @@ matches it anyway.
   several city names for many ZIPs, so this flags a disagreement with the
   pack, not a wrong address (`FORT MCCOY` with 32182, corpus case `rg-041`).
   On auction-tracker's 276 golden rows with a city and ZIP it never fires.
+  On the DBPR export's Florida addresses it fired on 23,878 rows (5.4%) with
+  `zips.tsv` alone, mostly municipalities inside a ZIP whose GeoNames place
+  is a neighbour (`CORAL GABLES` in 33134, `WESTON` in 33331); with
+  `zips_observed.tsv` it fires on 1,871 (0.4%), corpus `fl-014` to `fl-016`.
+- **`CR` is CIRCLE** (`overrides.toml`). The base table reads `CR` after a
+  street name as CREEK (an older C1 transcription). In the DBPR export 333
+  Florida street lines end a name in `CR`; for 277 the same street in the
+  same ZIP is also written CIRCLE or CIR, for none CREEK or CRK, and the
+  other 56 have no other spelling. So in Florida (the address's state, or
+  with none its ZIP's) `CR` is CIR, still with `non_standard_abbreviation`.
+  `CR` before a route number stays COUNTY ROAD. Corpus `fl-017` to
+  `fl-019`.
+
+## To do
+
+Open Florida work, from the DBPR licensee export (counts are rows out of
+445,252 Florida addresses, after the 2026-10-16 fixes):
+
+- **Unincorporated communities the pack does not know.** 4,514 rows have a
+  city that matches no place, mostly real communities with no city
+  government: `TRINITY` (403), `AVE MARIA` (277), `COCONUT GROVE` (216),
+  `CITRUS SPRINGS` (170), `TIERRA VERDE` (154), `VIERA` (102), `HARMONY`
+  (101), `UNIVERSITY PARK` (84). Add them as `place` rows with their county
+  and ZIPs (the rest are typos and cut-off names such as `MAIMI`,
+  `PT CHARLOTTE`). Related open decision in `docs/design.md` section 13: a
+  city that is no known place, with a ZIP the pack knows.
+- **Rarer misspellings and the penthouse shape.** Suffix typos `DRT` (1 row)
+  and `LNE` (3), and the unit designator `SU` (16, `SU B`). A penthouse
+  written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE PH`; 162
+  rows) gives a designator with no number plus a PH unit; decide whether it
+  is one unit (`APT PH5213`) or two.
+- **`SR` and county road names.** `SR` before a route number is State Road
+  in Florida (`SR 54`; 143 rows), left out of the base tables because it is
+  State Route elsewhere (Appendix F). County road spellings such as
+  `CTY RD` and `CO RD` (19 rows) are not highway prefixes yet. Both belong
+  in `overrides.toml` or the highway table, with evidence like the `CR`
+  entry's.
 
 ## Versioning
 

@@ -49,6 +49,7 @@ pub(crate) fn assemble(
     let mut military_kind = None;
     // `BOX 2877 PSC 103`: a box number before its military line.
     let mut military_box = None;
+    let mut suffix_text = None;
     for (tag, run) in runs {
         let text = join(run);
         let span = run_span(run);
@@ -88,7 +89,10 @@ pub(crate) fn assemble(
             Tag::Suffix => {
                 if let Some(l) = lex.suffix(&text) {
                     observed(addr, l.kind);
-                    addr.street_suffix.get_or_insert(l.value);
+                    if addr.street_suffix.is_none() {
+                        addr.street_suffix = Some(l.value);
+                        suffix_text = Some(text);
+                    }
                     record(addr, Component::StreetSuffix);
                 }
             }
@@ -241,6 +245,18 @@ pub(crate) fn assemble(
 
     if !unparsed.is_empty() {
         addr.diagnostics.unparsed = Some(unparsed.join(" "));
+    }
+    // A state pack may read the suffix spelling differently (`CR` is
+    // CIRCLE in Florida). The state written on the address wins; with none,
+    // the ZIP's.
+    if let Some(text) = suffix_text {
+        let state = addr.state.map(|s| s.code()).or_else(|| {
+            let z = lex.zip_places(addr.zip5.as_deref()?)?;
+            Some(z.main().state())
+        });
+        if let Some(l) = state.and_then(|st| lex.suffix_in(st, &text)) {
+            addr.street_suffix = Some(l.value);
+        }
     }
     // A floor is a number (Appendix C2: FL takes a range): `5TH FLOOR` is
     // FL 5.

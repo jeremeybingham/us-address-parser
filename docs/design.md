@@ -17,7 +17,7 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus (258
 cases, all passing), the `addr` CLI and benchmarks. From Milestone 8, the
 usaddress comparison is done. Milestone 5 is in progress: the Florida pack
-is built and used (271 corpus cases, all passing). **Next: the national
+is built and used (293 corpus cases, all passing). **Next: the national
 place list, the benchmark rerun and the CRF call, calibrated confidence,
 then Milestone 6, the Python wrapper.**
 Section 10 has the plan and section 13 the open items.
@@ -249,7 +249,7 @@ does include the city.
 
 | Check | Status |
 |---|---|
-| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 258 cases, all passing. |
+| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 293 cases, all passing. |
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
@@ -412,7 +412,8 @@ state (state token or ZIP prefix), then look up places in that state.
   is the largest remaining gap on the blind benchmark; the Census 2024
   Gazetteer (public domain) covers 73.5% of its cities.
 - `SR` (State Road in Florida, State Route elsewhere), `RR` as Ranch Road in
-  Texas, `PR 462` (Texas private road vs Puerto Rico), `CTY ROAD`,
+  Texas, `CR` as CIRCLE in Florida (*done*: the Florida pack's
+  `overrides.toml`, decision 20), `PR 462` (Texas private road vs Puerto Rico), `CTY ROAD`,
   `LEE ROAD 2004`-style county road names.
 - Queens-style hyphenated house numbers, Puerto Rico urbanizations.
 - `--default-state` for `addr parse-file` (most of the 1,700 auction rows
@@ -542,6 +543,23 @@ extensible; no state-specific rule in the tagger.
     only.** An older copy of the list elsewhere is redundant. Florida road
     names (`SR`, `CR`; the later `overrides.toml`) stay out of this pass.
 
+### Decisions recorded 2026-10-16 (DBPR data)
+
+20. **Packs may read a suffix spelling differently.** A pack's
+    `overrides.toml` maps a spelling the base suffix table already has to
+    another suffix in that state, so tagging never changes, only the value
+    (resolved in `assemble` through `Lexicons::suffix_in`, from the
+    address's state or its ZIP's). This is the one place a pack replaces a
+    base reading rather than adding to it (decision 18); each entry names
+    its evidence. First entry: `CR` is CIRCLE in Florida (`docs/packs/fl.md`),
+    asked for by the author on the DBPR evidence. This narrows decision 19
+    for `CR` as a suffix; `SR` and county road names are still open.
+21. **Observed ZIP places from DBPR data.** The Florida DBPR licensee export
+    (public record) is an approved source for pack data and corpus cases.
+    City and ZIP pairs seen often enough there are added to ZIPs' shared
+    places (`zips_observed.tsv`, `tools/packs/observe_fl_zips.py`);
+    `zip_city_mismatch` on that data fell from 5.4% to 0.4% of rows.
+
 ### Open decisions (for the author)
 
 - **A city that is no known place, with a ZIP the pack knows** (`SINGER
@@ -555,6 +573,10 @@ extensible; no state-specific rule in the tagger.
 - **Slug follows the street for dual addresses** (decision 11): change
   `emit/slug.rs`, the slug section of `docs/key-format.md`, the corpus slug
   expectations for `rg-040` to `rg-045` and `tools/corpus/emit_expect.py`.
+- **Florida pack to do** (`docs/packs/fl.md`, "To do"): unincorporated
+  communities the pack lacks (about 4,500 DBPR rows with no place match),
+  rarer misspellings and the `APT PH 5213` penthouse shape, and `SR` as
+  State Road plus county road names.
 - **Milestone 5**, in order: the national base list (next), the benchmark
   rerun and the CRF call, then calibrated confidence. The Florida pack is
   done.

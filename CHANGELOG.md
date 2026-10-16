@@ -4,6 +4,51 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### `addr parse-file`: every component has a column
+
+- New columns `addr_second_unit_type`, `addr_second_unit_number` (after
+  `addr_unit_number`), `addr_general_delivery` and
+  `addr_military_post_office`. A second unit (`STE 201 PMB 308`) used to be
+  left out of the CSV. A test checks that every component `addr parse`
+  prints has a column.
+
+### Florida pack: observed ZIP places and `CR` as CIRCLE
+
+From the DBPR licensee export (decisions 20 and 21 of 2026-10-16 in
+`docs/design.md`; `docs/packs/fl.md`; corpus `fl-014` to `fl-019`).
+
+- `data/packs/fl/zips_observed.tsv`: 198 (ZIP, place) pairs seen in at least
+  10 distinct addresses (or 3 that are 5% of a small ZIP), added to the ZIPs'
+  shared places by `build.rs`. Built by `tools/packs/observe_fl_zips.py`.
+  `zip_city_mismatch` on the export fell from 23,878 rows to 1,871, and 59
+  more cut-off cities complete.
+- Pack `overrides.toml` and `Lexicons::suffix_in`: a pack may read a base
+  suffix spelling as another suffix. Florida reads `CR` as CIRCLE (CREEK
+  elsewhere); 333 rows changed, keys included. Pack version 2026.10.1.
+- `tools/corpus/emit_expect.py`: dual addresses key and map to RESO from the
+  street and their USPS line and slug are the PO Box alone; name words after
+  a highway route are kept. New `--check` mode, run in CI. 72 cases that
+  had no emitter expectations now have them.
+
+### Rule fixes from the DBPR licensee data
+
+Run on about 445,000 Florida addresses from the DBPR real estate licensee
+export; corpus cases `rg-082` to `rg-097`; rules and observed spellings in
+`docs/usps-pub28-notes.md`. Rows with any `unparsed_remainder` fell from
+4,414 to 2,787, and 320 rows that parsed wrongly with no warning (a unit
+read into the street name) are now right. Keys changed for the fixed rows
+(`docs/key-format.md`).
+
+- A line 2 that is exactly the city field is skipped, even when it starts
+  with a suffix word (`CAPE CORAL`, `FORT MYERS`).
+- A unit value in two parts after a designator or `#` is one value
+  (`APT E 1003`, `UNIT 210 C`).
+- A street cut across lines is joined (`2781 NE` / `15 ST`).
+- A dash between the street and its unit is dropped.
+- Observed spellings: `APTO`, `AP`, `APART`, `APARTAMENTO`, `APARTAMENT`,
+  `APPT`, `APP`, `APRT` (APARTMENT), `SUIT` (SUITE), `BLV`, `BL`
+  (BOULEVARD), `TE` (TERRACE), with `non_standard_abbreviation`.
+
 ### Florida pack and place lookups (Milestone 5)
 
 Decisions 13 to 19 of 2026-10-16 in `docs/design.md`; data and sources in

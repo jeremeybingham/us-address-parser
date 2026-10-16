@@ -41,6 +41,16 @@ k1:G|<state>|<zip5>
   unparsed, so their keys could be `P` or `S`.
 - **Floors:** a floor unit's value is a number (`5TH FLOOR` gives `5`), so
   unit-level keys for ordinal floors changed on 2026-10-15.
+- **Parser fixes of 2026-10-16** (DBPR data, corpus `rg-082` to `rg-097`):
+  keys change where the old parse was wrong. Units written in two parts
+  (`APT D 906`), misspelled designators (`APTO 417`), suffix spellings
+  (`OAKES BLV`) and a dash before a unit were read into the street name and
+  are now split out; streets cut across lines (`2781 NE` / `15 ST`) are
+  joined. On about 445,000 Florida DBPR addresses, 1,385 property keys and
+  2,055 unit-level keys changed.
+- **`CR` as CIRCLE in Florida** (2026-10-16, Florida pack `overrides.toml`):
+  a Florida street ending in `CR` keys with suffix `CIR`, not `CRK`. On the
+  DBPR Florida addresses, 333 keys changed.
 - **Not in the key:** city, ZIP+4, unit type, the attention line, the
   building name, anything in
   `diagnostics`.

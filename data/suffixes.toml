@@ -78,6 +78,8 @@ forms = ["BOT", "BOTTM", "BOTTOM", "BTM"]
 name = "BOULEVARD"
 abbr = "BLVD"
 forms = ["BLVD", "BOUL", "BOULEVARD", "BOULV"]
+# observed: DBPR licensee data, Florida ("960 OAKES BLV", "15464 FIDDLESTICKS BL")
+observed = ["BL", "BLV"]
 
 [[suffix]]
 name = "BRANCH"
@@ -947,6 +949,8 @@ forms = ["SMT", "SUMIT", "SUMITT", "SUMMIT"]
 name = "TERRACE"
 abbr = "TER"
 forms = ["TER", "TERR", "TERRACE"]
+# observed: DBPR licensee data, Miami-Dade grid streets ("10095 NW 127 TE")
+observed = ["TE"]
 
 [[suffix]]
 name = "THROUGHWAY"

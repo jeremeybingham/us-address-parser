@@ -32,6 +32,9 @@ name = "APARTMENT"
 abbr = "APT"
 range_required = true
 forms = ["APARTMENT", "APT"]
+# observed: DBPR licensee data, Florida ("APTO 417", "APART 1707", "AP 902");
+# APTO, APARTAMENTO and APARTAMENT are Spanish spellings
+observed = ["AP", "APART", "APARTAMENT", "APARTAMENTO", "APP", "APPT", "APRT", "APTO"]
 
 [[unit]]
 name = "BASEMENT"
@@ -157,6 +160,8 @@ name = "SUITE"
 abbr = "STE"
 range_required = true
 forms = ["SUITE", "STE"]
+# observed: DBPR licensee data, Florida ("SUIT 300")
+observed = ["SUIT"]
 
 [[unit]]
 name = "TRAILER"

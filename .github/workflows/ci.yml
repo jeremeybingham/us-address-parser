@@ -21,3 +21,5 @@ jobs:
       - run: cargo test --workspace --all-features
       - name: Golden corpus accuracy report
         run: cargo test -p addr-core --test corpus -- --nocapture
+      - name: Corpus emitter expectations agree with emit_expect.py
+        run: python3 tools/corpus/emit_expect.py --check tests/corpus/*.jsonl
