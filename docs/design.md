@@ -16,14 +16,15 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 **Status (2026-10-16):** Milestones 0 to 4 are done: data and types, the
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus, the
 `addr` CLI and benchmarks; so is the usaddress comparison. Milestone 5, the
-place list, is in progress: the Florida pack is built and used (301 corpus
-cases, all passing), and the national list is built, compiled in and read by
-the parser in every state.
-**Next (section 10): item 29, the benchmark rerun and the CRF call, with the
-Florida items 26 to 28 any time** (items 23 to 25, the dual-address slug and
-the national list, are done). After Milestone 5 come the usaddress-shaped
-features and the Python wrapper (Milestone 6), then calibrated confidence
-(Milestone 7; decision 27); the custom layer is Milestone 9.
+place list, is done except item 29: the national list is built, compiled in
+and read by the parser in every state; the Florida pack is built, extended
+and used (items 26 to 28); the dual-address slug follows the street (item
+23). The golden corpus has 317 cases, all passing.
+**Next (section 10): item 29, the benchmark rerun and the CRF call.** The
+reruns are cheap and the data is in place; the call is the author's. After
+Milestone 5 come the usaddress-shaped features and the Python wrapper
+(Milestone 6), then calibrated confidence (Milestone 7; decision 27); the
+custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the open decisions and the unscheduled backlog.
 
@@ -149,7 +150,7 @@ tests/
 tools/
   corpus/emit_expect.py     # writes emitter expectations into corpus cases from the specs
   compare/                  # usaddress comparison and training-overlap scripts
-  packs/                    # Florida pack export and observed-ZIP scripts
+  packs/                    # Florida pack export, observed-ZIP and unmatched-city scripts
   places/                   # build_us.py: national place list from Census and GeoNames data
   calibrate/                # (planned, item 38) confidence fitting
   train/                    # (planned, Milestone 7, if built) CRF training scripts
@@ -309,7 +310,7 @@ does include the city.
 
 | Check | Status |
 |---|---|
-| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 293 cases, all passing. |
+| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 317 cases, all passing. |
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
@@ -374,7 +375,7 @@ Also done ahead of its milestone: the usaddress comparison script and
 results (`tools/compare/compare_usaddress.py`,
 `docs/usaddress-comparison.md`), first planned for Milestone 8.
 
-### Milestone 5: place list (in progress)
+### Milestone 5: place list (items 23 to 28 done; item 29 left)
 
 The first state-pack work (section 11), scoped to what the parser needs to
 find the city. It ends with the benchmark rerun that makes the CRF call
@@ -391,14 +392,26 @@ Done:
   with no commas, a city run into the street, street versus city before a
   ZIP, cut-off cities completed, the place from the ZIP and
   `zip_city_mismatch`. Corpus `fl-001` to `fl-019`.
+- **National place data** (item 24): `data/places/` (50,375 places, 41,154
+  ZIPs for the 50 states, DC and Puerto Rico) built by
+  `tools/places/build_us.py` from the Census Gazetteer and GeoNames, compiled
+  behind `places-us` as packed binary tables (+2.9 MB). `docs/places.md`.
 - **The national list in the parser** (item 25): place lookups read all 52
-  states; see the item below for the measured effect.
+  states; `zip_city_mismatch` stays limited to states with a curated pack.
+  Blind geocode benchmark, whole address (coarse): 85.7% to 96.1% (usaddress
+  88.2%). See the item below.
+- **Florida pack extensions** (items 26 to 28): `SR` and `CTY HWY` highway
+  prefixes through `Lexicons::highway_in`; `DRT`, `LNE`, `SU` and the
+  penthouse unit; 19 added communities and 16 added spellings, with the
+  observed-ZIP table rerun (unmatched DBPR rows 2,957 to 1,348). See the
+  items below and `docs/packs/fl.md`.
 - **Slug follows the street for dual addresses** (item 23; decision 11). The
   slug is built from the street line and its units, like the key and the
   RESO output. `rg-040` to `rg-044` changed (`rg-045` is not a dual
   address).
 
-To do, in order:
+Plan for items 24 to 29, in build order (24 to 28 are done; the notes under
+each say what was built):
 
 24. **National place data** (`data/places/`, feature `places-us`, on by
     default). Data only: no parser behavior changes, so the PR is the
@@ -642,7 +655,9 @@ data/packs/fl/
   places.tsv       # canonical place names, county, kind, variants (abbreviation or typo)
   zips.tsv         # ZIP -> main place, shared places
   zips_observed.tsv # more (ZIP, place) pairs seen in real data
-  overrides.toml   # suffix spellings read differently in the state (CR); road names next
+  places_added.tsv  # hand-kept communities seen in real data, with address counts
+  variants_added.tsv # hand-kept spellings of known places, with address counts
+  overrides.toml   # suffix spellings read differently in the state (CR) and highway prefixes (SR)
 ```
 
 Layering is add-only: a later layer adds names, variants and ZIPs and
