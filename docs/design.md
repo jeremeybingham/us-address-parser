@@ -17,9 +17,11 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus (258
 cases, all passing), the `addr` CLI and benchmarks. From Milestone 8, the
 usaddress comparison is done. Milestone 5 is in progress: the Florida pack
-is built and used (293 corpus cases, all passing). **Next: the national
-place list, the benchmark rerun and the CRF call, calibrated confidence,
-then Milestone 6, the Python wrapper.**
+is built and used (293 corpus cases, all passing), with open Florida items
+still to fix (section 13, open tasks). The national place list's source data
+is downloaded to `local-data/places/` (section 10, item 23). **Next: the
+national place list, the benchmark rerun and the CRF call, calibrated
+confidence, then Milestone 6, the Python wrapper.**
 Section 10 has the plan and section 13 the open items.
 
 ---
@@ -325,6 +327,15 @@ calibrated confidence, and it decides Milestone 7.
       directionals, Pub 28 suffix words inside names, `TWP`) come from a
       comparison rule, not stored variants. Built after the Florida pack,
       in the same format.
+      *Source data ready* (2026-10-16), in `local-data/places/` (gitignored;
+      URLs, dates and checksums in `local-data/README.md`): the Census 2024
+      Gazetteer national places, county subdivisions and counties; the
+      Census 2020 place-by-county code list (the `county` column: it covers
+      31,871 of the 32,333 places; 462 are newer than 2020); and GeoNames
+      `US.zip` (41,489 ZIPs) and `PR.zip` (177, a separate file). Open for
+      the builder: one county for the 1,304 places that span several, and
+      the 462 with none. The GeoNames attribution goes in `NOTICE` when the
+      list ships.
 24. Use it behind the `Lexicons` interface (lookups take the state found
     from a state token or the ZIP's pack; no state logic in the tagger).
     *Done for Florida* (`docs/packs/fl.md`; corpus `fl-001` to `fl-013`):
@@ -573,13 +584,14 @@ extensible; no state-specific rule in the tagger.
 - **Slug follows the street for dual addresses** (decision 11): change
   `emit/slug.rs`, the slug section of `docs/key-format.md`, the corpus slug
   expectations for `rg-040` to `rg-045` and `tools/corpus/emit_expect.py`.
-- **Florida pack to do** (`docs/packs/fl.md`, "To do"): unincorporated
-  communities the pack lacks (about 4,500 DBPR rows with no place match),
-  rarer misspellings and the `APT PH 5213` penthouse shape, and `SR` as
-  State Road plus county road names.
-- **Milestone 5**, in order: the national base list (next), the benchmark
-  rerun and the CRF call, then calibrated confidence. The Florida pack is
-  done.
+- **Florida pack to do, still open** (`docs/packs/fl.md`, "To do"):
+  unincorporated communities the pack lacks (about 4,500 DBPR rows with no
+  place match), rarer misspellings and the `APT PH 5213` penthouse shape,
+  and `SR` as State Road plus county road names.
+- **Milestone 5**, in order: the national base list (next; source data is
+  downloaded, item 23), the benchmark rerun and the CRF call, then
+  calibrated confidence. The Florida pack is built and in use, with the
+  open items above.
 - **auction-tracker's `cities_fl.json`**: drop `BELLVIEW` from BELLEVIEW's
   variants (Bellview is a Census place in Escambia County). The pack's
   export already drops it (`docs/packs/fl.md`).

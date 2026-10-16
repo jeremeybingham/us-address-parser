@@ -8,7 +8,9 @@ database-ready identifiers (a stable canonical match key and a URL-safe slug).
 > **Status:** the Rust library and the `addr` CLI work: parser, key, USPS,
 > RESO and slug emitters, a 293-case golden corpus and a comparison with
 > usaddress. The place list (Milestone 5) is in progress: the Florida pack is
-> built; a national place list is next, then the Python wrapper (Milestone 6). Nothing is published yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
+> built, with open items listed in [`docs/packs/fl.md`](docs/packs/fl.md); a
+> national place list is next (its source data is gathered), then the Python
+> wrapper (Milestone 6). Nothing is published yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
 
 ## This is not an address validator
 

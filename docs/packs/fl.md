@@ -133,7 +133,7 @@ matches it anyway.
 
 ## To do
 
-Open Florida work, from the DBPR licensee export (counts are rows out of
+Still open (2026-10-16). Florida work found in the DBPR licensee export (counts are rows out of
 445,252 Florida addresses, after the 2026-10-16 fixes):
 
 - **Unincorporated communities the pack does not know.** 4,514 rows have a
