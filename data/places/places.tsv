@@ -5509,8 +5509,7 @@ FL	ENSLEY	ESCAMBIA	place	census
 FL	ESTERO	LEE	municipality	census;geonames	
 FL	ESTO	HOLMES	municipality	census	
 FL	EUSTIS	LAKE	municipality	census;geonames	
-FL	EVERGLADES	COLLIER	municipality	census	
-FL	EVERGLADES CITY	COLLIER	place	geonames	
+FL	EVERGLADES CITY	COLLIER	municipality	census;geonames	
 FL	EVINSTON	ALACHUA	place	geonames	
 FL	FAIRFIELD	MARION	place	geonames	
 FL	FAIRVIEW SHORES	ORANGE	place	census	

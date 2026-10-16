@@ -15,7 +15,7 @@ address exists or can receive mail.
 | `pack.toml` | | state, pack version, sources |
 | `places.tsv` | 665 places (411 municipalities, 254 other places), 998 variants | `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 1,473 ZIPs (107 shared with a second place) | `zip`, `place` (the main place), `shared` |
-| `zips_observed.tsv` | 198 more (ZIP, place) pairs: 157 ZIPs, 105 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
+| `zips_observed.tsv` | 218 more (ZIP, place) pairs: 175 ZIPs, 123 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
 | `overrides.toml` | 1 suffix spelling | `[[suffix]]` `spelling`, `suffix` |
 
 - `name` is the place as auction-tracker spells it: upper case, `SAINT`
@@ -87,8 +87,13 @@ least 3 that are at least 5% of the ZIP's addresses (small and PO Box ZIPs,
 `MADEIRA BEACH` in 33738). Fewer stay out: they are mostly a nearby big
 city written for a suburb (`ORLANDO` in Saint Cloud's 34771), which the
 warning should still flag. Pairs are found against `zips.tsv`, not against
-the warning, so a rerun gives the same table. Of 1,514 pairs the export has
-that `zips.tsv` lacks, 198 pass, covering 17,238 addresses.
+the warning, so a rerun gives the same table. Of 1,582 pairs the export has
+that `zips.tsv` lacks, 218 pass, covering 18,446 addresses. The rerun after the
+national list (item 24) added 22 pairs for Census places the pack lacked
+(`TRINITY` in 34655, `AVE MARIA` in 34142, `TIERRA VERDE` in 33715, ...)
+and `BELLVIEW` in 32526: only 3 of the ZIP's 363 addresses, but a Census place
+whose own ZIP GeoNames names PENSACOLA, so the script keeps it by name
+(`KNOWN` in `observe_fl_zips.py`).
 
 `overrides.toml` is written by hand; each entry names its evidence.
 
@@ -149,12 +154,10 @@ to 28 in `docs/design.md` section 10, and the decisions are in its section
   the national list (item 24) adds, so remeasure after it. Related open
   decision in `docs/design.md` section 13: a city that is no known place,
   with a ZIP the pack knows. The national list is now compiled under the
-  pack (item 24): it adds 406 Census places (1,071 in all, including
-  `TRINITY` and `CITRUS SPRINGS`; `docs/places.md`) with their county but no
-  ZIPs, so a ZIP that lists only another place (`BELLVIEW` in 32526, listed
-  as `PENSACOLA`) gives `zip_city_mismatch` until the pack lists it as
-  shared. One duplicate came with it: the Census's `EVERGLADES` is the
-  pack's `EVERGLADES CITY`.
+  pack (item 24): it adds 405 Census places (1,070 in all, including
+  `TRINITY` and `CITRUS SPRINGS`; `docs/places.md`) with their county, and
+  the observed-ZIP table was rerun with them (`TRINITY` and the others in
+  `zips_observed.tsv`). Remeasure this list against the new total first.
 - **Rarer misspellings and the penthouse shape** (item 27). Suffix typos
   `DRT` (1 row) and `LNE` (3), and the unit designator `SU` (16, `SU B`). A
   penthouse written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE

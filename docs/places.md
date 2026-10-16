@@ -14,7 +14,7 @@ address exists or can receive mail.
 | File | Rows | Columns |
 |---|---|---|
 | `places.toml` | | list version, states, sources |
-| `places.tsv` | 50,376 places: 19,491 municipalities, 19,989 places, 10,896 subdivisions; 16,290 variants | `state`, `name`, `county`, `kind`, `sources`, `variants` |
+| `places.tsv` | 50,375 places: 19,491 municipalities, 19,988 places, 10,896 subdivisions; 16,290 variants | `state`, `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 41,154 ZIPs | `zip`, `state`, `place` |
 
 Same shape as a state pack (`docs/packs/fl.md`), with a `state` column
@@ -117,11 +117,15 @@ no places or no ZIPs.
 - A state with a curated pack keeps the pack's places and ZIPs. A national
   row whose comparison key the pack already has, as a name or a variant, is
   the pack's and is skipped; the national list adds the rest. For Florida
-  that is 406 Census places the pack lacks (`TRINITY`, `CITRUS SPRINGS`,
-  ... all CDPs), taking its places from 665 to 1,071. One is a duplicate:
-  the Census's `EVERGLADES` is the pack's `EVERGLADES CITY` under another
-  spelling. The pack's 1,473 ZIPs are untouched (GeoNames is the source of
-  both, so the national ZIPs for Florida are the same pairs).
+  that is 405 Census places the pack lacks (`TRINITY`, `CITRUS SPRINGS`,
+  ... all CDPs), taking its places from 665 to 1,070. The Census's
+  `Everglades` is renamed `EVERGLADES CITY` by the builder (`CENSUS_NAMES`
+  in `build_us.py`), the pack's name, so it is the pack's place and not a
+  second one. The pack's 1,473 ZIPs are untouched (GeoNames is the source of
+  both, so the national ZIPs for Florida are the same pairs); the new places'
+  ZIPs come from the observed-ZIP table, which was rerun with them
+  (`docs/packs/fl.md`); `build.rs` adds those pairs once the national rows
+  are in, and leaves them out when `places-us` is off.
 - For every other state a name, variant or ZIP that would lead to two places
   is a build error, as in a pack. Names, counties and kinds are checked the
   same way.
@@ -155,7 +159,7 @@ are used by several. The list contains 657 of the Florida pack's 665 places
 `ENTERPRISE`, `INLET BEACH`, `PENSACOLA BEACH`, `PERDIDO KEY`, `WALNUT HILL`,
 `WEEKI WACHEE`).
 
-One Florida corpus case changed with the merge: `rg-030` (`BELLVIEW`,
-32526) now has `zip_city_mismatch`. `BELLVIEW` is a Census place in
-Escambia County that the national list adds, but ZIP 32526 lists only
-`PENSACOLA`. This is the Florida communities gap of design.md item 28.
+Florida's `rg-030` (`BELLVIEW`, 32526) is the case that showed the gap the
+national list opens: `BELLVIEW` is a Census place in Escambia County, but
+GeoNames names ZIP 32526 `PENSACOLA`, so the city looked wrong for its ZIP.
+`zips_observed.tsv` now lists `BELLVIEW` as a place of 32526.

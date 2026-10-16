@@ -59,6 +59,11 @@ SUB_BARE = ["city", "town", "village", "borough"]
 # TWP"). The bare name and the abbreviation become variants.
 SUB_KEPT = {"township": "TWP", "plantation": "PLT", "gore": None, "grant": None,
             "purchase": None, "location": None}
+# Census names that differ from the name a curated pack uses for the same
+# place (docs/places.md). Without this the pack's EVERGLADES CITY and the
+# Census's EVERGLADES would be two places. Keyed by (state, name after
+# cleaning).
+CENSUS_NAMES = {("FL", "EVERGLADES"): "EVERGLADES CITY"}
 # Gazetteer subdivisions that are only statistical or administrative lines.
 SUB_SKIP_WORDS = {"CCD", "UT", "precinct", "district", "barrio", "subbarrio",
                   "defined", "unorganized", "reservation", "ward"}
@@ -305,6 +310,7 @@ def main():
 
     pending_variants = []
     for st, raw, kind, county, variants in census_places(src, counties, stats):
+        raw = CENSUS_NAMES.get((st, norm(raw)), raw)
         pending_variants.append((add(st, raw, kind, county, "census"), variants))
     subs = census_subdivisions(src, counties, stats)
     # A subdivision name used by several in a state (Washington township, in

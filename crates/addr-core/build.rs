@@ -584,6 +584,9 @@ struct PlaceTables {
     index: BTreeMap<String, (usize, &'static str)>,
     zips: BTreeMap<String, (usize, Vec<usize>)>,
     max_words: usize,
+    /// Observed (state, ZIP, place) pairs whose place is not in the pack; the
+    /// national list may have it (resolved after it is added).
+    deferred: Vec<(String, String, String)>,
 }
 
 /// The place tables: the state packs enabled by `state-<st>` features, in
@@ -598,6 +601,7 @@ fn gen_places(dir: &Path, ex: &Expand, sfx: &SuffixRows, out: &mut String) -> Re
     let (states, pack_suffixes) = gen_packs(&dir.join("packs"), ex, sfx, &mut t)?;
     if env::var_os("CARGO_FEATURE_PLACES_US").is_some() {
         gen_national(&dir.join("places"), ex, &states, &mut t)?;
+        resolve_deferred(ex, &mut t)?;
     }
     emit_places(&states, &pack_suffixes, &t, out)
 }
@@ -615,6 +619,7 @@ fn gen_packs(
         index,
         zips,
         max_words,
+        deferred,
     } = t;
     let mut states = Vec::new();
     if let Ok(entries) = fs::read_dir(dir) {
@@ -716,7 +721,11 @@ fn gen_packs(
         if observed.exists() {
             for r in tsv(&observed, &["zip", "place", "addresses"])? {
                 let ctx = format!("packs/{} zips_observed.tsv {}", st.to_lowercase(), r[0]);
-                let p = place(&r[1], &ctx)?;
+                // A place the pack lacks may be in the national list.
+                let Some(&p) = by_name.get(&r[1]) else {
+                    deferred.push((st.clone(), r[0].clone(), r[1].clone()));
+                    continue;
+                };
                 let Some((main, shared)) = zips.get_mut(&r[0]) else {
                     return Err(format!("{ctx}: ZIP not in zips.tsv"));
                 };
@@ -766,6 +775,27 @@ fn gen_packs(
     Ok((states, pack_suffixes))
 }
 
+/// Observed ZIP pairs for places only the national list has (a pack's
+/// `zips_observed.tsv`), added to the ZIP's shared places. Without the
+/// national list they are left out.
+fn resolve_deferred(ex: &Expand, t: &mut PlaceTables) -> Result<()> {
+    let expand = |w: &str| ex.get(w).cloned();
+    for (st, zip, name) in std::mem::take(&mut t.deferred) {
+        let ctx = format!("packs/{} zips_observed.tsv {zip}", st.to_lowercase());
+        let Some(&(p, _)) = t.index.get(&format!("{st}|{}", place_key(&name, expand))) else {
+            return Err(format!("{ctx}: unknown place `{name}`"));
+        };
+        let Some((main, shared)) = t.zips.get_mut(&zip) else {
+            return Err(format!("{ctx}: ZIP not in zips.tsv"));
+        };
+        if *main == p || shared.contains(&p) {
+            return Err(format!("{ctx}: `{name}` already uses this ZIP"));
+        }
+        shared.push(p);
+    }
+    Ok(())
+}
+
 /// The national place list (`data/places/`), added under the packs. A state
 /// with a curated pack keeps the pack's places and ZIPs; national rows only
 /// add places the pack lacks (a place whose comparison key the pack already
@@ -789,6 +819,7 @@ fn gen_national(
         index,
         zips,
         max_words,
+        ..
     } = t;
 
     let places = tsv(

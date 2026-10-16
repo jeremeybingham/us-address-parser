@@ -10,16 +10,18 @@ Nothing is released yet. Entries are newest first.
   by default. The place tables are now packed binary records read with
   `include_bytes!` instead of `&str` tables: the national list adds 2.7 MB to
   the `addr` binary (13.4 MB as `&str` tables). `docs/places.md`.
-- Florida gains 406 Census places its pack lacked (`TRINITY`, `CITRUS
-  SPRINGS`, ...). Lookups for other states stay off until the parser uses
-  the list (item 25), so only Florida parses differently. Corpus `rg-030`
-  now reports `zip_city_mismatch` (`BELLVIEW` is a Census place; ZIP 32526
-  lists only `PENSACOLA`).
+- Florida gains 405 Census places its pack lacked (`TRINITY`, `CITRUS
+  SPRINGS`, ...). The Census's `Everglades` is renamed `EVERGLADES CITY`, the
+  pack's name. Lookups for other states stay off until the parser uses the
+  list (item 25), so only Florida parses differently.
+- `zips_observed.tsv` rerun with the new places: 218 pairs (was 198), among
+  them `BELLVIEW` in 32526 (`KNOWN` in `observe_fl_zips.py`), so `rg-030`
+  keeps no `zip_city_mismatch`. Pack version 2026.10.2.
 - New `PlaceKind::Subdivision` (a township and the like).
 
 ### National place list: builder and data (`data/places/`)
 
-- `tools/places/build_us.py` builds `data/places/places.tsv` (50,376 places
+- `tools/places/build_us.py` builds `data/places/places.tsv` (50,375 places
   in the 50 states, DC and Puerto Rico: Census places and active county
   subdivisions, plus GeoNames postal names) and `zips.tsv` (41,154 ZIPs).
   The cleaned names, the 87.4% city coverage on the blind benchmark, and

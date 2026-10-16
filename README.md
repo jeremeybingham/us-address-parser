@@ -63,7 +63,7 @@ city. `city` always keeps what the input said. Florida is the first pack
 [`docs/packs/fl.md`](docs/packs/fl.md) for its sources and licenses.
 
 Under the packs sits a national list (`data/places/`, cargo feature
-`places-us`, on by default): 50,376 places and 41,154 ZIPs for the 50 states,
+`places-us`, on by default): 50,375 places and 41,154 ZIPs for the 50 states,
 DC and Puerto Rico, built from the Census Gazetteer and GeoNames postal codes.
 It adds the places a Florida pack lacks. The parser does not read it for other
 states yet. Sources, licenses and how it is built:

@@ -753,12 +753,12 @@ mod tests {
         );
         assert!(LEX.has_pack("FL"));
         assert!(!LEX.has_pack("GA"));
-        // The pack's 665 places, plus the national list's 406 Census places
+        // The pack's 665 places, plus the national list's 405 Census places
         // it lacks when that is compiled in.
         assert_eq!(
             LEX.places().count(),
             if cfg!(feature = "places-us") {
-                1071
+                1070
             } else {
                 665
             }
@@ -805,6 +805,18 @@ mod tests {
             LEX.place("FL", "BOCA RATOM").unwrap().kind,
             MatchKind::Variant
         );
+        // The Census's Everglades is the pack's EVERGLADES CITY, not a second
+        // place (build_us.py renames it).
+        assert_eq!(LEX.place("FL", "EVERGLADES"), None);
+        assert_eq!(
+            LEX.place("FL", "EVERGLADES CITY").unwrap().value.county(),
+            "COLLIER"
+        );
+        // A national-only place the pack's observed ZIPs name is shared.
+        let bellview = LEX.place("FL", "BELLVIEW").unwrap().value;
+        let z = LEX.zip_places("32526").unwrap();
+        assert_eq!(z.main().name(), "PENSACOLA");
+        assert!(z.contains(&bellview));
         // The pack's ZIP table is not touched: 32507 is still PENSACOLA.
         assert_eq!(LEX.zip_places("32507").unwrap().main().name(), "PENSACOLA");
     }
