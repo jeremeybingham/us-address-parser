@@ -15,6 +15,9 @@ have, when enough distinct addresses use it:
 - at least MIN_SMALL addresses that are at least MIN_SHARE of the ZIP's
   addresses (small and PO Box ZIPs: MADEIRA BEACH in 33738).
 
+A pair in KNOWN is kept with any count of addresses (at least one): places
+whose ZIP is known from another source than the export's volume.
+
 Only the city as a pack name or listed variant counts (not a cut-off city
 or one taken from the ZIP), and only ZIPs `zips.tsv` already has. Pairs are
 found against `zips.tsv`, not against the warning, so rerunning gives the
@@ -31,6 +34,10 @@ ADDR = ROOT / "target" / "release" / "addr"
 MIN_ADDRESSES = 10
 MIN_SMALL = 3
 MIN_SHARE = 0.05
+# (ZIP, place) pairs kept on fewer addresses, with why. BELLVIEW is a Census
+# place (CDP, Escambia County) whose own ZIP is 32526, which GeoNames names
+# PENSACOLA; 3 of the export's 363 addresses in the ZIP say BELLVIEW.
+KNOWN = {("32526", "BELLVIEW")}
 
 
 def fail(msg):
@@ -80,7 +87,7 @@ def main(parquet):
     rows = []
     for (z, place), keys in per_pair.items():
         c = len(keys)
-        if c >= MIN_ADDRESSES or (c >= MIN_SMALL and c / len(per_zip[z]) >= MIN_SHARE):
+        if (z, place) in KNOWN or c >= MIN_ADDRESSES or (c >= MIN_SMALL and c / len(per_zip[z]) >= MIN_SHARE):
             rows.append((z, place, c))
     rows.sort()
     with (PACK / "zips_observed.tsv").open("w", encoding="utf-8", newline="") as f:

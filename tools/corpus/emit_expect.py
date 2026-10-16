@@ -98,7 +98,9 @@ def key(e,unit):
     return pre+body[0]+":"[:0]+"|".join([body[0]]+[keyseg(x) for x in body[1:]])[1:] if False else pre+"|".join([body[0]]+[keyseg(x) for x in body[1:]])
 
 def slug(e):
-    text=join(line1(e),city_of(e),e.get("state",""),e.get("zip5","")).replace("#"," unit ")
+    # A dual address follows the street, with its units (decision 11).
+    l1=street_line(e) if dual(e) else line1(e)
+    text=join(l1,city_of(e),e.get("state",""),e.get("zip5","")).replace("#"," unit ")
     return re.sub(r"[^a-z0-9]+","-",text.lower()).strip("-")
 
 def reso(e):

@@ -13,7 +13,7 @@
 # hand. overrides.toml is written by hand.
 
 state = "FL"
-version = "2026.10.1"
+version = "2026.10.2"
 sources = [
   "auction-tracker cities_fl.json (author's own data, MIT OR Apache-2.0)",
   "US Census Bureau 2024 Gazetteer, places (public domain)",

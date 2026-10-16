@@ -105,16 +105,8 @@ struct StateRow {
     kind: StateKind,
 }
 
-struct PlaceRow {
-    state: &'static str,
-    name: &'static str,
-    county: &'static str,
-    kind: PlaceKind,
-}
-
 mod tables {
-    #[allow(unused_imports)] // PlaceKind is unused when no pack is enabled.
-    use super::{MatchKind, PlaceKind, PlaceRow, Special, StateKind, StateRow, SuffixRow, UnitRow};
+    use super::{MatchKind, Special, StateKind, StateRow, SuffixRow, UnitRow};
     use crate::types::{Directional, MilitaryKind, MilitaryPostOffice};
 
     include!(concat!(env!("OUT_DIR"), "/lexicon_tables.rs"));
@@ -122,14 +114,99 @@ mod tables {
 
 pub use tables::{MAX_FORM_WORDS, MAX_PLACE_WORDS};
 
+/// Whether lookups may return places of `state`. The national list is
+/// compiled in for every state (feature `places-us`), but only states with a
+/// curated pack are read until the parser uses it (design.md item 25).
+fn readable(state: &str) -> bool {
+    tables::PACK_STATES.contains(&state)
+}
+
+// The place tables are packed binary files written by build.rs (see
+// `emit_places` there for the layout), so a lookup is a binary search over
+// byte records with no pointers to relocate. Every read is bounds-checked and
+// a malformed table gives `None`, never a panic.
+
+const ROW_LEN: usize = 9;
+const KEY_LEN: usize = 10;
+const ZIP_LEN: usize = 9;
+
+fn le32(b: &[u8], at: usize) -> Option<u32> {
+    Some(u32::from_le_bytes(
+        b.get(at..at.checked_add(4)?)?.try_into().ok()?,
+    ))
+}
+
+/// The `n`th `len`-byte record of a packed table.
+fn record(table: &'static [u8], len: usize, n: usize) -> Option<&'static [u8]> {
+    let start = n.checked_mul(len)?;
+    table.get(start..start.checked_add(len)?)
+}
+
+fn pool_str(pool: &'static str, off: u32, len: u8) -> Option<&'static str> {
+    let start = usize::try_from(off).ok()?;
+    pool.get(start..start.checked_add(usize::from(len))?)
+}
+
 fn place_row(i: u32) -> Option<Place> {
-    let r = tables::PLACES.get(usize::try_from(i).ok()?)?;
+    let r = record(tables::PLACE_ROWS, ROW_LEN, usize::try_from(i).ok()?)?;
+    let county = usize::from(u16::from_le_bytes([*r.get(7)?, *r.get(8)?]));
     Some(Place {
-        state: r.state,
-        name: r.name,
-        county: r.county,
-        kind: r.kind,
+        state: tables::PLACE_STATES.get(usize::from(*r.get(5)?))?,
+        name: pool_str(tables::PLACE_POOL, le32(r, 0)?, *r.get(4)?)?,
+        county: match county {
+            0 => "",
+            n => tables::PLACE_COUNTIES.get(n - 1)?,
+        },
+        kind: match r.get(6)? {
+            0 => PlaceKind::Municipality,
+            1 => PlaceKind::Place,
+            _ => PlaceKind::Subdivision,
+        },
     })
+}
+
+/// Binary search over `n` sorted records: `cmp(i)` orders record `i` against
+/// the wanted key (`None` if the table is malformed).
+fn search(n: usize, cmp: impl Fn(usize) -> Option<std::cmp::Ordering>) -> Option<usize> {
+    use std::cmp::Ordering::{Equal, Greater, Less};
+    let (mut lo, mut hi) = (0, n);
+    while lo < hi {
+        let mid = lo + (hi - lo) / 2;
+        match cmp(mid)? {
+            Less => lo = mid + 1,
+            Greater => hi = mid,
+            Equal => return Some(mid),
+        }
+    }
+    None
+}
+
+/// The row and spelling kind for a `STATE|key` place key.
+fn find_place(key: &str) -> Option<(u32, MatchKind)> {
+    let index = tables::PLACE_INDEX;
+    let at = search(index.len() / KEY_LEN, |n| {
+        let r = record(index, KEY_LEN, n)?;
+        let k = pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?;
+        Some(k.cmp(key))
+    })?;
+    let r = record(index, KEY_LEN, at)?;
+    let kind = if *r.get(5)? == 0 {
+        MatchKind::Standard
+    } else {
+        MatchKind::Variant
+    };
+    Some((le32(r, 6)?, kind))
+}
+
+/// A ZIP's main place row and shared place rows.
+fn find_zip(zip5: &str) -> Option<(u32, &'static [u32])> {
+    let index = tables::ZIP_INDEX;
+    let at = search(index.len() / ZIP_LEN, |n| {
+        Some(record(index, ZIP_LEN, n)?.get(..5)?.cmp(zip5.as_bytes()))
+    })?;
+    let main = le32(record(index, ZIP_LEN, at)?, 5)?;
+    let shared = find(tables::ZIP_SHARED, zip5).copied().unwrap_or(&[]);
+    Some((main, shared))
 }
 
 /// The places a ZIP belongs to, from the state packs: its main place, and
@@ -339,11 +416,9 @@ impl Lexicons {
     /// no compiled-in pack lists it.
     pub fn place(&self, state: &str, s: &str) -> Option<Lookup<Place>> {
         let key = format!("{state}|{}", self.place_key(s));
-        let (i, kind) = *find(tables::PLACE_INDEX, &key)?;
-        Some(Lookup {
-            value: place_row(i)?,
-            kind,
-        })
+        let (i, kind) = find_place(&key)?;
+        let value = place_row(i).filter(|p| readable(p.state))?;
+        Some(Lookup { value, kind })
     }
 
     /// Whether `s` names a place (by name, not a listed misspelling) in any
@@ -357,16 +432,18 @@ impl Lexicons {
 
     /// The places a 5-digit ZIP belongs to, from the compiled-in packs.
     pub fn zip_places(&self, zip5: &str) -> Option<ZipPlaces> {
-        let (main, shared) = *find(tables::ZIP_INDEX, zip5)?;
+        let (main, shared) = find_zip(zip5)?;
         Some(ZipPlaces {
-            main: place_row(main)?,
+            main: place_row(main).filter(|p| readable(p.state))?,
             shared,
         })
     }
 
     /// All places in the compiled-in packs, in table order.
     pub fn places(&self) -> impl Iterator<Item = Place> {
-        (0..tables::PLACES.len()).filter_map(|i| place_row(u32::try_from(i).ok()?))
+        (0..tables::PLACE_ROWS.len() / ROW_LEN)
+            .filter_map(|i| place_row(u32::try_from(i).ok()?))
+            .filter(|p| readable(p.state))
     }
 
     /// All street suffixes, in table order.
@@ -427,8 +504,18 @@ mod tests {
         check("highway", tables::HIGHWAY_INDEX);
         check("military", tables::MILITARY_INDEX);
         check("military_po", tables::MILITARY_PO_INDEX);
-        check("place", tables::PLACE_INDEX);
-        check("zip", tables::ZIP_INDEX);
+        check("zip_shared", tables::ZIP_SHARED);
+        let keys: Vec<_> = (0..tables::PLACE_INDEX.len() / KEY_LEN)
+            .map(|n| {
+                let r = record(tables::PLACE_INDEX, KEY_LEN, n).unwrap();
+                pool_str(tables::PLACE_KEYS, le32(r, 0).unwrap(), r[4]).unwrap()
+            })
+            .collect();
+        assert!(keys.windows(2).all(|w| w[0] < w[1]), "place index order");
+        let zips: Vec<_> = (0..tables::ZIP_INDEX.len() / ZIP_LEN)
+            .map(|n| record(tables::ZIP_INDEX, ZIP_LEN, n).unwrap()[..5].to_vec())
+            .collect();
+        assert!(zips.windows(2).all(|w| w[0] < w[1]), "zip index order");
         assert!(tables::PLACEHOLDERS.windows(2).all(|w| w[0] < w[1]));
     }
 
@@ -666,7 +753,72 @@ mod tests {
         );
         assert!(LEX.has_pack("FL"));
         assert!(!LEX.has_pack("GA"));
-        assert_eq!(LEX.places().count(), 665);
+        // The pack's 665 places, plus the national list's 405 Census places
+        // it lacks when that is compiled in.
+        assert_eq!(
+            LEX.places().count(),
+            if cfg!(feature = "places-us") {
+                1070
+            } else {
+                665
+            }
+        );
+    }
+
+    #[cfg(feature = "places-us")]
+    #[test]
+    fn national_layer_sits_under_the_pack() {
+        // The national list is compiled in for every state ...
+        assert!(tables::PLACE_ROWS.len() / ROW_LEN > 50_000);
+        assert!(tables::ZIP_INDEX.len() / ZIP_LEN > 41_000);
+        assert!(find_place("MO|SAINTLOUIS").is_some());
+        assert_eq!(
+            find_place("PA|ROARINGBROOKTWP").map(|p| p.1),
+            Some(MatchKind::Variant)
+        );
+        assert!(find_zip("63101").is_some());
+        assert!(find_zip("6310").is_none() && find_zip("631011").is_none());
+        // ... but lookups read only states with a pack until the parser uses
+        // it (design.md item 25).
+        assert_eq!(LEX.place("MO", "ST LOUIS"), None);
+        assert_eq!(LEX.zip_places("63101"), None);
+        assert!(LEX.places().all(|p| p.state() == "FL"));
+    }
+
+    #[cfg(all(feature = "places-us", feature = "state-fl"))]
+    #[test]
+    fn national_rows_only_add_to_the_pack() {
+        // A Census place the pack lacks is added, with its county and kind.
+        let trinity = LEX.place("FL", "TRINITY").unwrap();
+        assert_eq!(trinity.kind, MatchKind::Standard);
+        assert_eq!(
+            (trinity.value.county(), trinity.value.kind()),
+            ("PASCO", PlaceKind::Place)
+        );
+        // The pack's own row and spelling win.
+        let miami = LEX.place("FL", "MIAMI").unwrap().value;
+        assert_eq!(
+            (miami.county(), miami.kind()),
+            ("DADE", PlaceKind::Municipality)
+        );
+        assert_eq!(
+            LEX.place("FL", "BOCA RATOM").unwrap().kind,
+            MatchKind::Variant
+        );
+        // The Census's Everglades is the pack's EVERGLADES CITY, not a second
+        // place (build_us.py renames it).
+        assert_eq!(LEX.place("FL", "EVERGLADES"), None);
+        assert_eq!(
+            LEX.place("FL", "EVERGLADES CITY").unwrap().value.county(),
+            "COLLIER"
+        );
+        // A national-only place the pack's observed ZIPs name is shared.
+        let bellview = LEX.place("FL", "BELLVIEW").unwrap().value;
+        let z = LEX.zip_places("32526").unwrap();
+        assert_eq!(z.main().name(), "PENSACOLA");
+        assert!(z.contains(&bellview));
+        // The pack's ZIP table is not touched: 32507 is still PENSACOLA.
+        assert_eq!(LEX.zip_places("32507").unwrap().main().name(), "PENSACOLA");
     }
 
     #[cfg(feature = "state-fl")]

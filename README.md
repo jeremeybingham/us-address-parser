@@ -50,7 +50,7 @@ usaddress's intersection, landmark, `CornerOf`, country, recipient or
 warning). The feature-by-feature comparison is in
 [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md).
 
-## Place data (state packs)
+## Place data (national list and state packs)
 
 A state pack gives the parser a state's place names, the misspellings seen
 in real data, and the place each ZIP belongs to. The parser uses it to find
@@ -61,6 +61,15 @@ completed from the ZIP (`FERNANDINA B`), or the ZIP's place when there is no
 city. `city` always keeps what the input said. Florida is the first pack
 (cargo feature `state-fl`, on by default); see
 [`docs/packs/fl.md`](docs/packs/fl.md) for its sources and licenses.
+
+Under the packs sits a national list (`data/places/`, cargo feature
+`places-us`, on by default): 50,375 places and 41,154 ZIPs for the 50 states,
+DC and Puerto Rico, built from the Census Gazetteer and GeoNames postal codes.
+It adds the places a Florida pack lacks. The parser does not read it for other
+states yet. Sources, licenses and how it is built:
+[`docs/places.md`](docs/places.md). The ZIP-to-place data is GeoNames,
+(c) GeoNames, CC BY 4.0 (<https://www.geonames.org/>), and is not a
+statement that an address exists or can receive mail.
 
 ## Rust usage
 
@@ -99,7 +108,8 @@ crates/addr-core/   pure Rust library (no Python dependency)
 crates/addr-cli/    `addr` command-line tool
 crates/addr-py/     PyO3 bindings (planned, Milestone 6)
 data/               lexicon tables (Pub 28 suffixes, units, states, ...) and
-                    state packs (data/packs/), compiled into static tables by
+                    national place list (data/places/), state
+                    packs (data/packs/), compiled into static tables by
                     addr-core's build.rs
 tests/corpus/       labeled golden corpus (JSONL)
 tests/external/     usaddress's labeled test files (MIT)
@@ -115,6 +125,7 @@ docs/               design and format specs
 - [`docs/reso-mapping.md`](docs/reso-mapping.md): RESO field mapping
 - [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md): accuracy against usaddress
 - [`docs/packs/fl.md`](docs/packs/fl.md): the Florida pack, its sources and licenses
+- [`docs/places.md`](docs/places.md): the national place list, its sources and licenses
 
 ## Development
 
@@ -128,5 +139,6 @@ cargo bench -p addr-core --bench parse
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at
-your option. The ZIP tables in `data/packs/` are GeoNames data under CC BY 4.0;
+your option. The ZIP tables in `data/packs/` and `data/places/` are GeoNames
+data under CC BY 4.0;
 see [`NOTICE`](NOTICE).

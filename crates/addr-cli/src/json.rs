@@ -104,6 +104,7 @@ pub fn record(a: &ParsedAddress) -> Value {
             "kind": match m.place.kind() {
                 PlaceKind::Municipality => "municipality",
                 PlaceKind::Place => "place",
+                PlaceKind::Subdivision => "subdivision",
             },
             "source": m.source.code(),
         })),

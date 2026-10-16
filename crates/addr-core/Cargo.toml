@@ -8,7 +8,10 @@ repository.workspace = true
 rust-version.workspace = true
 
 [features]
-default = ["state-fl"]
+default = ["places-us", "state-fl"]
+# National place list (data/places/, docs/places.md): places and ZIPs for every
+# state, DC and Puerto Rico, under the curated state packs.
+places-us = []
 # Curated state packs (data/packs/<st>/, docs/packs/): place names, their
 # spellings and ZIPs, used to find and name the city.
 state-fl = []

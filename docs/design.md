@@ -17,9 +17,10 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus, the
 `addr` CLI and benchmarks; so is the usaddress comparison. Milestone 5, the
 place list, is in progress: the Florida pack is built and used (293 corpus
-cases, all passing), and the national list's source data is downloaded.
-**Next (section 10): item 23, the dual-address slug, then items 24 and 25,
-the national place list.** After Milestone 5 come the usaddress-shaped
+cases, all passing), and the national list is built and compiled in but not
+yet read by the parser outside Florida.
+**Next (section 10): item 25, the national place list in the parser** (item
+23, the dual-address slug, and item 24, the national data, are done). After Milestone 5 come the usaddress-shaped
 features and the Python wrapper (Milestone 6), then calibrated confidence
 (Milestone 7; decision 27); the custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
@@ -148,7 +149,7 @@ tools/
   corpus/emit_expect.py     # writes emitter expectations into corpus cases from the specs
   compare/                  # usaddress comparison and training-overlap scripts
   packs/                    # Florida pack export and observed-ZIP scripts
-  places/                   # (planned, item 24) national place list builder
+  places/                   # build_us.py: national place list from Census and GeoNames data
   calibrate/                # (planned, item 38) confidence fitting
   train/                    # (planned, Milestone 7, if built) CRF training scripts
 models/                     # (planned, Milestone 7) CRF model; README only
@@ -389,18 +390,17 @@ Done:
   with no commas, a city run into the street, street versus city before a
   ZIP, cut-off cities completed, the place from the ZIP and
   `zip_city_mismatch`. Corpus `fl-001` to `fl-019`.
+- **Slug follows the street for dual addresses** (item 23; decision 11). The
+  slug is built from the street line and its units, like the key and the
+  RESO output. `rg-040` to `rg-044` changed (`rg-045` is not a dual
+  address).
 
 To do, in order:
 
-23. **Slug follows the street for dual addresses** (decision 11). Build the
-    slug from `street_line()`; update the slug section of
-    `docs/key-format.md`, `tools/corpus/emit_expect.py` and the slug
-    expectations of `rg-040` to `rg-045`. Small and independent; it goes
-    first because Python exposes the slug.
 24. **National place data** (`data/places/`, feature `places-us`, on by
     default). Data only: no parser behavior changes, so the PR is the
     builder, its checks and the compiled tables.
-    - Commit 1: `tools/places/build_us.py` and its output, from the Census
+    - Commit 1 (done): `tools/places/build_us.py` and its output, from the Census
       2024 Gazetteer (places and county subdivisions, public domain), the
       Census 2020 place-by-county list and GeoNames `US.zip` (CC BY 4.0).
       Source files are in `local-data/places/` (gitignored; URLs, dates and
@@ -409,12 +409,14 @@ To do, in order:
       settles: one county for the 1,304 places that span several, the 462
       places newer than the 2020 county list, and whether Puerto Rico
       (`PR.zip`, a separate GeoNames file) is in this pass.
-    - Commit 2: `build.rs` compiles `data/places/` behind `places-us`, with
+    - Commit 2 (done): `build.rs` compiles `data/places/` behind `places-us`, with
       the same checks as the packs, and merges it under the Florida pack
       (decision 29: the pack wins for Florida; national rows only add
       places it lacks). Record the compiled size (expected 1.5 to 2 MB) and
-      build time.
-    - Commit 3: GeoNames attribution in `NOTICE` and the README's place
+      build time. Done: 2.7 MB as packed binary tables (13.4 MB as `&str`
+      tables, which is why they are packed); see `docs/places.md`. Lookups
+      still return only pack states until item 25.
+    - Commit 3 (done): GeoNames attribution in `NOTICE` and the README's place
       data section.
 25. **Use the national list in the parser.** `Lexicons` place lookups read
     the national layer for every state, so the Florida behaviors (city on
@@ -781,11 +783,11 @@ extensible; no state-specific rule in the tagger.
     list are unlikely to close.
 11. **Slug for dual addresses: follow the street.** The key and the RESO
     output already use the street; only the USPS output writes the PO Box,
-    because Pub 28 section 215 says so for the mailpiece. The slug will be
+    because Pub 28 section 215 says so for the mailpiece. The slug is
     built from the street line, as the RESO emitter's `UnparsedAddress` is
     (the shared `street_line()` helper in `emit/usps.rs`), so every
     identifier names the same place. The slug is not a contract, so this
-    needs no version change. Planned before the Python wrapper (Milestone 6),
+    needs no version change. Done before the Python wrapper (Milestone 6),
     since Python exposes the slug.
 12. **`Diagnostics::confidence`: a calibrated probability.** A number from
     0.0 to 1.0: the chance that the whole parse (every component) is right,

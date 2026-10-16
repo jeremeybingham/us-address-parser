@@ -6,8 +6,13 @@ This product includes data from third parties under their own terms:
 - GeoNames postal code data (https://www.geonames.org/), licensed under the
   Creative Commons Attribution 4.0 License
   (https://creativecommons.org/licenses/by/4.0/). Used for the ZIP-to-place
-  tables in data/packs/ (see docs/packs/).
-- US Census Bureau Gazetteer files (public domain), used for place names.
+  tables in data/packs/ (see docs/packs/) and data/places/ (see
+  docs/places.md), and for the postal place names in data/places/. The
+  GeoNames data is provided "as is" and has been reformatted (upper-cased,
+  de-accented, joined with Census names).
+- US Census Bureau Gazetteer files and 2020 reference lists (public domain),
+  used for place names, county subdivisions and counties in data/packs/ and
+  data/places/.
 - Florida Department of Business and Professional Regulation licensee
   addresses (public record), used for observed city and ZIP pairs and street
   spellings in data/packs/fl/ (see docs/packs/fl.md).
