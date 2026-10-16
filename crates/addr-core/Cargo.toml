@@ -8,7 +8,10 @@ repository.workspace = true
 rust-version.workspace = true
 
 [features]
-default = []
+default = ["state-fl"]
+# Curated state packs (data/packs/<st>/, docs/packs/): place names, their
+# spellings and ZIPs, used to find and name the city.
+state-fl = []
 # Parallel `Parser::parse_many`.
 rayon = ["dep:rayon"]
 # CRF fallback tagger (Milestone 7, if built).
