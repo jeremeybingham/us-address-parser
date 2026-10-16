@@ -88,7 +88,7 @@ def test_other_threads_run_while_rust_parses():
 
 
 def test_pandas_recipe_with_chosen_columns():
-    """The README's short recipe: a few attributes, no `to_dict`."""
+    """The README's short pandas recipe: a few attributes, no `to_dict`."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"id": [1, 2], "address": [SAMPLE[0], ""]})
     parsed = uap.parse_many(df["address"].fillna("").tolist())
@@ -100,6 +100,48 @@ def test_pandas_recipe_with_chosen_columns():
     assert out.loc[0, "addr_street_name"] == "MAIN"
     assert out.loc[0, "addr_key"] == "k1:S|123|N|MAIN|ST||FL|33101"
     assert pd.isna(out.loc[1, "addr_street_name"]) and pd.isna(out.loc[1, "addr_key"])
+
+
+def test_polars_recipe_with_chosen_columns():
+    """The README's Polars recipe: a few attributes, an explicit schema."""
+    pl = pytest.importorskip("polars")
+    df = pl.DataFrame({"id": [1, 2, 3], "address": [SAMPLE[0], None, SAMPLE[1]]})
+    parsed = uap.parse_many(df["address"].fill_null("").to_list())
+    cols = ["street_number", "street_name", "street_suffix", "unit_number", "city", "state", "zip5"]
+    flat = pl.DataFrame(
+        {f"addr_{c}": [getattr(a, c) if a else None for a in parsed] for c in cols}
+        | {
+            "addr_key": [a.key() if a else None for a in parsed],
+            "addr_warnings": [",".join(a.warnings) if a else None for a in parsed],
+        },
+        schema={f"addr_{c}": pl.String for c in cols}
+        | {"addr_key": pl.String, "addr_warnings": pl.String},
+    )
+    out = df.hstack(flat)
+    assert out.height == 3 and out["id"].to_list() == [1, 2, 3]
+    assert out["addr_street_name"].to_list() == ["MAIN", None, None]
+    assert out["addr_key"].to_list()[0] == "k1:S|123|N|MAIN|ST||FL|33101"
+    assert out["addr_zip5"].to_list() == ["33101", None, "33601"]
+    # An all-None column keeps its String type.
+    assert out.schema["addr_unit_number"] == pl.String
+    only_blank = pl.DataFrame(
+        {"addr_unit_number": [None, None]}, schema={"addr_unit_number": pl.String}
+    )
+    assert only_blank.schema["addr_unit_number"] == pl.String
+
+
+def test_polars_recipe_with_structs():
+    pl = pytest.importorskip("polars")
+    parsed = uap.parse_many([SAMPLE[0], "", SAMPLE[1]])
+    full = pl.DataFrame([a.to_dict() if a else None for a in parsed], infer_schema_length=None)
+    out = full.select(
+        "street_name",
+        pl.col("place").struct.field("name").alias("place_name"),
+        pl.col("usps").struct.field("line1").alias("usps_line1"),
+    )
+    assert out["street_name"].to_list() == ["MAIN", None, None]
+    assert out["place_name"].to_list() == ["MIAMI", None, "TAMPA"]
+    assert out["usps_line1"].to_list() == ["123 N MAIN ST APT 4", None, "PO BOX 12"]
 
 
 def test_pandas_recipe():

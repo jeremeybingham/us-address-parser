@@ -4,6 +4,15 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Polars in the batch recipe (Milestone 6, item 34 follow-up)
+
+- The Python README now has a tested Polars recipe next to the pandas one:
+  chosen columns with an explicit `pl.String` schema (an all-`None` column
+  stays typed), and `to_dict()` structs read with `struct.field`. Building a
+  7-column frame from 100,000 addresses: 0.34 s with Polars, 0.45 s with
+  pandas, parsing included. `bench_batch.py` times both; the CI Python job
+  installs polars.
+
 ### Python `parse_many`: batch tests, benchmark and the pandas recipe (Milestone 6, item 34)
 
 - `crates/addr-py/tests/test_batch.py`: `parse_many` gives what a loop of

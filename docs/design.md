@@ -578,6 +578,12 @@ wrapper does not change when it is filled.
     `to_dict` per row costs about as much as the parse, so the README recipe
     picks columns); the recipe in `crates/addr-py/README.md`. Multi-field
     input has no batch call (a loop of `parse_fields`, or join the columns).
+    **Follow-up:** the recipe covers Polars as well as pandas, both tested
+    (`to_dict` structs and chosen columns with an explicit schema). Building a
+    7-column frame from 100,000 parsed addresses took 0.34 s with Polars and
+    0.45 s with pandas, parsing included (0.25 s of it); the rest is reading
+    attributes from Python objects, which a columnar call (or Arrow) could
+    remove (not built).
 35. **Wheels.** `.github/workflows/wheels.yml`: abi3 wheels for Linux,
     macOS and Windows, built and tested on every pull request. No
     publishing yet (item 46).
