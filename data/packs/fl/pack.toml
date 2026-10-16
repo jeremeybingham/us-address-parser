@@ -18,7 +18,7 @@
 # after changing places_added.tsv.
 
 state = "FL"
-version = "2026.10.3"
+version = "2026.10.4"
 sources = [
   "auction-tracker cities_fl.json (author's own data, MIT OR Apache-2.0)",
   "US Census Bureau 2024 Gazetteer, places (public domain)",
