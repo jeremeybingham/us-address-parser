@@ -1,4 +1,5 @@
 """Type stubs for us_address_parser (the compiled module is `_core`)."""
+from collections.abc import Sequence
 from typing import TypedDict
 
 __version__: str
@@ -160,7 +161,7 @@ class Parser:
         state: str | None = None,
         zip: str | None = None,
     ) -> ParsedAddress: ...
-    def parse_many(self, texts: list[str]) -> list[ParsedAddress | None]: ...
+    def parse_many(self, texts: Sequence[str]) -> list[ParsedAddress | None]: ...
 
 def parse(text: str, default_state: str | None = None) -> ParsedAddress: ...
 def parse_fields(
@@ -172,7 +173,7 @@ def parse_fields(
     default_state: str | None = None,
 ) -> ParsedAddress: ...
 def parse_many(
-    texts: list[str], default_state: str | None = None
+    texts: Sequence[str], default_state: str | None = None
 ) -> list[ParsedAddress | None]: ...
 def tag(text: str, default_state: str | None = None) -> tuple[dict[str, str], str]: ...
 def parse_tokens(

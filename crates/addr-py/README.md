@@ -36,6 +36,43 @@ uap.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
   `ValueError`.
 - `confidence` is `None` until it is calibrated.
 
+## Batches and pandas
+
+`parse_many(texts)` takes a list or tuple of strings, releases the GIL and
+parses in parallel with Rust threads, and returns the results in order (`None`
+for an element with no address text). On 100,000 addresses on a 14-CPU
+machine (`benchmarks/bench_batch.py`):
+
+| | Time | Per second | Speed-up |
+|---|---|---|---|
+| a loop of `parse` | 1.55 s | 64,000 | 1x |
+| `parse_many` | 0.25 s | 403,000 | 6.3x |
+
+A `ParsedAddress` computes its formats when you ask, so take only what you
+need. For a DataFrame, pick the columns:
+
+```python
+import pandas as pd
+import us_address_parser as uap
+
+df = pd.read_csv("addresses.csv")
+parsed = uap.parse_many(df["address"].fillna("").tolist())  # None for a blank row
+
+cols = ["street_number", "street_name", "street_suffix", "unit_number", "city", "state", "zip5"]
+flat = pd.DataFrame([{c: getattr(a, c) for c in cols} if a else {} for a in parsed])
+flat["key"] = [a.key() if a else None for a in parsed]
+flat["warnings"] = [",".join(a.warnings) if a else None for a in parsed]
+out = pd.concat([df, flat.add_prefix("addr_")], axis=1)
+```
+
+For every field at once (`place`, `usps`, `reso`, ...), use `to_dict()` and
+`pd.json_normalize([a.to_dict() if a else {} for a in parsed])`; that costs
+about as much as parsing again (the loop with `to_dict` ran at 55,000 per
+second). Pre-split columns (`line1`, `city`, ...) have no batch call yet:
+loop over `parse_fields`, or join the columns with commas and use
+`parse_many`. The same works with Polars (`pl.DataFrame(rows)`); neither
+library is a dependency.
+
 ## Coming from usaddress
 
 | usaddress | `us_address_parser` |

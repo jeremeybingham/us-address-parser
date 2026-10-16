@@ -4,6 +4,19 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Python `parse_many`: batch tests, benchmark and the pandas recipe (Milestone 6, item 34)
+
+- `crates/addr-py/tests/test_batch.py`: `parse_many` gives what a loop of
+  `parse` gives, keeps order, returns `None` for unusable input, takes
+  `default_state`, accepts a list or tuple (a string or generator raises
+  `TypeError`), and lets another thread run during a big batch (the GIL is
+  released). Both pandas recipes are tested.
+- `crates/addr-py/benchmarks/bench_batch.py`: on 100,000 corpus addresses
+  (14 CPUs) `parse_many` takes 0.25 s against 1.55 s for a loop of `parse`
+  (6.3x); `to_dict` per row costs about as much as parsing, so the README
+  recipe picks columns, with `json_normalize(to_dict())` for everything.
+- The CI Python job installs pandas so the recipe tests run.
+
 ### The Python wrapper (Milestone 6, item 33)
 
 - `crates/addr-py` joins the workspace: the extension module
