@@ -570,6 +570,14 @@ wrapper does not change when it is filled.
 34. **`parse_many`**, releasing the GIL during the Rust work, with
     `test_batch.py`, a benchmark against a Python loop of `parse`, and the
     pandas recipe in the package README.
+    **Done:** `test_batch.py` (8 tests: identical to a loop of `parse`,
+    order, `None` for unusable input, `default_state`, list/tuple only, 20,000
+    in order, a counting thread keeps running during a 150,000 batch, both
+    pandas recipes); `benchmarks/bench_batch.py` (100,000 corpus addresses on
+    14 CPUs: 1.55 s for a loop of `parse`, 0.25 s for `parse_many`, 6.3x; a
+    `to_dict` per row costs about as much as the parse, so the README recipe
+    picks columns); the recipe in `crates/addr-py/README.md`. Multi-field
+    input has no batch call (a loop of `parse_fields`, or join the columns).
 35. **Wheels.** `.github/workflows/wheels.yml`: abi3 wheels for Linux,
     macOS and Windows, built and tested on every pull request. No
     publishing yet (item 46).
