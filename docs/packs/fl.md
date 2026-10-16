@@ -131,6 +131,31 @@ matches it anyway.
   `CR` before a route number stays COUNTY ROAD. Corpus `fl-017` to
   `fl-019`.
 
+## To do
+
+Open Florida work, from the DBPR licensee export (counts are rows out of
+445,252 Florida addresses, after the 2026-10-16 fixes):
+
+- **Unincorporated communities the pack does not know.** 4,514 rows have a
+  city that matches no place, mostly real communities with no city
+  government: `TRINITY` (403), `AVE MARIA` (277), `COCONUT GROVE` (216),
+  `CITRUS SPRINGS` (170), `TIERRA VERDE` (154), `VIERA` (102), `HARMONY`
+  (101), `UNIVERSITY PARK` (84). Add them as `place` rows with their county
+  and ZIPs (the rest are typos and cut-off names such as `MAIMI`,
+  `PT CHARLOTTE`). Related open decision in `docs/design.md` section 13: a
+  city that is no known place, with a ZIP the pack knows.
+- **Rarer misspellings and the penthouse shape.** Suffix typos `DRT` (1 row)
+  and `LNE` (3), and the unit designator `SU` (16, `SU B`). A penthouse
+  written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE PH`; 162
+  rows) gives a designator with no number plus a PH unit; decide whether it
+  is one unit (`APT PH5213`) or two.
+- **`SR` and county road names.** `SR` before a route number is State Road
+  in Florida (`SR 54`; 143 rows), left out of the base tables because it is
+  State Route elsewhere (Appendix F). County road spellings such as
+  `CTY RD` and `CO RD` (19 rows) are not highway prefixes yet. Both belong
+  in `overrides.toml` or the highway table, with evidence like the `CR`
+  entry's.
+
 ## Versioning
 
 `pack.toml` `version` is `YYYY.MM.N`. Bump it whenever the `.tsv` files

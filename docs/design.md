@@ -573,6 +573,10 @@ extensible; no state-specific rule in the tagger.
 - **Slug follows the street for dual addresses** (decision 11): change
   `emit/slug.rs`, the slug section of `docs/key-format.md`, the corpus slug
   expectations for `rg-040` to `rg-045` and `tools/corpus/emit_expect.py`.
+- **Florida pack to do** (`docs/packs/fl.md`, "To do"): unincorporated
+  communities the pack lacks (about 4,500 DBPR rows with no place match),
+  rarer misspellings and the `APT PH 5213` penthouse shape, and `SR` as
+  State Road plus county road names.
 - **Milestone 5**, in order: the national base list (next), the benchmark
   rerun and the CRF call, then calibrated confidence. The Florida pack is
   done.
