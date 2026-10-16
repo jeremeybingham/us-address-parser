@@ -6,7 +6,7 @@ Publication 28** style and **RESO Data Dictionary** output, and produces
 database-ready identifiers (a stable canonical match key and a URL-safe slug).
 
 > **Status:** the Rust library and the `addr` CLI work: parser, key, USPS,
-> RESO and slug emitters, a 258-case golden corpus and a comparison with
+> RESO and slug emitters, a 287-case golden corpus and a comparison with
 > usaddress. The place list (Milestone 5) is in progress: the Florida pack is
 > built; a national place list is next, then the Python wrapper (Milestone 6). Nothing is published yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
 

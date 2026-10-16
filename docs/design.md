@@ -17,7 +17,7 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus (258
 cases, all passing), the `addr` CLI and benchmarks. From Milestone 8, the
 usaddress comparison is done. Milestone 5 is in progress: the Florida pack
-is built and used (271 corpus cases, all passing). **Next: the national
+is built and used (287 corpus cases, all passing). **Next: the national
 place list, the benchmark rerun and the CRF call, calibrated confidence,
 then Milestone 6, the Python wrapper.**
 Section 10 has the plan and section 13 the open items.
@@ -249,7 +249,7 @@ does include the city.
 
 | Check | Status |
 |---|---|
-| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 258 cases, all passing. |
+| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 287 cases, all passing. |
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |

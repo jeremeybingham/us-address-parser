@@ -4,6 +4,25 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Rule fixes from the DBPR licensee data
+
+Run on about 445,000 Florida addresses from the DBPR real estate licensee
+export; corpus cases `rg-082` to `rg-097`; rules and observed spellings in
+`docs/usps-pub28-notes.md`. Rows with any `unparsed_remainder` fell from
+4,414 to 2,787, and 320 rows that parsed wrongly with no warning (a unit
+read into the street name) are now right. Keys changed for the fixed rows
+(`docs/key-format.md`).
+
+- A line 2 that is exactly the city field is skipped, even when it starts
+  with a suffix word (`CAPE CORAL`, `FORT MYERS`).
+- A unit value in two parts after a designator or `#` is one value
+  (`APT E 1003`, `UNIT 210 C`).
+- A street cut across lines is joined (`2781 NE` / `15 ST`).
+- A dash between the street and its unit is dropped.
+- Observed spellings: `APTO`, `AP`, `APART`, `APARTAMENTO`, `APARTAMENT`,
+  `APPT`, `APP`, `APRT` (APARTMENT), `SUIT` (SUITE), `BLV`, `BL`
+  (BOULEVARD), `TE` (TERRACE), with `non_standard_abbreviation`.
+
 ### Florida pack and place lookups (Milestone 5)
 
 Decisions 13 to 19 of 2026-10-16 in `docs/design.md`; data and sources in

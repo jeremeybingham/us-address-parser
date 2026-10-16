@@ -64,6 +64,19 @@ auction-tracker (Florida county data):
 | `UN` | UNIT | units |
 | `LT` | LOT | units |
 
+Seen in DBPR licensee data (Florida real estate licensees, 2025 export;
+counts are rows out of about 445,000 Florida addresses):
+
+| Spelling | Resolves to | Table |
+|---|---|---|
+| `BLV` (96), `BL` (46) | BLVD (BOULEVARD) | suffixes |
+| `TE` (50, Miami-Dade grid streets: `NW 127 TE`) | TER (TERRACE) | suffixes |
+| `APTO` (170), `AP` (38), `APART` (37), `APARTAMENTO` (20), `APPT` (20), `APARTAMENT` (13), `APP` (13), `APRT` (10) | APT (APARTMENT) | units |
+| `SUIT` (35) | STE (SUITE) | units |
+
+`AP` is also the Armed Forces Pacific state code; the tagger reads the
+last line first, so `APO AP 96xxx` keeps it as the state.
+
 Also `observed`, but taken from older transcriptions of the Pub 28 tables
 rather than from field data: 20 suffix spellings that usaddress-scourgify and
 the street-address gem list but the current Appendix C1 does not (for example
@@ -151,6 +164,16 @@ marked "decided" were chosen by the author:
 | A house number and a unit with no street raise `missing_street_name` (`123 UNIT 1`). | Decided. |
 | Floors are numbers: an ordinal floor value is written without its ordinal suffix (`5TH FLOOR` is FL 5). | Appendix C2 (FL takes a range); decided. |
 | Building name: words ending in a `[building]` word (TOWER, BUILDING, HALL, CENTER, PLAZA, ...), at the end of the delivery lines, in their own line or comma segment or right after a unit (`SUITE 801 EAST TOWER`, line 2 `ANNEX BUILDING`), go in `building`. Not after the house number alone (`1 TRUMP TOWER` is a street). | Not a USPS rule (Pub 28 has no building line); usaddress BuildingName; decided. |
+
+Added 2026-10-16 from the DBPR licensee data (Florida; corpus cases
+`rg-082` to `rg-097`):
+
+| Rule | Source |
+|---|---|
+| A line 2 or comma segment that is exactly the city field is a copy and is skipped, even when its first word is also a suffix (`CAPE CORAL`, `FORT MYERS`, `LAKE WORTH`). The cut-off-copy rule above still keeps a suffix at the end of the street line. | Prior art (DBPR data). |
+| A unit value written in two parts, a letter and a number in either order, right after a designator or `#` and in the same line or comma segment, is one value kept as written (`APT E 1003`, `UNIT 210 C`, `# 104 M`), like the bare `DR V 21`. Two numbers stay unparsed (`STE 109 258`). | Section 213; prior art (DBPR data). |
+| A street cut across lines: when line 1's street part has no suffix and the next line or comma segment is a suffix, with at most a number before it and a directional after it, the two are one street (`8725 NW` / `18 TER`, `6556 CHESTNUT` / `CIR`, `750 NE` / `64 ST APT B202`). A line 2 of name words stays unparsed (`... OAK COURT` / `MAGNOLIA TERRACE`). | Prior art (DBPR data). |
+| A dash between the street and its unit is dropped (`3RD AVENUE - SUITE 1500`, `192ND STREET - #502`). | Section 354 (punctuation removal); prior art (DBPR data). |
 
 ## Emitter rules
 

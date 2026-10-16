@@ -412,6 +412,19 @@ impl Tagger<'_> {
     ) -> usize {
         let Some(city) = city else { return hi };
         let words: Vec<&str> = self.toks[city].iter().map(|t| t.text.as_str()).collect();
+        // Line 2 `CAPE CORAL` with city `CAPE CORAL`: a whole line or comma
+        // segment that is the city, even when its first word is a suffix.
+        let k = words.len();
+        if hi > lo + k {
+            let tail = &self.toks[hi - k..hi];
+            let whole_seg = self.toks[hi - k - 1].seg != tail[0].seg
+                && tail.iter().all(|t| t.seg == tail[0].seg)
+                && !self.toks.get(hi).is_some_and(|t| t.seg == tail[0].seg);
+            if whole_seg && tail.iter().zip(&words).all(|(t, w)| t.text == *w) {
+                self.set(hi - k..hi, Tag::Skip);
+                return hi - k;
+            }
+        }
         for k in (1..=words.len()).rev() {
             if hi < lo + k + 1 {
                 continue;
@@ -1001,7 +1014,34 @@ impl Tagger<'_> {
         {
             line_end = j;
         }
+        if self.street_continues(i, line_end, j) {
+            line_end = j;
+        }
         self.street_body(i, line_end, hi.min(line_end));
+    }
+
+    /// A street cut across lines (`8725 NW` / `18 TER`, `5424 EDGEWATER` /
+    /// `AVE`): the first line's part `i..e` has no suffix, and the rest
+    /// `e..j`, one line or comma segment, is a suffix with at most a number
+    /// before it and a directional after it.
+    fn street_continues(&self, i: usize, e: usize, j: usize) -> bool {
+        if i >= e || e >= j || self.lex.suffix(self.text(e - 1)).is_some() {
+            return false;
+        }
+        let rest = &self.toks[e..j];
+        if rest.iter().any(|t| t.seg != rest[0].seg) || rest[0].seg == self.toks[e - 1].seg {
+            return false;
+        }
+        let mut k = j;
+        if let Some((_, w)) = longest_ending(self.toks, e, k, |s| self.lex.directional(s)) {
+            k -= w;
+        }
+        let is_number = |t: &str| all_digits(t) || is_ordinal(t);
+        match k - e {
+            1 => self.lex.suffix(self.text(e)).is_some(),
+            2 => is_number(self.text(e)) && self.lex.suffix(self.text(e + 1)).is_some(),
+            _ => false,
+        }
     }
 
     /// Whether the single letter at `k` belongs to the house number before
@@ -1167,6 +1207,24 @@ impl Tagger<'_> {
         lex.suffix(word).is_some() && !highway && sfx > name_start
     }
 
+    /// Whether tokens `last - 1` and `last` are one unit value written in two
+    /// parts, a letter and a number in either order, right after a designator
+    /// or `#`: `APT E 1003`, `UNIT 210 C`, and `# V 21`, the form the USPS
+    /// emitter writes for a bare `DR V 21`.
+    fn split_value(&self, floor: usize, last: usize) -> bool {
+        if last < floor + 2 {
+            return false;
+        }
+        let (a, b) = (self.text(last - 1), self.text(last));
+        let pair = is_letter(a) && all_digits(b) || all_digits(a) && is_letter(b);
+        let v = last - 1;
+        let seg = self.toks[last].seg;
+        let one_seg = self.toks[v].seg == seg && self.toks[v - 1].seg == seg;
+        pair && one_seg
+            && (self.toks[v - 1].is_hash()
+                || longest_ending(self.toks, floor, v, |s| self.lex.unit(s)).is_some())
+    }
+
     /// Up to two units at the end of `floor..hi`, read from the right.
     /// `name_lo` is where the street name starts (for the bare-unit rule).
     /// Returns the new end of the street.
@@ -1207,15 +1265,16 @@ impl Tagger<'_> {
                 j = last;
                 continue;
             }
+            // "STE 1500" before " - ": a dash between the street and its
+            // unit (`3RD AVENUE - SUITE 1500`).
+            if !found.is_empty() && self.toks[last].is_dash() {
+                self.set(last..j, Tag::Skip);
+                j = last;
+                continue;
+            }
             // "# 309", "UNIT 203", "LOT H28".
             if is_unit_value(t) && last > floor {
-                // "# V 21": a letter and a number after '#' are one value
-                // (the form the USPS emitter writes for a bare "DR V 21").
-                let start = if all_digits(t)
-                    && last >= floor + 2
-                    && is_letter(self.text(last - 1))
-                    && self.toks[last - 2].is_hash()
-                {
+                let start = if self.split_value(floor, last) {
                     last - 1
                 } else {
                     last
@@ -1236,9 +1295,9 @@ impl Tagger<'_> {
                     }
                     continue;
                 }
-                if let Some((_, w)) = longest_ending(self.toks, floor, last, |s| lex.unit(s)) {
-                    found.push((last - w..last, last..j));
-                    j = last - w;
+                if let Some((_, w)) = longest_ending(self.toks, floor, start, |s| lex.unit(s)) {
+                    found.push((start - w..start, start..j));
+                    j = start - w;
                     continue;
                 }
             }
