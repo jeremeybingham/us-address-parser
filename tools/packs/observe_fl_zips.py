@@ -3,7 +3,11 @@ from the DBPR real estate licensee export.
 
     cargo build --release -p addr-cli
     uv run --with pyarrow python tools/packs/observe_fl_zips.py \
-        local-data/florida/dbpr_20251010_113032.parquet
+        local-data/florida/dbpr_20251010_113032.parquet \
+        local-data/florida/COSMETOLOGYLICENSE_1.csv ...
+
+Each argument is a DBPR export (`.parquet` or board `.csv`; see `dbpr.py`).
+Addresses are counted once across all of them.
 
 GeoNames gives each ZIP one place, so a municipality that shares a ZIP with
 its neighbour (CORAL GABLES in 33134, WESTON in 33331) raised
@@ -11,7 +15,8 @@ its neighbour (CORAL GABLES in 33134, WESTON in 33331) raised
 `addr parse-file`, and lists each (ZIP, place) pair that `zips.tsv` does not
 have, when enough distinct addresses use it:
 
-- at least MIN_ADDRESSES distinct street addresses (`k1` keys), or
+- at least MIN_ADDRESSES distinct street addresses (`k1` keys) that are at
+  least MIN_LARGE_SHARE of the ZIP's addresses, or
 - at least MIN_SMALL addresses that are at least MIN_SHARE of the ZIP's
   addresses (small and PO Box ZIPs: MADEIRA BEACH in 33738).
 
@@ -28,12 +33,19 @@ import csv, subprocess, sys, tempfile
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from dbpr import write_parse_input  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 PACK = ROOT / "data" / "packs" / "fl"
 ADDR = ROOT / "target" / "release" / "addr"
 MIN_ADDRESSES = 10
 MIN_SMALL = 3
 MIN_SHARE = 0.05
+# The MIN_ADDRESSES path also needs this share of the ZIP: with a million
+# addresses, 10 is under 1% of a big ZIP and lets in a nearby city written
+# for a suburb (ORLANDO in Winter Garden's 34787: 23 of 4,435).
+MIN_LARGE_SHARE = 0.01
 # (ZIP, place) pairs kept on fewer addresses, with why. BELLVIEW is a Census
 # place (CDP, Escambia County) whose own ZIP is 32526, which GeoNames names
 # PENSACOLA; 3 of the export's 363 addresses in the ZIP say BELLVIEW.
@@ -44,25 +56,7 @@ def fail(msg):
     sys.exit(f"observe_fl_zips: {msg}")
 
 
-def export(parquet, path):
-    """The Florida rows' address fields, as `addr parse-file` input."""
-    import pyarrow.parquet as pq
-
-    cols = ["address_1", "address_2", "address_3", "city", "state_code", "zip_"]
-    n = 0
-    with path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["line1", "line2", "city", "state", "zip"])
-        for r in pq.read_table(parquet, columns=cols).to_pylist():
-            if r["state_code"] != "FL":
-                continue
-            l2 = " ".join(x.strip() for x in (r["address_2"], r["address_3"]) if x and x.strip())
-            w.writerow([r["address_1"] or "", l2, r["city"] or "", "FL", r["zip_"] or ""])
-            n += 1
-    return n
-
-
-def main(parquet):
+def main(paths):
     if not ADDR.exists():
         fail(f"{ADDR} not found; run cargo build --release -p addr-cli")
     base = {}
@@ -71,7 +65,7 @@ def main(parquet):
             base[r["zip"]] = {r["place"], *filter(None, r["shared"].split(";"))}
     with tempfile.TemporaryDirectory() as tmp:
         src, out = Path(tmp) / "in.csv", Path(tmp) / "out.csv"
-        n = export(parquet, src)
+        n, distinct = write_parse_input(paths, src)
         subprocess.run([str(ADDR), "parse-file", str(src), "--column", "line1",
                         "--line2", "line2", "--city", "city", "--state", "state",
                         "--zip", "zip", "-o", str(out)], check=True)
@@ -87,18 +81,21 @@ def main(parquet):
     rows = []
     for (z, place), keys in per_pair.items():
         c = len(keys)
-        if (z, place) in KNOWN or c >= MIN_ADDRESSES or (c >= MIN_SMALL and c / len(per_zip[z]) >= MIN_SHARE):
+        share = c / len(per_zip[z])
+        if (z, place) in KNOWN or (c >= MIN_ADDRESSES and share >= MIN_LARGE_SHARE) or (
+            c >= MIN_SMALL and share >= MIN_SHARE
+        ):
             rows.append((z, place, c))
     rows.sort()
     with (PACK / "zips_observed.tsv").open("w", encoding="utf-8", newline="") as f:
         f.write("zip\tplace\taddresses\n")
         for z, place, c in rows:
             f.write(f"{z}\t{place}\t{c}\n")
-    print(f"observe_fl_zips: {n} Florida rows, {len(per_pair)} pairs not in zips.tsv, "
+    print(f"observe_fl_zips: {n} Florida rows ({distinct} distinct), {len(per_pair)} pairs not in zips.tsv, "
           f"{len(rows)} kept -> {PACK / 'zips_observed.tsv'}")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        fail("usage: observe_fl_zips.py <dbpr export .parquet>")
-    main(sys.argv[1])
+    if len(sys.argv) < 2:
+        fail("usage: observe_fl_zips.py <dbpr export .parquet or .csv> ...")
+    main(sys.argv[1:])
