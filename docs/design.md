@@ -459,7 +459,12 @@ To do, in order:
     place match first, then add what is left (`COCONUT GROVE`, and so on)
     to the pack, with county and ZIPs. Needs a source for added rows: a
     hand-kept `places_added.tsv` beside the export, or a change to
-    auction-tracker's list and a re-export.
+    auction-tracker's list and a re-export. **Done:** hand-kept
+    `places_added.tsv` (19 communities) and `variants_added.tsv` (16
+    spellings) beside the pack, chosen with `tools/packs/measure_fl_places.py`
+    (at least 10 distinct addresses, one main ZIP); the observed-ZIP table
+    rerun with them. Unmatched rows went from 2,957 to 1,348. Corpus
+    `fl-024` to `fl-027`; `docs/packs/fl.md`.
 29. **Rerun the comparisons and make the CRF call.** Rerun the usaddress
     comparison and the blind geocode benchmark; record the results in
     `docs/usaddress-comparison.md` and the go or no-go for Milestone 7's

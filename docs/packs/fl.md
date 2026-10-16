@@ -15,7 +15,9 @@ address exists or can receive mail.
 | `pack.toml` | | state, pack version, sources |
 | `places.tsv` | 665 places (411 municipalities, 254 other places), 998 variants | `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 1,473 ZIPs (107 shared with a second place) | `zip`, `place` (the main place), `shared` |
-| `zips_observed.tsv` | 218 more (ZIP, place) pairs: 175 ZIPs, 123 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
+| `places_added.tsv` | 19 more communities, all `place` | `name`, `county`, `kind`, `addresses` (distinct street addresses seen) |
+| `variants_added.tsv` | 16 more spellings of known places | `variant`, `place`, `addresses` |
+| `zips_observed.tsv` | 239 more (ZIP, place) pairs: 187 ZIPs, 141 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
 | `overrides.toml` | 1 suffix spelling, 2 highway prefix spellings | `[[suffix]]` `spelling`, `suffix`; `[[highway]]` `spelling`, `highway`, `kind` |
 
 - `name` is the place as auction-tracker spells it: upper case, `SAINT`
@@ -165,28 +167,55 @@ matches it anyway.
   has its own number (`APT 4 PH 5`) stays two units. Corpus `rg-098` to
   `rg-105`.
 
+- **Communities and spellings added from the DBPR export** (item 28;
+  `places_added.tsv`, `variants_added.tsv`; `tools/packs/measure_fl_places.py`).
+  With the national list in (item 24), 2,957 of the export's 445,252 rows
+  (2,631 distinct addresses, 849 cities) still had a city that matches no
+  place. They were read for real communities and clear spellings of known
+  places; a candidate needed at least 10 distinct street addresses and one
+  main ZIP. `places_added.tsv` adds 19 communities the Census list lacks:
+  `COCONUT GROVE` (142 addresses), `VIERA` (89), `HARMONY` (86), `CHAMPIONS
+  GATE` (79, with `CHAMPIONSGATE`), `UNIVERSITY PARK` (77), `NORTH VENICE`
+  (62), `HUTCHINSON ISLAND` (58), `SINGER ISLAND` (56), `REUNION` (43),
+  `AMELIA ISLAND` (42), `BABCOCK RANCH` (42), `MIROMAR LAKES` (39),
+  `SUGARLOAF KEY` (32), `KINDRED` (25), `WATERSOUND` (25), `LITTLE TORCH
+  KEY` (20), `LAKE SUZY` (20), `RAMROD KEY` (18) and `SALT SPRINGS` (13).
+  All are `place` rows. The county is GeoNames' county for the community's
+  main ZIP, in the pack's spelling (`DADE`, `ST. LUCIE`). The ZIPs come
+  from `observe_fl_zips.py`, rerun with the new places (`zips_observed.tsv`
+  239 pairs, was 218). `variants_added.tsv` adds 16 spellings of places
+  already known, each at least 10 addresses: `PT CHARLOTTE` (50), `STPETE
+  BEACH` (47), `LAUDERDALE BY THE SE` (43), `MAIMI` (31), `WPB` (22), `PNTE
+  VDRA BCH` (21), `NEW SMYRNA BC` (19), `PORT STLUCIE` (19), `FTLAUDERDALE`
+  (18), `ST PETERSBURG BEACH` (16), `LA BELLE` (15), `NMB` (14), `FTMYERS`
+  (12), `SANIBEL ISLAND` (11), `STJOHNS` (10) and `PT ORANGE` (10).
+  `LA BELLE` needs the entry because the place comparison rule reads `LA`
+  as the suffix LANE; changing that rule would merge `LADUE` and `LA DUE`
+  in Missouri, two different places. `build.rs` takes both files add-only:
+  a name or spelling whose key the pack already has is an error. A variant
+  of a place only the national list has is added after it (and left out
+  when `places-us` is off). Result: rows with a city that matches no place
+  went from 2,957 to 1,348 (1,290 addresses, 804 cities). Corpus `fl-024`
+  to `fl-027`; `fl-016` now uses `LAUDERDALE BY THE S`, because `LAUDERDALE
+  BY THE SE` is a listed variant.
+
 ## To do
 
 Still open (2026-10-16): Florida work found in the DBPR licensee export
 (counts are rows out of 445,252 Florida addresses, after the 2026-10-16
 fixes). This section keeps the evidence; the work is scheduled as items 26
-to 28 in `docs/design.md` section 10, and the decisions are in its section
+to 28 in `docs/design.md` section 10 (all three done; what is left is below), and the decisions are in its section
 13.
 
-- **Unincorporated communities the pack does not know** (item 28, after the
-  national list). 4,514 rows have a city that matches no place, mostly real
-  communities with no city government: `TRINITY` (403), `AVE MARIA` (277),
-  `COCONUT GROVE` (216), `CITRUS SPRINGS` (170), `TIERRA VERDE` (154),
-  `VIERA` (102), `HARMONY` (101), `UNIVERSITY PARK` (84). Add them as
-  `place` rows with their county and ZIPs (the rest are typos and cut-off
-  names such as `MAIMI`, `PT CHARLOTTE`). Many are Census places (CDPs) that
-  the national list (item 24) adds, so remeasure after it. Related open
-  decision in `docs/design.md` section 13: a city that is no known place,
-  with a ZIP the pack knows. The national list is now compiled under the
-  pack (item 24): it adds 405 Census places (1,070 in all, including
-  `TRINITY` and `CITRUS SPRINGS`; `docs/places.md`) with their county, and
-  the observed-ZIP table was rerun with them (`TRINITY` and the others in
-  `zips_observed.tsv`). Remeasure this list against the new total first.
+- **Unmatched cities still left** (after item 28): 1,348 rows. The largest
+  are `MIDDLETON` (61 addresses, ZIP 34762; not identified as a community,
+  so not added), `DEER ISLAND` (10), and communities just under the
+  10-address line (`CAPE HAZE`, `MATLACHA ISLES`, `BELLA COLLINA`, `CAROL
+  CITY`, `VILLAGE OF GOLF`, `WILBUR BY THE SEA`, `SEACREST`). The rest are
+  one-off typos and abbreviations (`OVEIDO`, `JAX BEACH`, `PCB`). Rerun
+  `measure_fl_places.py` to see the list. Related open decision in
+  `docs/design.md` section 13: a city that is no known place, with a ZIP
+  the pack knows.
 
 ## Versioning
 

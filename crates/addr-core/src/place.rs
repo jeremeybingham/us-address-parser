@@ -167,7 +167,7 @@ mod tests {
         assert_eq!(a.place.unwrap().place.name(), "SAINT LOUIS");
         // An unknown city is not a mismatch.
         let a = Parser::new()
-            .parse("1 MAIN ST, SINGER ISLAND, FL 33404")
+            .parse("1 MAIN ST, NOWHEREVILLE, FL 33404")
             .unwrap();
         assert!(!a.diagnostics.has(&Warning::ZipCityMismatch));
         assert!(a.place.is_none());

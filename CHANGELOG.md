@@ -4,6 +4,21 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Florida: communities and spellings still missing after the national list (item 28)
+
+- `tools/packs/measure_fl_places.py` lists the cities in the DBPR export that
+  match no place. After the national list 2,957 rows (849 cities) did.
+- The pack gains `places_added.tsv` (19 communities: `COCONUT GROVE`,
+  `VIERA`, `HARMONY`, `CHAMPIONS GATE`, `UNIVERSITY PARK`, `NORTH VENICE`,
+  `HUTCHINSON ISLAND`, `SINGER ISLAND`, ...) and `variants_added.tsv` (16
+  spellings of known places: `PT CHARLOTTE`, `STPETE BEACH`, `LA BELLE`,
+  ...), both hand-kept with the number of addresses behind each row and read
+  add-only by `build.rs`. A variant of a place only the national list has is
+  added after it. `zips_observed.tsv` is rerun with the new places (239
+  pairs, was 218). Pack version 2026.10.3.
+- Unmatched rows: 2,957 to 1,348. Corpus `fl-024` to `fl-027`; `fl-016` uses
+  `LAUDERDALE BY THE S` now that `LAUDERDALE BY THE SE` is a variant.
+
 ### Rarer misspellings and the penthouse shape (item 27)
 
 - Observed spellings `DRT` (DR), `LNE` (LANE) and `SU` (SUITE), from the

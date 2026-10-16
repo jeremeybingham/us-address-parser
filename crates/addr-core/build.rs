@@ -600,6 +600,8 @@ struct PlaceTables {
     /// Observed (state, ZIP, place) pairs whose place is not in the pack; the
     /// national list may have it (resolved after it is added).
     deferred: Vec<(String, String, String)>,
+    /// Added (state, variant, place) spellings for a place the pack lacks.
+    deferred_variants: Vec<(String, String, String)>,
 }
 
 /// The place tables: the state packs enabled by `state-<st>` features, in
@@ -641,6 +643,7 @@ fn gen_packs(
         zips,
         max_words,
         deferred,
+        deferred_variants,
     } = t;
     let mut states = Vec::new();
     if let Ok(entries) = fs::read_dir(dir) {
@@ -694,6 +697,40 @@ fn gen_packs(
                 return Err(format!("{ctx}: same key `{key}` as row {j}"));
             }
         }
+        // Optional: communities found in real data that the pack and the
+        // national list lack (`places_added.tsv`, hand-kept, each with the
+        // number of distinct addresses that use it). Add-only: a name whose
+        // key the pack already has is an error.
+        let added = pdir.join("places_added.tsv");
+        println!("cargo:rerun-if-changed={}", added.display());
+        if added.exists() {
+            for r in tsv(&added, &["name", "county", "kind", "addresses"])? {
+                let (name, county) = (&r[0], &r[1]);
+                let ctx = format!("packs/{} places_added.tsv {name}", st.to_lowercase());
+                check_key(name, &ctx)?;
+                let kind = match r[2].as_str() {
+                    "municipality" => 0,
+                    "place" => 1,
+                    k => return Err(format!("{ctx}: bad kind `{k}`")),
+                };
+                if r[3].parse::<u32>().is_err() {
+                    return Err(format!("{ctx}: `addresses` must be a number"));
+                }
+                let i = rows.len();
+                rows.push(PlaceData {
+                    state: st.clone(),
+                    name: name.clone(),
+                    county: county.clone(),
+                    kind,
+                });
+                by_name.insert(name.clone(), i);
+                *max_words = (*max_words).max(words(name));
+                let key = format!("{st}|{}", place_key(name, expand));
+                if let Some((j, _)) = index.insert(key.clone(), (i, "Standard")) {
+                    return Err(format!("{ctx}: same key `{key}` as row {j}"));
+                }
+            }
+        }
         for r in &places {
             let (name, i) = (&r[0], by_name[&r[0]]);
             let ctx = format!("packs/{} places.tsv {name}", st.to_lowercase());
@@ -709,6 +746,24 @@ fn gen_packs(
                         index.insert(key, (i, "Variant"));
                         *max_words = (*max_words).max(words(v));
                     }
+                }
+            }
+        }
+        // Optional: more spellings seen in real data for a place
+        // (`variants_added.tsv`: variant, place, distinct addresses). A
+        // place only the national list has is resolved after it is added.
+        let extra = pdir.join("variants_added.tsv");
+        println!("cargo:rerun-if-changed={}", extra.display());
+        if extra.exists() {
+            for r in tsv(&extra, &["variant", "place", "addresses"])? {
+                let ctx = format!("packs/{} variants_added.tsv {}", st.to_lowercase(), r[0]);
+                check_key(&r[0], &ctx)?;
+                if r[2].parse::<u32>().is_err() {
+                    return Err(format!("{ctx}: `addresses` must be a number"));
+                }
+                match by_name.get(&r[1]) {
+                    Some(&i) => add_variant(index, max_words, expand, st, &r[0], i, &ctx)?,
+                    None => deferred_variants.push((st.clone(), r[0].clone(), r[1].clone())),
                 }
             }
         }
@@ -854,6 +909,43 @@ fn resolve_deferred(ex: &Expand, t: &mut PlaceTables) -> Result<()> {
         }
         shared.push(p);
     }
+    for (st, variant, name) in std::mem::take(&mut t.deferred_variants) {
+        let ctx = format!("packs/{} variants_added.tsv {variant}", st.to_lowercase());
+        let Some(&(p, _)) = t.index.get(&format!("{st}|{}", place_key(&name, expand))) else {
+            return Err(format!("{ctx}: unknown place `{name}`"));
+        };
+        add_variant(
+            &mut t.index,
+            &mut t.max_words,
+            expand,
+            &st,
+            &variant,
+            p,
+            &ctx,
+        )?;
+    }
+    Ok(())
+}
+
+/// Adds `variant` as another spelling of place row `i`. Add-only: a key
+/// that already leads anywhere is an error.
+fn add_variant(
+    index: &mut BTreeMap<String, (usize, &'static str)>,
+    max_words: &mut usize,
+    expand: impl Fn(&str) -> Option<String>,
+    st: &str,
+    variant: &str,
+    i: usize,
+    ctx: &str,
+) -> Result<()> {
+    let key = format!("{st}|{}", place_key(variant, expand));
+    if let Some((j, _)) = index.get(&key) {
+        return Err(format!(
+            "{ctx}: `{variant}` already leads to row {j} (wanted row {i})"
+        ));
+    }
+    index.insert(key, (i, "Variant"));
+    *max_words = (*max_words).max(words(variant));
     Ok(())
 }
 
