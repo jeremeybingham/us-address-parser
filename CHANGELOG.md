@@ -4,6 +4,14 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### `addr parse-file`: every component has a column
+
+- New columns `addr_second_unit_type`, `addr_second_unit_number` (after
+  `addr_unit_number`), `addr_general_delivery` and
+  `addr_military_post_office`. A second unit (`STE 201 PMB 308`) used to be
+  left out of the CSV. A test checks that every component `addr parse`
+  prints has a column.
+
 ### Florida pack: observed ZIP places and `CR` as CIRCLE
 
 From the DBPR licensee export (decisions 20 and 21 of 2026-10-16 in

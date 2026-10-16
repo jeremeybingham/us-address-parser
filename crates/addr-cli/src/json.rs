@@ -122,7 +122,7 @@ pub fn usaddress_record(input: &str, tags: &[UsaddressTag]) -> Value {
 }
 
 /// Columns `addr parse-file` appends, in order.
-pub const COLUMNS: [&str; 26] = [
+pub const COLUMNS: [&str; 30] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -130,6 +130,8 @@ pub const COLUMNS: [&str; 26] = [
     "street_dir_suffix",
     "unit_type",
     "unit_number",
+    "second_unit_type",
+    "second_unit_number",
     "city",
     "state",
     "zip5",
@@ -139,7 +141,9 @@ pub const COLUMNS: [&str; 26] = [
     "highway",
     "po_box",
     "rural_route",
+    "general_delivery",
     "military",
+    "military_post_office",
     "attention",
     "building",
     "usps_line1",
@@ -177,4 +181,65 @@ pub fn row(a: &ParsedAddress) -> Vec<String> {
             other => get(other),
         })
         .collect()
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+    use addr_core::{Fields, Parser};
+
+    /// Every component `components()` can print has a `parse-file` column.
+    /// The inputs between them fill every component; extend them when a
+    /// component is added.
+    #[test]
+    fn every_component_has_a_column() {
+        let p = Parser::new();
+        let mut parsed: Vec<ParsedAddress> = [
+            "123 N MAIN ST E APT 4 PMB 9, MIAMI, FL 33101-1234",
+            "100 HWY 66 FRONTAGE RD, TULSA OK 74101",
+            "RR 2 BOX 152, AXTELL NE 68924",
+            "GENERAL DELIVERY, JUNEAU AK 99801",
+            "PSC 1650 BOX 10, APO AE 09001",
+            "1679 E ORANGETHORPE AVE PO BOX 365, ATWOOD, CA 92811",
+        ]
+        .iter()
+        .map(|s| p.parse(s).unwrap())
+        .collect();
+        for line2 in ["ANNEX BUILDING", "ATTN LAW DEPT"] {
+            let f = Fields {
+                line1: Some("323 NORRISTOWN ROAD".into()),
+                line2: Some(line2.into()),
+                city: Some("OCALA".into()),
+                state: Some("FL".into()),
+                zip: Some("34470".into()),
+            };
+            parsed.push(p.parse_fields(&f).unwrap());
+        }
+        let mut seen = std::collections::BTreeSet::new();
+        for a in &parsed {
+            for k in components(a).keys() {
+                assert!(COLUMNS.contains(&k.as_str()), "no column for `{k}`");
+                seen.insert(k.clone());
+            }
+            assert_eq!(row(a).len(), COLUMNS.len());
+        }
+        assert_eq!(
+            seen.len(),
+            21,
+            "inputs no longer cover every component: {seen:?}"
+        );
+    }
+
+    #[test]
+    fn second_unit_is_in_the_row() {
+        let a = Parser::new().parse("123 MAIN ST STE 201 PMB 308").unwrap();
+        let r = row(&a);
+        let col = |n: &str| r[COLUMNS.iter().position(|c| *c == n).unwrap()].as_str();
+        assert_eq!((col("unit_type"), col("unit_number")), ("STE", "201"));
+        assert_eq!(
+            (col("second_unit_type"), col("second_unit_number")),
+            ("PMB", "308")
+        );
+    }
 }
