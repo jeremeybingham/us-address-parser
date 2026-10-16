@@ -17,9 +17,10 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus, the
 `addr` CLI and benchmarks; so is the usaddress comparison. Milestone 5, the
 place list, is in progress: the Florida pack is built and used (293 corpus
-cases, all passing), and the national list's source data is downloaded.
-**Next (section 10): items 24 and 25, the national place list** (item 23,
-the dual-address slug, is done). After Milestone 5 come the usaddress-shaped
+cases, all passing), and the national list is built and compiled in but not
+yet read by the parser outside Florida.
+**Next (section 10): item 25, the national place list in the parser** (item
+23, the dual-address slug, and item 24, the national data, are done). After Milestone 5 come the usaddress-shaped
 features and the Python wrapper (Milestone 6), then calibrated confidence
 (Milestone 7; decision 27); the custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
@@ -415,7 +416,7 @@ To do, in order:
       build time. Done: 2.7 MB as packed binary tables (13.4 MB as `&str`
       tables, which is why they are packed); see `docs/places.md`. Lookups
       still return only pack states until item 25.
-    - Commit 3: GeoNames attribution in `NOTICE` and the README's place
+    - Commit 3 (done): GeoNames attribution in `NOTICE` and the README's place
       data section.
 25. **Use the national list in the parser.** `Lexicons` place lookups read
     the national layer for every state, so the Florida behaviors (city on
