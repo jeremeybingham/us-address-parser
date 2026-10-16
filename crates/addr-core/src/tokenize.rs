@@ -19,7 +19,8 @@
 //!   not an ordinal (`42ND`) or a one-letter suffix (`12A`);
 //! - a name run into a ZIP: `TAMPA33616` -> `TAMPA` `33616`;
 //! - a highway prefix run into its route: `I10`, `IH280` (Pub 28 Appendix F);
-//! - a unit designator run into its number: `APT107`;
+//! - a unit designator run into its number: `APT107`, `APT3D`, or joined by
+//!   punctuation: `APT.1285`, `STE.200`, `APT:201`, `UNIT-4`;
 //! - a street suffix run into a unit designator, before a number:
 //!   `CTAPT 107` -> `CT` `APT` `107`;
 //! - a street suffix run into a city a state pack knows, when the city ends
@@ -238,6 +239,13 @@ impl Piece<'_> {
             self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
             return;
         }
+        // A unit designator joined to its value by punctuation: `APT.1285`,
+        // `STE.200`, `APT:201`, `UNIT-4`.
+        if let Some(cut) = unit_punct(t, lex) {
+            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+            self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
+            return;
+        }
         if t.bytes().all(|c| c.is_ascii_alphanumeric()) {
             let cut = glue_split(t, next_numeric, lex)
                 .or_else(|| glue_place(t, self.after, self.later_seg, lex));
@@ -289,6 +297,21 @@ fn route_hyphen(t: &str, lex: &Lexicons) -> Option<usize> {
     (lex.highway(letters).is_some() || state).then_some(letters.len())
 }
 
+/// The index of the punctuation in `APT.1285`, `STE.200`, `APT:201`,
+/// `UNIT-4`: a unit designator, one of `.` `:` `-`, then the value.
+fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
+    let cut = t.find(['.', ':', '-'])?;
+    let (letters, rest) = (&t[..cut], &t[cut + 1..]);
+    let ok = letters.len() >= 2
+        && letters.bytes().all(|c| c.is_ascii_alphabetic())
+        && rest
+            .bytes()
+            .next()
+            .is_some_and(|c| c.is_ascii_alphanumeric())
+        && lex.unit(letters).is_some();
+    ok.then_some(cut)
+}
+
 /// Where to split a glued alphanumeric token, if anywhere.
 fn glue_split(t: &str, next_numeric: bool, lex: &Lexicons) -> Option<usize> {
     let digits_lead = t.bytes().take_while(u8::is_ascii_digit).count();
@@ -318,8 +341,10 @@ fn glue_split(t: &str, next_numeric: bool, lex: &Lexicons) -> Option<usize> {
         if route && lex.highway(letters).is_some() {
             return Some(alpha_lead);
         }
-        // APT107
-        if rest_digits && letters.len() >= 2 && lex.unit(letters).is_some() {
+        // APT107, APT3D
+        let unit_value = rest.bytes().next().is_some_and(|c| c.is_ascii_digit())
+            && rest.bytes().all(|c| c.is_ascii_alphanumeric());
+        if unit_value && letters.len() >= 2 && lex.unit(letters).is_some() {
             return Some(alpha_lead);
         }
         return None;
@@ -425,6 +450,18 @@ mod tests {
         assert_eq!(toks("APT107"), ["APT", "107"]);
         assert_eq!(toks("ACCESS UNDETERMINED"), ["ACCESS", "UNDETERMINED"]);
         assert_eq!(toks("409742ND SQ"), ["409742ND", "SQ"]);
+    }
+
+    #[test]
+    fn designator_joined_to_its_value() {
+        assert_eq!(toks("APT.1285"), ["APT", "1285"]);
+        assert_eq!(toks("STE.200 APT:201"), ["STE", "200", "APT", "201"]);
+        assert_eq!(toks("UNIT-4 APT.D"), ["UNIT", "4", "APT", "D"]);
+        assert_eq!(toks("APT3D"), ["APT", "3D"]);
+        // Not a designator: a route, a name with a period, a hyphenated value.
+        assert_eq!(toks("GA-25"), ["GA", "25"]);
+        assert_eq!(toks("ST.LUCIE"), ["STLUCIE"]);
+        assert_eq!(toks("C-22"), ["C-22"]);
     }
 
     #[cfg(feature = "state-fl")]

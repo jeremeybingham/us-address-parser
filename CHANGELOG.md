@@ -4,6 +4,34 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Parser fixes found in three more DBPR licensee files
+
+Parsing the cosmetology, construction and `lic03bb` licensee files (613,719
+distinct addresses, 93% Florida; `docs/packs/fl.md`) found four parser
+problems. 4,225 of those addresses now come out differently, and none of the
+other benchmarks moved (blind geocode 96.1%, usaddress files 99.2%).
+
+- **A cut-off copy of the address ahead of the whole one** (`624 E Coloni 624
+  E COLONIAL DR`; 1,785 addresses): the copy is dropped instead of polluting
+  the street name. The house number comes again after words that match the
+  start of what follows, the last one possibly cut short. Corpus `rg-115` to
+  `rg-118`.
+- **A designator joined to its value** (`APT.1285`, `STE.200`, `APT:201`,
+  `UNIT-4`, `APT3D`; about 1,200 addresses): was `# APT1285` or unparsed, now
+  `APT 1285`. Tokenizer rule. Corpus `rg-106` to `rg-110`.
+- **A name or building on line 1, the street on line 2** (`THE COVE` /
+  `1111 ASBURY WAY`; 629 addresses): line 1 is the attention line. Also in
+  the first comma segment of one line. Corpus `rg-119`, `rg-120`.
+- **Units with no Pub 28 word**: `BAY 102`, `STUDIO 7` and `BOOTH 12` are
+  read as `UNIT` (observed spellings, with `non_standard_abbreviation`);
+  `SUITE NO. 102` drops the `NO`. An observed spelling with no value after
+  it (`GULF TO BAY`, `ARUBA BAY`) is no longer taken for a unit. Corpus
+  `rg-111` to `rg-114`.
+- Across the three files: `unparsed_remainder` 5,274 to 4,334,
+  `missing_street_number` 2,018 to 1,383, `possibly_truncated` 1,168 to
+  1,082; `non_standard_abbreviation` rose 2,589 to 3,056 (the new observed
+  unit words).
+
 ### No CRF fallback (item 29, decision 32)
 
 - The usaddress comparison and the blind geocode benchmark were rerun after

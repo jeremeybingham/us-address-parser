@@ -199,6 +199,24 @@ matches it anyway.
   to `fl-027`; `fl-016` now uses `LAUDERDALE BY THE S`, because `LAUDERDALE
   BY THE SE` is a listed variant.
 
+- **Three more DBPR licensee files** (2026-10-16; public record):
+  `COSMETOLOGYLICENSE_1`, `CONSTRUCTIONLICENSE_1`, `lic03bb`, the same
+  column layout as the earlier `RE_rgn` files (address in columns 5 to 10).
+  613,719 distinct addresses, 570,078 in Florida. 99.0% of those with a city
+  resolve to a place; the warnings were `zip_city_mismatch` 5,509,
+  `unparsed_remainder` 5,274, `non_standard_abbreviation` 2,589,
+  `missing_street_number` 2,018 and `possibly_truncated` 1,168. The parser
+  fixes this found are in the changelog (a cut-off copy ahead of the
+  address, designators joined to their values, a name on line 1, BAY and
+  STUDIO units). Pack findings, to do: 87 (ZIP, place) pairs pass the
+  observed-ZIP rule and would clear 1,067 of the 5,509 mismatches (the rest
+  is a long tail of about 2,970 pairs, mostly a nearby big city written for a
+  suburb, which the warning should still flag); about ten more communities
+  and spellings (`CUTLER RIDGE`, `MIDDLETON`, `DORAL BRANCH`, `JAX`,
+  `PEMBROKE LAKES`, `CAROL CITY`, `DUETTE`, `WEST HOLLYWOOD`, `MAXVILLE`,
+  `VALKARIA`) and about ten typos (`OVEIDO`, `MERRIT ISLAND`, `KISSEMME`)
+  reach 10 addresses when counted with the earlier export.
+
 ## To do
 
 Still open (2026-10-16): Florida work found in the DBPR licensee export
