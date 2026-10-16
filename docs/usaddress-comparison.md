@@ -2,7 +2,7 @@
 
 How this parser is compared with the Python
 [usaddress](https://github.com/datamade/usaddress) library (design section 9
-and Milestone 7, item 31), and the results.
+and Milestone 8, item 35), and the results.
 
 ## Tools
 

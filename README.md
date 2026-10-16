@@ -7,8 +7,8 @@ database-ready identifiers (a stable canonical match key and a URL-safe slug).
 
 > **Status:** the Rust library and the `addr` CLI work: parser, key, USPS,
 > RESO and slug emitters, a 258-case golden corpus and a comparison with
-> usaddress. The Python wrapper (Milestone 5) is next. Nothing is published
-> yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
+> usaddress. Next is the place list (Milestone 5), then the Python wrapper
+> (Milestone 6). Nothing is published yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
 
 ## This is not an address validator
 
@@ -69,7 +69,7 @@ cargo run -p addr-cli -- corpus test
 ```
 crates/addr-core/   pure Rust library (no Python dependency)
 crates/addr-cli/    `addr` command-line tool
-crates/addr-py/     PyO3 bindings (planned, Milestone 5)
+crates/addr-py/     PyO3 bindings (planned, Milestone 6)
 data/               lexicon tables (Pub 28 suffixes, units, states, ...),
                     compiled into static tables by addr-core's build.rs
 tests/corpus/       labeled golden corpus (JSONL)

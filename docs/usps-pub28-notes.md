@@ -27,7 +27,7 @@ of the HTML supplied by the maintainer, Appendix B, Appendix F and the
 chapter 2 sections cited below fetched directly (`pe.usps.com` sends
 clients without a browser User-Agent to a "page not found" page). Before
 release, re-check every table against the live pages (`docs/design.md`,
-Milestone 7 item 32).
+Milestone 8 item 36).
 
 Chapter 2 page map (all under `https://pe.usps.com/text/pub28/`): 225
 Military Addresses `28c2_010.htm`; 233 Directionals `28c2_014.htm`; 237
@@ -233,7 +233,7 @@ October 2026. What each check found:
    sections 222 and 354.
 9. **Release re-check (open).** Re-check every lexicon table and the
    emitter rules above against the live Pub 28 pages before release
-   (`docs/design.md`, Milestone 7 item 32).
+   (`docs/design.md`, Milestone 8 item 36).
 
 Special forms (sourced):
 

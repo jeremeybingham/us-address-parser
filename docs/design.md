@@ -15,8 +15,9 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 
 **Status (2026-10-16):** Milestones 0 to 4 are done: data and types, the
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus (258
-cases, all passing), the `addr` CLI and benchmarks. From Milestone 7, the
-usaddress comparison is done. **Next: Milestone 5, the Python wrapper.**
+cases, all passing), the `addr` CLI and benchmarks. From Milestone 8, the
+usaddress comparison is done. **Next: Milestone 5, the place list,
+then Milestone 6, the Python wrapper.**
 Section 10 has the plan and section 13 the open items.
 
 ---
@@ -83,7 +84,7 @@ they cause friction.
 
 | # | Decision | Resolution |
 |---|---|---|
-| 1 | Parsing approach | Rules first; CRF fallback behind a cargo feature (`crf`, declared but empty). Whether to build it is open (section 13). |
+| 1 | Parsing approach | Rules first; CRF fallback behind a cargo feature (`crf`, declared but empty). Whether to build it is decided after the place list (Milestone 5; section 13, decision 10). |
 | 2 | Model training | Train in Python (parserator / python-crfsuite) on usaddress's MIT-licensed training data plus own labels; Rust does inference only via `crfs`. |
 | 3 | Input scope | Both single-line strings and multi-field input (line1, line2, city, state, zip). |
 | 4 | Geographic scope | US-wide grammar. **State-specific tuning packs are deferred** (section 11); the core is designed so packs can be added without restructuring. |
@@ -120,7 +121,7 @@ crates/
                             # input, lexicon, types, emit/{key,usps,reso,slug,usaddress}, corpus
     tests/                  # corpus.rs, no_panic.rs (proptest), usaddress_gold.rs
   addr-cli/                 # `addr` binary: parse, parse-file, corpus test
-  addr-py/                  # PyO3 bindings (planned, Milestone 5; README only)
+  addr-py/                  # PyO3 bindings (planned, Milestone 6; README only)
 data/                       # suffixes, directionals, units, states, special (.toml)
 benches/parse.rs            # criterion benches
 tests/
@@ -129,8 +130,8 @@ tests/
 tools/
   corpus/emit_expect.py     # writes emitter expectations into corpus cases from the specs
   compare/                  # usaddress comparison and training-overlap scripts
-  train/                    # (planned, Milestone 6) CRF training scripts
-models/                     # (planned, Milestone 6) CRF model; README only
+  train/                    # (planned, Milestone 7) CRF training scripts
+models/                     # (planned, Milestone 7) CRF model; README only
 .github/workflows/ci.yml    # fmt, clippy, test, corpus report
 local-data/                 # gitignored: private and unlicensed test data, never committed
 ```
@@ -157,7 +158,7 @@ Emitters never mutate the parsed struct and never re-parse.
 
 - **Deterministic.** Same input, same output, across platforms.
 - **Spans preserved.** Components keep their source byte ranges (`SourceInfo::spans`).
-- **Never panic on input.** Covered by proptest properties (`tests/no_panic.rs`); fuzz targets are Milestone 7.
+- **Never panic on input.** Covered by proptest properties (`tests/no_panic.rs`); fuzz targets are Milestone 8.
 - **Lexicon access behind one interface** (`Lexicons`, built from `data/*.toml` at build time). This is the seam state packs will plug into.
 - No global mutable state; `Parser` is cheap and `Send + Sync`.
 
@@ -172,8 +173,8 @@ ZIP5, ZIP+4, `diagnostics` and `source`.
 
 `Diagnostics` holds the warnings (`Warning`, each with a stable `code()`
 string; `Warning::ALL` lists them), the unparsed remainder, the library
-version, and `confidence` / `model_version`, which stay `None` until a CRF
-model exists.
+version, `confidence` (`None` until calibrated; meaning in section 13,
+decision 12) and `model_version` (`None` until a CRF model exists).
 
 ### Public API
 
@@ -220,13 +221,14 @@ does include the city.
 
 ---
 
-## 7. Python wrapper (`addr-py`, Milestone 5, not started)
+## 7. Python wrapper (`addr-py`, Milestone 6, not started)
 
 - PyO3 with maturin; **abi3 wheels**, minimum Python **3.10**.
 - Python import name `us_address_parser` (section 13, decision 2).
 - Typed Rust-backed objects exposing the same fields, plus `to_dict()`. Ship type stubs (`.pyi`) and `py.typed`.
 - `parse(str)`, `parse_fields(...)`, and **`parse_many(list[str])`**, which releases the GIL during Rust work.
 - Emitters: `to_usps()`, `to_reso()`, `key()`, `slug()`, `to_usaddress_tags()`.
+- `confidence` is exposed as `float | None` (calibrated in Milestone 5; `None` only where no score applies, such as a placeholder).
 - Errors map to Python exceptions only for unusable input.
 - No required runtime dependencies. No pandas/Polars dependency; document a short recipe instead.
 
@@ -250,8 +252,8 @@ does include the city.
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
 | **Benchmarks** (criterion): single shapes, the corpus through `parse` and `parse_many`, the emitters. | Done (`benches/parse.rs`). |
 | **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --all-features`, corpus accuracy report. | Done (`ci.yml`). |
-| **Fuzzing** (cargo-fuzz) for the tokenizer and assembler. | Milestone 7. |
-| **Python tests** (pytest): the wrapper, type stubs, `parse_many`; wheel builds on Linux, macOS and Windows. | Milestone 5. |
+| **Fuzzing** (cargo-fuzz) for the tokenizer and assembler. | Milestone 8. |
+| **Python tests** (pytest): the wrapper, type stubs, `parse_many`; wheel builds on Linux, macOS and Windows. | Milestone 6. |
 | **Blind accuracy**: labels neither this parser nor usaddress was tuned on. | Geocode benchmark run locally (`docs/usaddress-comparison.md`); a hand-labeled Florida sample is still open. |
 
 The corpus is hand-labeled and the rules were tuned against it, so 100% on
@@ -300,34 +302,56 @@ Each milestone ends with passing tests.
 21. `addr` CLI (section 8). The CLI, not the core, depends on `csv` and `serde_json`.
 22. `benches/parse.rs`. First numbers (quick run, 2026-10-15): about 4 to 11 µs per address, about 110K addresses/s one by one, about 3x that through `parse_many` with `rayon`. Run `cargo bench -p addr-core --bench parse` (add `--features rayon`).
 
-### Milestone 5: Python wrapper (next)
+### Milestone 5: place list and calibrated confidence (next)
 
-23. `crates/addr-py/Cargo.toml`, `pyproject.toml` (maturin), `src/lib.rs`; add to the workspace
-24. Python package `us_address_parser`: `__init__.py`, `__init__.pyi`, `py.typed`
-25. `crates/addr-py/tests/test_basic.py`, `test_batch.py`
-26. `.github/workflows/wheels.yml`
+The first state-pack work (section 11), scoped to what the parser needs to
+find the city. It comes before the Python wrapper, so Python ships with the
+calibrated confidence, and it decides Milestone 7.
 
-### Milestone 6: CRF fallback (optional; go/no-go open, section 13)
+23. Place list data: a national table from the Census Gazetteer (places and
+    county subdivisions, public domain) plus Florida aliases from
+    auction-tracker's `cities_fl.json` and dbpr_fl's variant list. Record
+    provenance and licenses in `docs/`; settle the pack open questions in
+    section 11 that this touches (format, layering, versioning).
+24. Use it behind the `Lexicons` interface to find where the city starts on
+    one line with no commas, and to separate cities run into the street.
+    Golden-corpus cases for each fixed shape; `WINGATE ST 32507` goes in.
+25. Calibrated confidence (section 13, decision 12): record the uncertain
+    decisions the tagger makes, fit the score on licensed labeled data, and
+    report calibration in `docs/`.
+26. Rerun the usaddress comparison and the blind geocode benchmark; record the
+    results in `docs/usaddress-comparison.md`, then make the Milestone 7
+    go/no-go call (section 13, decision 10).
 
-27. `tools/train/`: export labeled data, train with parserator/python-crfsuite, write the model file
-28. `models/`: model file plus `README.md` with provenance, version, training date (usaddress MIT attribution)
-29. `src/tagger/crf.rs` using `crfs`, behind feature `crf`; embed the model with `include_bytes!`
-30. First, verify that a CRFsuite-format model trained from usaddress data loads in `crfs`; if not, pick a compatible export path before investing further.
+### Milestone 6: Python wrapper
 
-### Milestone 7: hardening and release
+27. `crates/addr-py/Cargo.toml`, `pyproject.toml` (maturin), `src/lib.rs`; add to the workspace
+28. Python package `us_address_parser`: `__init__.py`, `__init__.pyi`, `py.typed`
+29. `crates/addr-py/tests/test_basic.py`, `test_batch.py`
+30. `.github/workflows/wheels.yml`
 
-31. usaddress comparison script and results. *Done: `tools/compare/compare_usaddress.py`, `docs/usaddress-comparison.md`.*
-32. Re-check every lexicon table and the USPS emitter rules against the live Pub 28 pages (`docs/usps-pub28-notes.md`, "Verification status").
-33. Fuzz targets (cargo-fuzz) for the tokenizer and assembler.
-34. Rename for publishing: crates and Python package to `us-address-parser` / `us_address_parser` (section 13, decision 2); check name availability first.
-35. Copy `data/` into the `addr-core` crate for packaging (`build.rs` already looks for a crate-local `data/` first).
-36. crates.io and PyPI publishing workflows; turn the CHANGELOG's "Unreleased" into the first release.
+### Milestone 7: CRF fallback (only if Milestone 5 leaves a gap worth it)
+
+31. First, verify that a CRFsuite-format model trained from usaddress data loads in `crfs`; if not, pick a compatible export path before investing further.
+32. `tools/train/`: export labeled data, train with parserator/python-crfsuite, write the model file
+33. `models/`: model file plus `README.md` with provenance, version, training date (usaddress MIT attribution)
+34. `src/tagger/crf.rs` using `crfs`, behind feature `crf`; embed the model with `include_bytes!`. The CRF's sequence probability feeds `confidence`, calibrated the same way.
+
+### Milestone 8: hardening and release
+
+35. usaddress comparison script and results. *Done: `tools/compare/compare_usaddress.py`, `docs/usaddress-comparison.md`.*
+36. Re-check every lexicon table and the USPS emitter rules against the live Pub 28 pages (`docs/usps-pub28-notes.md`, "Verification status").
+37. Fuzz targets (cargo-fuzz) for the tokenizer and assembler.
+38. Rename for publishing: crates and Python package to `us-address-parser` / `us_address_parser` (section 13, decision 2); check name availability first.
+39. Copy `data/` into the `addr-core` crate for packaging (`build.rs` already looks for a crate-local `data/` first).
+40. crates.io and PyPI publishing workflows; turn the CHANGELOG's "Unreleased" into the first release.
 
 ---
 
 ## 11. Deferred feature: state tuning packs
 
-Not part of the initial build. Recorded so the core stays ready for it.
+Mostly deferred. The place list (Milestone 5) is the first piece to be built;
+the rest waits. Recorded so the core stays ready for it.
 
 **Idea:** the base parser is US-wide and state-agnostic. Each state gets a data-only "pack" of tuning files, so accuracy can improve per state without touching core code. Florida would be first.
 
@@ -389,14 +413,14 @@ extensible; no state-specific rule in the tagger.
   usaddress scores 100% by construction). Details:
   `docs/usaddress-comparison.md`.
 - **Model format compatibility** between CRFsuite-trained models and `crfs`
-  must be verified before any Milestone 6 work.
+  must be verified before any Milestone 7 work.
 - **Key stability.** `k1` is signed off and stored keys depend on it. Parser
   fixes can still change the key an input produces; each such change is
   recorded in `docs/key-format.md`.
 - **Licensing.** Keep MIT attribution for vendored usaddress test data and
   any usaddress-derived training data. Unlicensed test data (the geocode
   benchmark) stays in `local-data/` and is never committed.
-- **Fuzzing** does not exist yet (Milestone 7); proptest covers the
+- **Fuzzing** does not exist yet (Milestone 8); proptest covers the
   never-panic rule meanwhile.
 - **Python boundary overhead** for single-address calls; recommend `parse_many` in the docs.
 
@@ -407,7 +431,7 @@ extensible; no state-specific rule in the tagger.
 ### Decisions recorded 2026-10-15
 
 1. **Florida parsing code: pending.** The author will provide it later, as a reference (not ported). It seeds the corpus when it arrives.
-2. **Names: `us-address-parser`.** Publish names (crates.io and PyPI; Python import `us_address_parser`) will be `us-address-parser`; the CLI binary stays `addr`. The rename applies at Milestone 7; until then the crates keep the `addr-core`, `addr-cli` and `addr-py` names.
+2. **Names: `us-address-parser`.** Publish names (crates.io and PyPI; Python import `us_address_parser`) will be `us-address-parser`; the CLI binary stays `addr`. The rename applies at Milestone 8; until then the crates keep the `addr-core`, `addr-cli` and `addr-py` names.
 3. **Licensing: confirmed.** MIT OR Apache-2.0.
 4. **Key definition: signed off.** `k1` (section 6) is the public contract; any change needs a new version prefix. **Minimum Python version: 3.10** (abi3 wheels).
 5. **RESO mapping: reviewed.** All choices accepted as implemented; see "Decisions" in `docs/reso-mapping.md`.
@@ -416,29 +440,62 @@ extensible; no state-specific rule in the tagger.
 8. **Rule changes from the usaddress comparison and geocode benchmark** (`docs/usps-pub28-notes.md`, rows added 2026-10-15): a no-ZIP state at the end of one line (never NE or FL; suffix-like codes only after an abbreviated suffix); hyphenated routes split (`GA-25`), SR left to state packs; `BOX <number>` alone is a PO Box; a letter before a directional joins the house number; letter-and-digits house numbers (`T703`); two-part grid numbers kept as written; letter routes after a county prefix; `COUNTRY ROAD` before a number is an observed typo; BUSINESS after a route stays in the name; `missing_street_name` for a number and unit with no street; ordinal floors normalized to numbers (`FL 5`); `STE 4 551` stays unparsed; a `building` field.
 9. **Deferred to state packs:** the items listed in section 11.
 
+### Decisions recorded 2026-10-16
+
+10. **CRF fallback: decided after the place list.** Milestone 5 builds the
+    place list and reruns the blind benchmark; Milestone 7 goes ahead only if
+    a gap remains that rules plus the place list are unlikely to close.
+11. **Slug for dual addresses: follow the street.** The key and the RESO
+    output already use the street; only the USPS output writes the PO Box,
+    because Pub 28 section 215 says so for the mailpiece. The slug will be
+    built from the street line, as the RESO emitter's `UnparsedAddress` is
+    (the shared `street_line()` helper in `emit/usps.rs`), so every
+    identifier names the same place. The slug is not a contract, so this
+    needs no version change. Planned before the Python wrapper (Milestone 6),
+    since Python exposes the slug.
+12. **`Diagnostics::confidence`: a calibrated probability.** A number from
+    0.0 to 1.0: the chance that the whole parse (every component) is right,
+    calibrated so that of the addresses scored 0.9, about 90% are right on a
+    labeled set the rules were not tuned on. It stays `None` until it is
+    calibrated (Milestone 5, item 25). Plan:
+    - The rule tagger has no native probability, so the score comes from
+      the decisions it had to make: which warnings fired, and which uncertain
+      rules settled a boundary (city found by a comma, by the no-comma
+      suffix split or by the place list; a state with no ZIP; a bare unit; a
+      house-number letter rule). The tagger records these internally.
+    - The accuracy of each path is measured on labeled data and compiled
+      into a fixed table (or a small logistic model) in `data/`, with its
+      source, so the score stays deterministic and has no runtime
+      dependencies.
+    - Fit on licensed data only: the golden corpus, usaddress's MIT test
+      files, and the hand-labeled Florida sample. The geocode benchmark has
+      no license, so it is used to check calibration, not to fit numbers
+      that ship.
+    - If a CRF is built (Milestone 7), its sequence probability gives the
+      score for CRF parses, checked against the same calibration report.
+    - Calibration waits for the place list, because the place list changes
+      which paths are uncertain.
+
 ### Open decisions (for the author)
 
-- **CRF fallback (Milestone 6): go or no-go.** The remaining blind-benchmark
-  gap is mostly city detection, which a place list addresses. Decide after
-  the place list, or after a blind Florida sample, whether a CRF is still
-  worth building.
-- **Slug for dual addresses.** The slug follows the USPS output, so it names
-  the PO Box while the key names the street. Left as specified; change it if
-  the slug should follow the street.
-- **`Diagnostics::confidence`.** Always `None` today. Define its meaning
-  before the Python wrapper exposes it, or leave it out of the Python API.
-- **State-pack questions** (section 11) when that work starts.
+- **State-pack questions** (section 11), the ones the place list touches
+  first: data format, layering and versioning.
 
 ### Open tasks
 
-- **Milestone 5**, the Python wrapper (next).
+- **Slug follows the street for dual addresses** (decision 11): change
+  `emit/slug.rs`, the slug section of `docs/key-format.md`, the corpus slug
+  expectations for `rg-040` to `rg-045` and `tools/corpus/emit_expect.py`.
+- **Milestone 5**, the place list, calibrated confidence, and the CRF call (next).
+- **Milestone 6**, the Python wrapper.
 - **Florida code** from the author, to seed more corpus cases.
 - **Blind Florida sample:** hand-label 100 to 200 rows of the private Florida
-  files as a blind test on the data this library targets.
+  files. It is a blind test on the data this library targets and calibration
+  data for confidence.
 - **Accuracy backlog** not tied to packs (`docs/usaddress-comparison.md`):
   named buildings without a building word (`THE GARRETT`), and highway
   modifiers such as BUSINESS before a city on one line.
-- **Milestone 7** items 32 to 36 (Pub 28 re-check, fuzzing, rename and name
+- **Milestone 8** items 36 to 40 (Pub 28 re-check, fuzzing, rename and name
   availability, packaging `data/`, publishing).
 
 ---
