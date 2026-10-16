@@ -136,6 +136,14 @@ impl Tagger<'_> {
                 self.set(cs..hi, Tag::City);
                 return (cs, Some(cs..hi));
             }
+            // With a `default_state` hint: "281 EVELYN DR DOTHAN", the city
+            // by the place list in that state.
+            if self.places.is_some_and(|c| c.hinted) {
+                if let Some(k) = self.place_city(cs, hi) {
+                    self.set(k..hi, Tag::City);
+                    return (k, Some(k..hi));
+                }
+            }
             return (hi, None);
         }
 
@@ -212,12 +220,16 @@ impl Tagger<'_> {
         let zip = zip
             .and_then(|k| zip_parts(self.text(k)))
             .and_then(|(z5, _)| self.lex.zip_places(z5));
-        let state = match state {
-            Some(r) => self.lex.state(&join(&self.toks[r]))?.value.code(),
-            None => zip?.main().state(),
+        let (state, hinted) = match state {
+            Some(r) => (self.lex.state(&join(&self.toks[r]))?.value.code(), false),
+            None => match zip {
+                Some(z) => (z.main().state(), false),
+                // No state and no known ZIP: the parser's hint, if any.
+                None => (self.hint?, true),
+            },
         };
         let zip = zip.filter(|z| z.main().state() == state);
-        Some(PlaceCtx { state, zip })
+        Some(PlaceCtx { state, zip, hinted })
     }
 
     /// `WINGATE ST, 32507`: with a state pack, a first segment of plain words
@@ -263,6 +275,9 @@ impl Tagger<'_> {
             if !matches!(best, Some((_, a)) if a || !agrees) {
                 best = Some((k, agrees));
             }
+        }
+        if best.is_some() && ctx.hinted {
+            self.hint_used.set(true);
         }
         best.map(|(k, _)| k)
     }

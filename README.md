@@ -94,11 +94,19 @@ a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 `Parser::parse_fields` takes pre-split fields (`Fields`), and
 `Parser::parse_many` parses a batch (in parallel with the `rayon` feature).
 
+For data with no state (a county's listings), `Parser::with_options(ParseOptions
+{ default_state: Some("FL".into()) })?` looks cities up in that state when the
+input names no state and has no known ZIP. It is a hint, never a fill: `state`
+stays empty, and the warning `default_state_applied` says when it decided a
+place or a reading (`281 EVELYN DR DOTHAN` finds DOTHAN with `AL`). The CLI has
+`--default-state ST`.
+
 ## CLI
 
 ```sh
 cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101" --pretty
 cargo run -p addr-cli -- parse-file in.csv --column address -o out.csv
+cargo run -p addr-cli -- parse "281 EVELYN DR DOTHAN" --default-state AL
 cargo run -p addr-cli -- corpus test
 ```
 

@@ -87,6 +87,10 @@ pub(crate) struct Tagger<'a> {
     /// The state pack that applies, once the last line's state or ZIP is
     /// known.
     places: Option<PlaceCtx>,
+    /// The parser's `default_state`, used when the input names no state.
+    hint: Option<&'static str>,
+    /// Whether a place found under the hint decided a tag.
+    hint_used: std::cell::Cell<bool>,
 }
 
 /// The state whose pack is used to find the city, and the ZIP's places.
@@ -94,10 +98,17 @@ pub(crate) struct Tagger<'a> {
 pub(crate) struct PlaceCtx {
     state: &'static str,
     zip: Option<ZipPlaces>,
+    /// The state is the parser's `default_state`, not the input's.
+    hinted: bool,
 }
 
 impl<'a> Tagger<'a> {
-    fn new(toks: &'a [Token], lex: Lexicons, lens: LineLengths) -> Self {
+    fn new(
+        toks: &'a [Token],
+        lex: Lexicons,
+        lens: LineLengths,
+        hint: Option<&'static str>,
+    ) -> Self {
         Self {
             toks,
             tags: vec![Tag::Untagged; toks.len()],
@@ -107,6 +118,8 @@ impl<'a> Tagger<'a> {
             zero_number: false,
             lens,
             places: None,
+            hint,
+            hint_used: std::cell::Cell::new(false),
         }
     }
 
@@ -160,6 +173,9 @@ impl<'a> Tagger<'a> {
         if has(&self.tags, Tag::Unparsed) {
             self.warn(Warning::UnparsedRemainder);
         }
+        if self.hint_used.get() {
+            self.warn(Warning::DefaultStateApplied);
+        }
         if let Some(k) = self.incomplete {
             let tok = &self.toks[k];
             let seg_len = self.lens.seg.get(tok.seg).copied().unwrap_or(0);
@@ -177,8 +193,13 @@ impl<'a> Tagger<'a> {
 }
 
 /// Tag a single-line input.
-pub(crate) fn tag_line(toks: &[Token], lex: Lexicons, lens: LineLengths) -> Tagged {
-    let mut t = Tagger::new(toks, lex, lens);
+pub(crate) fn tag_line(
+    toks: &[Token],
+    lex: Lexicons,
+    lens: LineLengths,
+    hint: Option<&'static str>,
+) -> Tagged {
+    let mut t = Tagger::new(toks, lex, lens, hint);
     let (street_end, city) = t.last_line();
     let lo = t.drop_truncated_copy(0, street_end);
     let street_end = t.drop_repeated_zip(lo, street_end);
@@ -194,6 +215,7 @@ pub(crate) fn tag_fields(
     ranges: &[(FieldName, Range<usize>)],
     lex: Lexicons,
     lens: LineLengths,
+    hint: Option<&'static str>,
 ) -> Tagged {
     let get = |f: FieldName| {
         ranges
@@ -208,7 +230,7 @@ pub(crate) fn tag_fields(
         get(FieldName::Zip),
     );
     let mut line = l1.start.min(l2.start)..l1.end.max(l2.end);
-    let mut t = Tagger::new(toks, lex, lens);
+    let mut t = Tagger::new(toks, lex, lens, hint);
     // Line 2 that repeats the end of line 1 (`9453 LUTOO LANE` / `LUTOO
     // LANE`, DBPR data) is a copy.
     if !l2.is_empty() && l2.start == l1.end && l2.len() <= l1.len() {

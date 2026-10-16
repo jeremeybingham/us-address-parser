@@ -14,13 +14,17 @@
 use crate::lexicon::{Lexicons, MatchKind, ZipPlaces};
 use crate::types::{ParsedAddress, Place, PlaceMatch, PlaceSource, Warning};
 
-pub(crate) fn resolve(addr: &mut ParsedAddress, lex: &Lexicons) {
+pub(crate) fn resolve(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static str>) {
     let zip = addr.zip5.as_deref().and_then(|z| lex.zip_places(z));
     // The state written on the address wins; with none, the ZIP's.
-    let state = match (addr.state, zip) {
-        (Some(s), _) => s.code(),
-        (None, Some(z)) => z.main().state(),
-        (None, None) => return,
+    // With neither a state nor a known ZIP, the parser's `default_state`.
+    let (state, hinted) = match (addr.state, zip) {
+        (Some(s), _) => (s.code(), false),
+        (None, Some(z)) => (z.main().state(), false),
+        (None, None) => match hint {
+            Some(h) => (h, true),
+            None => return,
+        },
     };
     let zip = zip.filter(|z| z.main().state() == state);
     let Some(city) = addr.city.as_deref() else {
@@ -42,6 +46,9 @@ pub(crate) fn resolve(addr: &mut ParsedAddress, lex: &Lexicons) {
         if lex.has_pack(state) && !z.contains(&m.place) {
             addr.diagnostics.warn(Warning::ZipCityMismatch);
         }
+    }
+    if hinted && found.is_some() {
+        addr.diagnostics.warn(Warning::DefaultStateApplied);
     }
     addr.place = found;
 }

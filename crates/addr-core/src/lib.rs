@@ -35,7 +35,7 @@ mod types;
 pub use emit::{KeyOptions, ResoAddress, UsaddressTag, UspsAddress};
 pub use input::Fields;
 pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind, ZipPlaces};
-pub use parser::{ParseError, Parser};
+pub use parser::{OptionsError, ParseError, ParseOptions, Parser};
 pub use types::{
     Component, ComponentSpan, Diagnostics, Directional, FieldName, Highway, InputKind, MilitaryBox,
     MilitaryKind, MilitaryPostOffice, ParsedAddress, Place, PlaceKind, PlaceMatch, PlaceSource,

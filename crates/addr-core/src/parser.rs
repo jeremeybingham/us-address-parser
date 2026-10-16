@@ -12,7 +12,7 @@ use crate::lexicon::Lexicons;
 use crate::place;
 use crate::tagger::{tag_fields, tag_line, LineLengths};
 use crate::tokenize::{tokenize, Token};
-use crate::types::{FieldName, InputKind, ParsedAddress, Span};
+use crate::types::{FieldName, InputKind, ParsedAddress, Span, StateKind};
 
 /// Returned only for truly unusable input. Partial parses are never errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -30,15 +30,65 @@ impl fmt::Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
+/// Parser settings.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ParseOptions {
+    /// A state (USPS code or name) to assume when the input names none and
+    /// its ZIP (if any) is unknown: the place list looks cities up in that
+    /// state, and the state's pack readings (`CR` is CIRCLE in Florida)
+    /// apply. It is a hint, never a fill (design.md decision 24): the parsed
+    /// `state` stays empty, `missing_state` still fires and the key is
+    /// unchanged. [`Warning::DefaultStateApplied`] says when it decided
+    /// something.
+    pub default_state: Option<String>,
+}
+
+/// A [`ParseOptions`] value that cannot be used.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OptionsError {
+    /// `default_state` is not a US state, DC or territory.
+    UnknownDefaultState(String),
+}
+
+impl fmt::Display for OptionsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            OptionsError::UnknownDefaultState(s) => {
+                write!(f, "default_state {s:?} is not a US state, DC or territory")
+            }
+        }
+    }
+}
+
+impl std::error::Error for OptionsError {}
+
 /// Address parser. Cheap to construct, `Send + Sync`, no global state.
 #[derive(Debug, Clone, Default)]
 pub struct Parser {
     lex: Lexicons,
+    default_state: Option<&'static str>,
 }
 
 impl Parser {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// A parser with settings. Fails only for a `default_state` that is not
+    /// a US state, DC or territory (a military "state" such as `AE` is not).
+    pub fn with_options(options: ParseOptions) -> Result<Self, OptionsError> {
+        let lex = Lexicons::builtin();
+        let default_state = match options.default_state.as_deref().map(str::trim) {
+            None | Some("") => None,
+            Some(s) => {
+                let code = lex
+                    .state(s)
+                    .filter(|l| l.value.kind() != StateKind::Military)
+                    .map(|l| l.value.code());
+                Some(code.ok_or_else(|| OptionsError::UnknownDefaultState(s.to_string()))?)
+            }
+        };
+        Ok(Self { lex, default_state })
     }
 
     /// Parse a single-line address. Commas (or semicolons) separate lines:
@@ -60,12 +110,17 @@ impl Parser {
             seg: seg_lengths(&toks, |s| input.get(s.start..s.end)),
             whole: Some(input.trim().chars().count()),
         };
-        let tagged = tag_line(&toks, self.lex, lens);
+        let tagged = tag_line(&toks, self.lex, lens, self.default_state);
         let mut addr = ParsedAddress::empty(input.to_string(), InputKind::SingleLine, None);
-        assemble(&mut addr, &toks, tagged, &self.lex, &|s: &Span| {
-            input.get(s.start..s.end)
-        });
-        place::resolve(&mut addr, &self.lex);
+        assemble(
+            &mut addr,
+            &toks,
+            tagged,
+            &self.lex,
+            self.default_state,
+            &|s: &Span| input.get(s.start..s.end),
+        );
+        place::resolve(&mut addr, &self.lex, self.default_state);
         Ok(addr)
     }
 
@@ -101,11 +156,18 @@ impl Parser {
             seg: seg_lengths(&toks, source),
             whole: None,
         };
-        let tagged = tag_fields(&toks, &ranges, self.lex, lens);
+        let tagged = tag_fields(&toks, &ranges, self.lex, lens, self.default_state);
         let mut addr =
             ParsedAddress::empty(fields.joined(), InputKind::Fields, Some(fields.clone()));
-        assemble(&mut addr, &toks, tagged, &self.lex, &source);
-        place::resolve(&mut addr, &self.lex);
+        assemble(
+            &mut addr,
+            &toks,
+            tagged,
+            &self.lex,
+            self.default_state,
+            &source,
+        );
+        place::resolve(&mut addr, &self.lex, self.default_state);
         Ok(addr)
     }
 
@@ -165,6 +227,72 @@ mod tests {
             Parser::new().parse_fields(&Fields::default()),
             Err(ParseError::EmptyInput)
         );
+    }
+
+    fn hinted(state: &str) -> Parser {
+        Parser::with_options(ParseOptions {
+            default_state: Some(state.to_string()),
+        })
+        .unwrap()
+    }
+
+    #[test]
+    fn default_state_must_be_a_state() {
+        for ok in ["FL", "fl", "Florida", "DC", "PR", " AL ", ""] {
+            assert!(
+                Parser::with_options(ParseOptions {
+                    default_state: Some(ok.to_string())
+                })
+                .is_ok(),
+                "{ok:?}"
+            );
+        }
+        for bad in ["ZZ", "AE", "Narnia"] {
+            assert_eq!(
+                Parser::with_options(ParseOptions {
+                    default_state: Some(bad.to_string())
+                })
+                .map(|_| ()),
+                Err(OptionsError::UnknownDefaultState(bad.to_string()))
+            );
+        }
+        assert!(Parser::with_options(ParseOptions::default()).is_ok());
+    }
+
+    #[test]
+    fn default_state_is_a_hint_and_never_a_fill() {
+        let a = hinted("AL").parse("281 EVELYN DR DOTHAN").unwrap();
+        assert_eq!(a.city.as_deref(), Some("DOTHAN"));
+        assert_eq!(a.place.unwrap().place.state(), "AL");
+        assert!(a.state.is_none() && a.zip5.is_none());
+        assert!(a.diagnostics.has(&Warning::DefaultStateApplied));
+        assert!(a.diagnostics.has(&Warning::MissingState));
+        assert_eq!(
+            a.key(crate::KeyOptions::property()).unwrap(),
+            "k1n:S|281||EVELYN|DR|||"
+        );
+        // Without the hint the city is not found.
+        let b = Parser::new().parse("281 EVELYN DR DOTHAN").unwrap();
+        assert!(b.city.is_none() && !b.diagnostics.has(&Warning::DefaultStateApplied));
+    }
+
+    #[test]
+    fn default_state_yields_to_the_input() {
+        // The input's own state, or a known ZIP's, wins; no warning.
+        for input in ["500 OAK ST, ATLANTA, GA 30301", "100 MAIN ST DOTHAN 36301"] {
+            let a = hinted("FL").parse(input).unwrap();
+            assert!(!a.diagnostics.has(&Warning::DefaultStateApplied), "{input}");
+            assert_eq!(a, Parser::new().parse(input).unwrap(), "{input}");
+        }
+    }
+
+    #[test]
+    fn default_state_gives_the_pack_readings() {
+        let a = hinted("FL").parse("22200 SR 60").unwrap();
+        assert_eq!(a.highway.unwrap().prefix.standard(), "STATE ROAD");
+        assert!(a.diagnostics.has(&Warning::DefaultStateApplied));
+        let b = hinted("OH").parse("22200 SR 60").unwrap();
+        assert!(b.highway.is_none() && !b.diagnostics.has(&Warning::DefaultStateApplied));
     }
 
     #[test]

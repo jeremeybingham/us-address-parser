@@ -76,6 +76,10 @@ Emitter expectations are optional record keys, checked only when present
 - `usps`: `{"line1": ..., "line2": ..., "last_line": ...}` from
   `to_usps()`; an omitted part must be empty.
 
+- `default_state`: a state (code or name) passed as
+  `ParseOptions::default_state` for this case, so the hint cases (`ds-*`) can
+  run in the one corpus. Absent means no hint.
+
 - `place`: `ParsedAddress::place` as `"NAME (source)"`, with the pack's
   standard name and the `PlaceSource::code()` (`"WEST PALM BEACH (name)"`,
   `"FERNANDINA BEACH (completed)"`, `"PENSACOLA (zip)"`), or `"none"`.

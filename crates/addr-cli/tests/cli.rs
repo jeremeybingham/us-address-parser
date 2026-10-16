@@ -99,6 +99,22 @@ fn parse_file_appends_prefixed_columns() {
 }
 
 #[test]
+fn default_state_is_a_hint_and_must_be_a_state() {
+    let (out, err, code) = addr(
+        &["parse", "281 EVELYN DR DOTHAN", "--default-state", "AL"],
+        "",
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    assert!(out.contains("\"default_state_applied\""), "{out}");
+    assert!(out.contains("\"DOTHAN\""), "{out}");
+    let (out, _, _) = addr(&["parse", "281 EVELYN DR DOTHAN"], "");
+    assert!(!out.contains("default_state_applied"), "{out}");
+    let (_, err, code) = addr(&["parse", "1 MAIN ST", "--default-state", "ZZ"], "");
+    assert_eq!(code, 1, "{err}");
+    assert!(err.contains("not a US state"), "{err}");
+}
+
+#[test]
 fn corpus_test_runs_the_golden_corpus() {
     let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/corpus");
     let (out, err, code) = addr(&["corpus", "test", "--dir", dir], "");

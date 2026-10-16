@@ -39,7 +39,7 @@ plan items are in `docs/design.md`).
 | Token labels | `parse()` | `to_usaddress_tags()` | Done; `parse_tokens` in Python |
 | Joined components and type | `tag()` returns a dict and `Street Address` / `PO Box` / `Ambiguous`; raises `RepeatedLabelError` | None yet | `tag()`, `address_type()`; warning, not an error (decision 23) |
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) | Done |
-| Default state | None | None | `default_state` hint (decision 24) |
+| Default state | None | `default_state` hint, `--default-state` (decision 24) | Done |
 | Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug | Done |
 | Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; confidence planned (calibrated rule paths) | Milestone 7 |
 | Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit | Done |
