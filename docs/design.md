@@ -358,16 +358,17 @@ To do, in order:
       (`PR.zip`, a separate GeoNames file) is in this pass.
     - Commit 2: `build.rs` compiles `data/places/` behind `places-us`, with
       the same checks as the packs, and merges it under the Florida pack
-      (the layering rule is the open decision in section 13, needed before
-      this commit). Record the compiled size (expected 1.5 to 2 MB) and
+      (decision 24: the pack wins for Florida; national rows only add
+      places it lacks). Record the compiled size (expected 1.5 to 2 MB) and
       build time.
     - Commit 3: GeoNames attribution in `NOTICE` and the README's place
       data section.
 25. **Use the national list in the parser.** `Lexicons` place lookups read
     the national layer for every state, so the Florida behaviors (city on
     one line, street versus city before a ZIP, cut-off cities, place from
-    the ZIP) work everywhere. Decide in this PR whether `zip_city_mismatch`
-    fires on national data alone (section 13, open decisions). Corpus cases
+    the ZIP) work everywhere. `zip_city_mismatch` stays limited to states
+    with a curated pack (decision 25); document that on the warning. Corpus
+    cases
     from other states for each shape (`ST LOUIS`, `NORTH LITTLE ROCK`,
     `LA GRANGE PARK`, `ROARING BROOK TWP`); rerun `cargo bench` and record
     the parse-time change.
@@ -377,9 +378,8 @@ To do, in order:
     `overrides.toml` (today it only reads suffixes), with evidence counts
     from the DBPR export. **(any time)**
 27. **Florida: rarer misspellings and the penthouse shape.** `DRT`, `LNE`,
-    `SU` as observed spellings, and `APT PH 5213` read as the decision
-    says. **(author)** for the penthouse decision (section 13); the
-    spellings alone can go in any time.
+    `SU` as observed spellings, and a penthouse after a designator read as
+    one unit (`APT PH 5213` is `APT PH5213`; decision 26). **(any time)**
 28. **Florida: communities still missing after the national list.** Item
     24 adds Census places (including unincorporated CDPs such as `TRINITY`
     and `CITRUS SPRINGS`) for Florida, so remeasure the DBPR rows with no
@@ -495,8 +495,8 @@ data/packs/fl/
 
 Layering is add-only: a later layer adds names, variants and ZIPs and
 never replaces or removes an earlier entry; a conflict fails the build.
-How the national list and a curated pack for the same state combine is an
-open decision (section 13).
+Where a state has a curated pack, the pack wins and national rows for that
+state only add places it lacks (section 13, decision 24).
 Packs are fixed at compile time (section 3, decision 7); there are no user
 packs loaded from a directory. State selection is two-pass: find the
 state (state token or ZIP prefix), then look up places in that state.
@@ -680,28 +680,32 @@ extensible; no state-specific rule in the tagger.
     backlog below. `docs/packs/<st>.md` keeps the evidence for its state's
     items.
 
+24. **A curated pack wins over the national list for its state.** The
+    national data has its own row for every Florida place, sometimes with
+    another spelling (the Census's `Everglades` is the pack's `EVERGLADES
+    CITY`) or another main ZIP. Where a state has a curated pack, the
+    pack's places and ZIPs are used, and the national rows for that state
+    only add places the pack lacks, matched by the place comparison rule.
+    Add-only layering (decision 18) still holds. Item 24.
+25. **`zip_city_mismatch` only where a curated pack covers the state.**
+    GeoNames gives one place per ZIP; on that alone Florida fired on 5.4%
+    of DBPR rows before the observed ZIP places (decision 21), so the
+    national list would make the warning noisy. It fires only for states
+    with a curated pack, and its docs say so. Item 25.
+26. **A penthouse after a designator is one unit.** `APT PH 5213`, `UNIT
+    PH6` and `SUITE PH` (162 DBPR rows) give a designator with no number
+    plus a PH unit today. They become one unit: the designator with `PH`
+    joined to the number (`APT PH5213`, `UNIT PH6`; `SUITE PH` is `STE
+    PH`). Item 27.
+
 ### Open decisions (for the author)
 
-- **How the national list and the Florida pack combine** (needed for item
-  24, commit 2). The national data has its own row for every Florida place,
-  sometimes with another spelling (the Census's `Everglades` is the pack's
-  `EVERGLADES CITY`) or another main ZIP. Suggested: where a state has a
-  curated pack, the pack's places and ZIPs are used and the national rows
-  for that state only add places the pack lacks, matched by the place
-  comparison rule. Add-only layering (decision 18) then still holds.
-- **`zip_city_mismatch` on national data alone** (item 25). With GeoNames'
-  one place per ZIP, Florida fired on 5.4% of DBPR rows before the observed
-  ZIP places (decision 21). Suggested: fire only where a curated pack
-  covers the state, and say so in the warning's docs.
-- **The penthouse after a designator** (item 27): `APT PH 5213`, `UNIT
-  PH6`, `SUITE PH` (162 DBPR rows) give a designator with no number plus a
-  PH unit today. One unit (`APT PH5213`) or two?
 - **A city that is no known place, with a ZIP the pack knows** (`SINGER
   ISLAND`, `SAINT LUCIE COUNTY`): `place` is `None` today. auction-tracker
   uses the ZIP's place there. Filling it (source `zip`) would name the
   place mail goes to, but would put a different name beside a real
-  community's. Revisit after item 25, since the national list will know
-  more of these names.
+  community's. Deferred by the author (2026-10-16): revisit after item 25,
+  since the national list will know more of these names.
 
 ### Backlog (not scheduled)
 

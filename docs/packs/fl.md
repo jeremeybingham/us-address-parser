@@ -136,8 +136,8 @@ matches it anyway.
 Still open (2026-10-16): Florida work found in the DBPR licensee export
 (counts are rows out of 445,252 Florida addresses, after the 2026-10-16
 fixes). This section keeps the evidence; the work is scheduled as items 26
-to 28 in `docs/design.md` section 10, and the open decisions are in its
-section 13.
+to 28 in `docs/design.md` section 10, and the decisions are in its section
+13.
 
 - **Unincorporated communities the pack does not know** (item 28, after the
   national list). 4,514 rows have a city that matches no place, mostly real
@@ -152,8 +152,8 @@ section 13.
 - **Rarer misspellings and the penthouse shape** (item 27). Suffix typos
   `DRT` (1 row) and `LNE` (3), and the unit designator `SU` (16, `SU B`). A
   penthouse written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE
-  PH`; 162 rows) gives a designator with no number plus a PH unit; decide
-  whether it is one unit (`APT PH5213`) or two (an open decision).
+  PH`; 162 rows) gives a designator with no number plus a PH unit; it is to
+  be read as one unit (`APT PH5213`; `docs/design.md` decision 26).
 - **`SR` and county road names** (item 26). `SR` before a route number is
   State Road in Florida (`SR 54`; 143 rows), left out of the base tables
   because it is State Route elsewhere (Appendix F). County road spellings
