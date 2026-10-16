@@ -180,9 +180,10 @@ impl<'a> Tagger<'a> {
 pub(crate) fn tag_line(toks: &[Token], lex: Lexicons, lens: LineLengths) -> Tagged {
     let mut t = Tagger::new(toks, lex, lens);
     let (street_end, city) = t.last_line();
-    let street_end = t.drop_repeated_zip(0, street_end);
-    let street_end = t.drop_city_copy(0, street_end, city);
-    t.delivery(0, street_end);
+    let lo = t.drop_truncated_copy(0, street_end);
+    let street_end = t.drop_repeated_zip(lo, street_end);
+    let street_end = t.drop_city_copy(lo, street_end, city);
+    t.delivery(lo, street_end);
     t.finish()
 }
 
@@ -220,6 +221,7 @@ pub(crate) fn tag_fields(
             line = l1.clone();
         }
     }
+    line.start = t.drop_truncated_copy(line.start, line.end);
     if city.is_empty() && state.is_empty() && zip.is_empty() {
         // Everything is on the address lines: read them like one line.
         let (street_end, c) = t.last_line_in(line.start, line.end);

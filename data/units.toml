@@ -175,8 +175,11 @@ name = "UNIT"
 abbr = "UNIT"
 range_required = true
 forms = ["UNIT"]
-# observed: auction-tracker, Pasco County listings ("9960 EAGLES POINT CIRCLE UN 3")
-observed = ["UN"]
+# observed: auction-tracker, Pasco County listings ("9960 EAGLES POINT CIRCLE UN 3");
+# DBPR licensee data, Florida: industrial and studio units that Appendix C2
+# has no word for ("14355 SW 120TH STREET, BAY 102" 127 lines, "STUDIO 7" 99,
+# "BOOTH 12" 11), read as a plain unit
+observed = ["UN", "BAY", "STUDIO", "BOOTH"]
 
 [[unit]]
 name = "UPPER"

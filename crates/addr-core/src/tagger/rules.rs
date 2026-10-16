@@ -562,6 +562,7 @@ impl Tagger<'_> {
 
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {
         let (lo, hi) = self.attention(lo, hi);
+        let lo = self.name_line(lo, hi);
         if lo >= hi || self.placeholder(lo, hi) {
             return;
         }
@@ -599,6 +600,89 @@ impl Tagger<'_> {
             return;
         }
         self.street(lo, hi);
+    }
+
+    /// A name or building on line 1 (or in the first comma segment) with the
+    /// street on the next line: `THE COVE` / `1111 ASBURY WAY`. The first
+    /// segment has no digit, is no designator, PO Box or placeholder, and
+    /// the next one starts with a house number and a word; the first becomes
+    /// the attention line. Returns the start of the address.
+    fn name_line(&mut self, lo: usize, hi: usize) -> usize {
+        let lex = self.lex;
+        if lo >= hi {
+            return lo;
+        }
+        let seg = self.toks[lo].seg;
+        let Some(e) = (lo..hi).find(|&k| self.toks[k].seg != seg) else {
+            return lo;
+        };
+        let first = &self.toks[lo..e];
+        let plain = first
+            .iter()
+            .all(|t| !has_digit(&t.text) && !t.is_hash() && !t.is_dash());
+        let word =
+            |k: usize| lex.special(self.text(k)).is_some() || lex.unit(self.text(k)).is_some();
+        if !plain
+            || word(lo)
+            || lex.is_placeholder(&join(first))
+            || house_number(self.text(e)).is_none()
+        {
+            return lo;
+        }
+        // The street needs a word of its own after the number (not a unit:
+        // `4 APT B`).
+        let seg2 = self.toks[e].seg;
+        let named = self.toks[e + 1..hi]
+            .iter()
+            .take_while(|t| t.seg == seg2)
+            .any(|t| {
+                t.text.len() >= 3
+                    && t.text.bytes().all(|c| c.is_ascii_alphabetic())
+                    && lex.unit(&t.text).is_none()
+            });
+        if !named {
+            return lo;
+        }
+        self.set(lo..e, Tag::Attention);
+        e
+    }
+
+    /// A cut-off copy of the address ahead of the whole address, as the
+    /// DBPR mailing fields write it: `624 E COLONI 624 E COLONIAL DR`. The
+    /// house number comes again after words that match the start of what
+    /// follows (the last one may be cut short), all in one segment. The copy
+    /// is dropped. Returns the start of the address.
+    pub(super) fn drop_truncated_copy(&mut self, lo: usize, hi: usize) -> usize {
+        if hi < lo + 4 || house_number(self.text(lo)).is_none() {
+            return lo;
+        }
+        let seg = self.toks[lo].seg;
+        for k in lo + 2..hi {
+            if self.toks[k].seg != seg {
+                break;
+            }
+            if self.text(k) != self.text(lo) {
+                continue;
+            }
+            let m = k - lo - 1;
+            if k + 1 + m > hi || (m == 1 && self.text(lo + 1).len() < 2) {
+                continue;
+            }
+            let body = &self.toks[lo + 1..k];
+            let rest = &self.toks[k + 1..k + 1 + m];
+            let copy = body.iter().zip(rest).enumerate().all(|(i, (b, r))| {
+                if i + 1 == m {
+                    r.text.starts_with(&b.text)
+                } else {
+                    b.text == r.text
+                }
+            });
+            if copy {
+                self.set(lo..k, Tag::Skip);
+                return k;
+            }
+        }
+        lo
     }
 
     /// A building name at the end of the delivery lines, after the street
@@ -1306,6 +1390,18 @@ impl Tagger<'_> {
                     }
                     continue;
                 }
+                // "SUITE NO. 407", "APT NO 5": a filler word between the
+                // designator and its value.
+                if start > floor + 1 && matches!(self.text(start - 1), "NO" | "NUM" | "NUMBER") {
+                    if let Some((_, w)) =
+                        longest_ending(self.toks, floor, start - 1, |s| lex.unit(s))
+                    {
+                        self.set(start - 1..start, Tag::Skip);
+                        found.push((start - 1 - w..start - 1, start..j));
+                        j = start - 1 - w;
+                        continue;
+                    }
+                }
                 if let Some((_, w)) = longest_ending(self.toks, floor, start, |s| lex.unit(s)) {
                     found.push((start - w..start, start..j));
                     j = start - w;
@@ -1333,8 +1429,12 @@ impl Tagger<'_> {
                     continue;
                 }
             }
-            // A designator with nothing after it: "... TRL UNIT".
-            if let Some((u, w)) = longest_ending(self.toks, floor + 1, j, |s| lex.unit(s)) {
+            // A designator with nothing after it: "... TRL UNIT". An observed
+            // spelling is only trusted with a value (`GULF TO BAY` is a
+            // street, `BAY 4` a unit).
+            if let Some((u, w)) = longest_ending(self.toks, floor + 1, j, |s| {
+                lex.unit(s).filter(|l| l.kind != MatchKind::Observed)
+            }) {
                 if j - w > name_lo + 1 {
                     // A penthouse right after a designator is its number
                     // (`APT PH 5213`, `SUITE PH`; design.md decision 31).
