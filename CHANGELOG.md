@@ -20,6 +20,9 @@ Nothing is released yet. Entries are newest first.
   a rural route a PO Box, as there.
 - `addr parse --tag`; corpus fields `address_type`, `tag`, `tag_repeated`;
   corpus `tg-001` to `tg-008`.
+- `tools/compare/compare_usaddress.py ... tag` compares the joined dicts and
+  types with `usaddress.tag()` on the vendored test files: identical on 99.3%
+  of 8,103 addresses, types on 99.8% (`docs/usaddress-comparison.md`).
 
 ### `default_state`: a state hint for lookups (Milestone 6, item 30)
 

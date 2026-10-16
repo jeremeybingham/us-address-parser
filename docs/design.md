@@ -532,6 +532,10 @@ wrapper does not change when it is filled.
     `ALL` is 20), `addr parse --tag`, and corpus fields `address_type`, `tag`
     and `tag_repeated`; cases `tg-001` to `tg-008`. Tokens the parse did not
     place have no label and are left out (usaddress labels every token).
+    **Commit 2 done:** `compare_usaddress.py tag` compares the joined dicts
+    and types with `usaddress.tag()` on the vendored test files; result in
+    `docs/usaddress-comparison.md` (identical on 99.3% of 8,103; types on
+    99.8%).
 32. **Migration notes** for users coming from usaddress: the "Coming from
     usaddress" section in the README, and the same in
     `crates/addr-py/README.md`, from `docs/usaddress-comparison.md`
