@@ -15,9 +15,9 @@ address exists or can receive mail.
 | `pack.toml` | | state, pack version, sources |
 | `places.tsv` | 665 places (411 municipalities, 254 other places), 998 variants | `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 1,473 ZIPs (107 shared with a second place) | `zip`, `place` (the main place), `shared` |
-| `places_added.tsv` | 19 more communities, all `place` | `name`, `county`, `kind`, `addresses` (distinct street addresses seen) |
-| `variants_added.tsv` | 16 more spellings of known places | `variant`, `place`, `addresses` |
-| `zips_observed.tsv` | 239 more (ZIP, place) pairs: 187 ZIPs, 141 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
+| `places_added.tsv` | 36 more communities, all `place` | `name`, `county`, `kind`, `addresses` (distinct street addresses seen) |
+| `variants_added.tsv` | 37 more spellings of known places | `variant`, `place`, `addresses` |
+| `zips_observed.tsv` | 341 more (ZIP, place) pairs: 259 ZIPs, 199 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
 | `overrides.toml` | 1 suffix spelling, 2 highway prefix spellings | `[[suffix]]` `spelling`, `suffix`; `[[highway]]` `spelling`, `highway`, `kind` |
 
 - `name` is the place as auction-tracker spells it: upper case, `SAINT`
@@ -208,14 +208,32 @@ matches it anyway.
   `missing_street_number` 2,018 and `possibly_truncated` 1,168. The parser
   fixes this found are in the changelog (a cut-off copy ahead of the
   address, designators joined to their values, a name on line 1, BAY and
-  STUDIO units). Pack findings, to do: 87 (ZIP, place) pairs pass the
-  observed-ZIP rule and would clear 1,067 of the 5,509 mismatches (the rest
-  is a long tail of about 2,970 pairs, mostly a nearby big city written for a
-  suburb, which the warning should still flag); about ten more communities
-  and spellings (`CUTLER RIDGE`, `MIDDLETON`, `DORAL BRANCH`, `JAX`,
-  `PEMBROKE LAKES`, `CAROL CITY`, `DUETTE`, `WEST HOLLYWOOD`, `MAXVILLE`,
-  `VALKARIA`) and about ten typos (`OVEIDO`, `MERRIT ISLAND`, `KISSEMME`)
-  reach 10 addresses when counted with the earlier export.
+  STUDIO units). The pack work these files led to is the next bullet.
+- **Communities, spellings and ZIP pairs from five exports** (2026-10-16;
+  `places_added.tsv`, `variants_added.tsv`, `zips_observed.tsv`). The two
+  pack scripts now read every DBPR export together (`tools/packs/dbpr.py`:
+  the parquet and the board `.csv` files), counting each address once:
+  1,138,411 Florida rows, 961,275 distinct. Run
+  `measure_fl_places.py` and `observe_fl_zips.py` with all five files
+  (`dbpr_20251010_113032.parquet`, `RE_rgn4.csv`, `COSMETOLOGYLICENSE_1.csv`,
+  `CONSTRUCTIONLICENSE_1.csv`, `lic03bb.csv`). Added: 17 communities
+  (`MIDDLETON` 113 addresses, a Villages development in Lake County;
+  `CUTLER RIDGE` 73; `PEMBROKE LAKES`; `CAROL CITY`; `DUETTE`; `DEER ISLAND`;
+  `MAXVILLE`; `BONITA BEACH`; `BELLA COLLINA`; `CAPE HAZE`; `SEACREST`;
+  `MATLACHA ISLES`; `WILBUR BY THE SEA`; `WEST HOLLYWOOD`; `HOLLYWOOD
+  BEACH`; `SWITZERLAND`; `SAINT LUCIE WEST`), and 21 spellings of known
+  places, each at least 10 addresses (`DORAL BRANCH` 34, `JAX` 32, `OVEIDO`
+  26, `MERRIT ISLAND` 23, `PBG` 23, `STPETE` 21, `PSL` 20, `LEHIGH ACERS` 18,
+  `PONTE VERDA BEACH` 17, `SPRING HILLS` 17, `KISSEMME` 14, ...). The
+  observed-ZIP table is regenerated: 341 pairs (was 239; none dropped).
+  With five times the data the "10 addresses" rule let in a nearby city
+  written for a suburb (`ORLANDO` in Winter Garden's 34787: 23 of 4,435
+  addresses), so that path now also needs 1% of the ZIP's addresses
+  (`MIN_LARGE_SHARE`); 32 pairs it would otherwise have added stay out. On
+  the three newer files `zip_city_mismatch` fell from 5,509 to 4,505, FL rows
+  with a city that matches no place from 3,289 to 2,776. The rest of the
+  mismatches are a long tail of about 2,900 pairs. Corpus `fl-028` to
+  `fl-033`.
 
 ## To do
 

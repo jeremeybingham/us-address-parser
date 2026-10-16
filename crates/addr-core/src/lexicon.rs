@@ -775,12 +775,12 @@ mod tests {
         assert!(LEX.has_pack("FL"));
         assert!(!LEX.has_pack("GA"));
         assert_eq!(LEX.places().filter(|p| p.state() == "FL").count(), {
-            // The pack's 665 places and 19 added communities, plus the national list's 405 Census
+            // The pack's 665 places and 36 added communities, plus the national list's 405 Census
             // places it lacks when that is compiled in.
             if cfg!(feature = "places-us") {
-                1089
+                1106
             } else {
-                684
+                701
             }
         });
     }

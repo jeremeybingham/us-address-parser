@@ -4,6 +4,23 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Florida pack: communities, spellings and ZIP pairs from five DBPR exports
+
+- `tools/packs/dbpr.py` reads the DBPR parquet and board CSV exports;
+  `observe_fl_zips.py` and `measure_fl_places.py` take any number of them and
+  count each address once (961,275 distinct Florida addresses in five files).
+- `places_added.tsv` gains 17 communities (`MIDDLETON`, `CUTLER RIDGE`,
+  `PEMBROKE LAKES`, `CAROL CITY`, `DUETTE`, `DEER ISLAND`, ...), 36 in all;
+  `variants_added.tsv` gains 21 spellings (`JAX`, `PBG`, `STPETE`, `OVEIDO`,
+  `LEHIGH ACERS`, ...), 37 in all; `zips_observed.tsv` is 341 pairs (was
+  239). Pack version 2026.10.4.
+- The observed-ZIP rule now also needs 10-address pairs to be 1% of the
+  ZIP's addresses, so a big neighbour city written for a suburb stays a
+  mismatch as the data grows.
+- On the three newer files `zip_city_mismatch` fell from 5,509 to 4,505 and
+  Florida rows with an unknown city from 3,289 to 2,776. Corpus `fl-028` to
+  `fl-033`.
+
 ### Parser fixes found in three more DBPR licensee files
 
 Parsing the cosmetology, construction and `lic03bb` licensee files (613,719
