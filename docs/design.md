@@ -16,8 +16,9 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 **Status (2026-10-16):** Milestones 0 to 4 are done: data and types, the
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus (258
 cases, all passing), the `addr` CLI and benchmarks. From Milestone 8, the
-usaddress comparison is done. **Next: Milestone 5, the place list,
-then Milestone 6, the Python wrapper.**
+usaddress comparison is done. **Next: Milestone 5, the place list (the
+Florida pack first, then a national base list), then Milestone 6, the
+Python wrapper.**
 Section 10 has the plan and section 13 the open items.
 
 ---
@@ -32,14 +33,14 @@ Build a small, dependable library that:
 4. Reports **diagnostics** (warnings, unparsed remainder) so bulk users can route bad rows to review.
 5. Is usable from Rust directly and from Python via a PyO3 wrapper, with no C library or data download required at runtime.
 
-The author's Florida address code (auction-tracker, dbpr_fl) is the main
+The author's Florida address code (auction-tracker) is the main
 source of domain knowledge; what carried over is in `docs/prior-art.md`.
 
 ### Explicit non-goals (v1)
 
 - **Address validation or deliverability.** Pub 28 formatting is not the same as a deliverable address; real validation needs CASS-certified data. The README states this plainly.
 - Geocoding, fuzzy matching, address correction, international addresses.
-- ZIP-to-city or county lookup tables (possible later via state packs, see section 11).
+- Correcting addresses. The place list (Milestone 5) can fill a missing city from the ZIP or flag a city that disagrees with its ZIP, but the parsed `city` stays what the input said; the place match is reported beside it (section 13, decision 13).
 - Runtime-configurable lexicons (fixed at compile time in v1).
 
 ---
@@ -87,7 +88,7 @@ they cause friction.
 | 1 | Parsing approach | Rules first; CRF fallback behind a cargo feature (`crf`, declared but empty). Whether to build it is decided after the place list (Milestone 5; section 13, decision 10). |
 | 2 | Model training | Train in Python (parserator / python-crfsuite) on usaddress's MIT-licensed training data plus own labels; Rust does inference only via `crfs`. |
 | 3 | Input scope | Both single-line strings and multi-field input (line1, line2, city, state, zip). |
-| 4 | Geographic scope | US-wide grammar. **State-specific tuning packs are deferred** (section 11); the core is designed so packs can be added without restructuring. |
+| 4 | Geographic scope | US-wide grammar. Place data in layers (section 11): a national place list generated from public data, plus curated state packs, Florida first (Milestone 5). Other pack contents (road patterns) are deferred. |
 | 5 | Canonical key | Unit inclusion is an explicit option (default off, property level); the key carries a version prefix. City and ZIP+4 excluded. Spec in `docs/key-format.md`. |
 | 6 | Error model | Always return a `ParsedAddress` with diagnostics; `Result` only for unusable input (empty). |
 | 7 | Lexicon extensibility | Fixed at compile time in v1. |
@@ -308,14 +309,32 @@ The first state-pack work (section 11), scoped to what the parser needs to
 find the city. It comes before the Python wrapper, so Python ships with the
 calibrated confidence, and it decides Milestone 7.
 
-23. Place list data: a national table from the Census Gazetteer (places and
-    county subdivisions, public domain) plus Florida aliases from
-    auction-tracker's `cities_fl.json` and dbpr_fl's variant list. Record
-    provenance and licenses in `docs/`; settle the pack open questions in
-    section 11 that this touches (format, layering, versioning).
-24. Use it behind the `Lexicons` interface to find where the city starts on
-    one line with no commas, and to separate cities run into the street.
-    Golden-corpus cases for each fixed shape; `WINGATE ST 32507` goes in.
+23. Place list data in two layers (section 11; section 13, decisions 13
+    to 19):
+    - **Florida pack** (`data/packs/fl/`, feature `state-fl`), built by
+      `tools/packs/build_fl.py` from auction-tracker's `cities_fl.json`
+      (places, county, kind, main and shared ZIPs, variant spellings
+      tagged as abbreviation or typo) and checked against its Census and
+      GeoNames sources. Provenance and licenses in `docs/packs/fl.md`.
+    - **National base** (`data/places/`, feature `places-us`), built by
+      `tools/places/build_us.py` from the Census 2024 Gazetteer (places
+      and county subdivisions, public domain) and the GeoNames US postal
+      file (ZIP to city, CC BY 4.0). Abbreviated spellings (`ST`/`SAINT`,
+      directionals, Pub 28 suffix words inside names, `TWP`) come from a
+      comparison rule, not stored variants. Built after the Florida pack,
+      in the same format.
+24. Use it behind the `Lexicons` interface (lookups take the state found
+    from a state token or the ZIP prefix; no state logic in the tagger):
+    - find where the city starts on one line with no commas, and separate
+      cities run into the street (`13551 WILSON STREETDADE CITY`); on a
+      whole line only names and abbreviation variants count, typo
+      variants only in a city field or when the ZIP agrees;
+    - tell a street from a city before a ZIP (`WINGATE ST 32507`);
+    - complete a cut-off city when exactly one place for the ZIP starts
+      that way (`WESLEY CHA`);
+    - fill a missing city from the ZIP's main place, and warn when city
+      and ZIP disagree.
+    Golden-corpus cases for each shape.
 25. Calibrated confidence (section 13, decision 12): record the uncertain
     decisions the tagger makes, fit the score on licensed labeled data, and
     report calibration in `docs/`.
@@ -353,20 +372,31 @@ calibrated confidence, and it decides Milestone 7.
 Mostly deferred. The place list (Milestone 5) is the first piece to be built;
 the rest waits. Recorded so the core stays ready for it.
 
-**Idea:** the base parser is US-wide and state-agnostic. Each state gets a data-only "pack" of tuning files, so accuracy can improve per state without touching core code. Florida would be first.
+**Idea:** the base parser is US-wide and state-agnostic. Data comes in
+layers, each a set of files compiled in by `build.rs`:
 
-Sketch of a pack:
+1. **Base lexicons** (`data/*.toml`): Pub 28 and RESO tables.
+2. **National place list** (`data/places/`, feature `places-us`, on by
+   default): generated for every state, DC and Puerto Rico from public
+   data (Census Gazetteer, GeoNames ZIPs). Good enough to find cities and
+   match ZIPs everywhere; no misspellings.
+3. **Curated state packs** (`data/packs/<st>/`, feature `state-<st>`):
+   hand-checked data for a state, added where real data shows a need.
+   Florida is the first (on by default).
 
 ```
-packs/fl/
-  pack.toml        # state code, pack version, minimum core version, data provenance
-  places.csv       # canonical place names, aliases, county, type
-  zips.csv         # ZIP -> place(s), county
-  overrides.toml   # suffix/abbreviation tweaks, road patterns
-  tests/           # labeled addresses and golden outputs
+data/packs/fl/
+  pack.toml        # state code, pack version, sources and licenses
+  places.tsv       # canonical place names, county, kind, variants (abbreviation or typo)
+  zips.tsv         # ZIP -> main place, shared places
+  overrides.toml   # (later) SR/CR and other road patterns
 ```
 
-Layering: base defaults, then state pack, then optional user pack from a directory; later layers win. Official packs could be embedded via cargo features (`state-fl`) and Python extras. State selection would be two-pass: find the state (state token or ZIP prefix), then tag with that state's pack; with no pack, fall back to base only.
+Layering is add-only: a later layer adds names, variants and ZIPs and
+never replaces or removes an earlier entry; a conflict fails the build.
+Packs are fixed at compile time (section 3, decision 7); there are no user
+packs loaded from a directory. State selection is two-pass: find the
+state (state token or ZIP prefix), then look up places in that state.
 
 **Work already waiting on packs** (from the corpus, `docs/prior-art.md` and
 `docs/usaddress-comparison.md`):
@@ -376,8 +406,7 @@ Layering: base defaults, then state pack, then optional user pack from a directo
   (`13551 WILSON STREETDADE CITY`), cut-off cities completed from the county
   (`WESLEY CHA`), and city from ZIP. This is the largest remaining gap on the
   blind benchmark. The Census 2024 Gazetteer (public domain) covers 73.5% of
-  its cities; for Florida, auction-tracker's `cities_fl.json` and dbpr_fl's
-  variant list.
+  its cities; for Florida, auction-tracker's `cities_fl.json`.
 - `WINGATE ST 32507` (street plus ZIP, or city plus ZIP): only a place list
   separates them.
 - `SR` (State Road in Florida, State Route elsewhere), `RR` as Ranch Road in
@@ -389,13 +418,13 @@ Layering: base defaults, then state pack, then optional user pack from a directo
 - `ST`/`FT`/`MT` vs `SAINT`/`FORT`/`MOUNT` in place names, and suffix
   abbreviations inside place names (`ALTAMONTE SPGS`).
 
-Open questions to settle when this is picked up:
+Settled 2026-10-16 (section 13, decisions 13 to 19): add-only layering,
+compile-time packs, the pack version recorded in `pack.toml` but not yet in
+output, and GeoNames (CC BY 4.0) as the ZIP source. Still open:
 
-- Overlay semantics (add only, or add/replace/remove).
-- Pack versioning and core compatibility checks (include pack version in output).
-- ZIP data source and licensing: Census ZCTAs are public but not identical to USPS ZIPs; confirm redistribution terms for any USPS-derived table.
 - Whether packs may ship their own model weights (suggest no initially; reserve a manifest field).
 - A required golden-test corpus per pack, enforced in CI (`addr pack test`).
+- Reporting the pack version in output.
 
 **Design-now constraints:** keep all lexicon access behind the `Lexicons`
 interface; keep the key independent of city (section 6); keep diagnostics
@@ -476,17 +505,51 @@ extensible; no state-specific rule in the tagger.
     - Calibration waits for the place list, because the place list changes
       which paths are uncertain.
 
+### Decisions recorded 2026-10-16 (place list)
+
+13. **A place found from the list is reported beside the city, not in
+    it.** `ParsedAddress::city` stays what the input said (no span when it
+    came from the ZIP). A new `place` field holds the standard place name
+    and how it was found: exact, variant, completed (cut off) or from the
+    ZIP. Emitters keep writing the city as written. Filling or correcting
+    a city is a correction, which this library otherwise avoids; the key
+    leaves the city out, so none of this changes `k1`.
+14. **City and ZIP disagreeing is a warning** (`ZipCityMismatch`). It says
+    the two do not match the place list; it does not say the address is
+    undeliverable.
+15. **Florida first, then a national base list.** The Florida pack proves
+    the format and the `Lexicons` methods on curated data; the national
+    base (Census Gazetteer plus GeoNames) follows in the same format. The
+    blind benchmark is rerun after both. The other 49 states get generated
+    data, not hand-built packs; curated packs are added later where real
+    data shows a need.
+16. **Features on by default.** `places-us` and `state-fl`; the Python
+    wheel includes both. The Florida data is under 100 KB; the national
+    list is expected at about 1.5 to 2 MB compiled.
+17. **ZIP data: GeoNames, CC BY 4.0.** The Florida ZIP table in
+    `cities_fl.json` is GeoNames data, and the GeoNames US postal file is
+    the national source. It ships with attribution in `docs/packs/` and a
+    NOTICE file; the code stays MIT OR Apache-2.0. Rejected: Census ZCTAs
+    (public domain, but not USPS ZIPs and no PO Box ZIPs) and the USPS City
+    State file (no redistribution).
+18. **Pack questions settled:** layering is add-only, packs are fixed at
+    compile time (no user packs from a directory), and the pack version is
+    recorded in `pack.toml` but not added to output yet.
+19. **Florida variants come from auction-tracker's `cities_fl.json`
+    only.** An older copy of the list elsewhere is redundant. Florida road
+    names (`SR`, `CR`; the later `overrides.toml`) stay out of this pass.
+
 ### Open decisions (for the author)
 
-- **State-pack questions** (section 11), the ones the place list touches
-  first: data format, layering and versioning.
+- None open; the remaining pack questions are listed in section 11.
 
 ### Open tasks
 
 - **Slug follows the street for dual addresses** (decision 11): change
   `emit/slug.rs`, the slug section of `docs/key-format.md`, the corpus slug
   expectations for `rg-040` to `rg-045` and `tools/corpus/emit_expect.py`.
-- **Milestone 5**, the place list, calibrated confidence, and the CRF call (next).
+- **Milestone 5**, in order: the Florida pack, the national base list, the
+  benchmark rerun and the CRF call, then calibrated confidence (next).
 - **Milestone 6**, the Python wrapper.
 - **Florida code** from the author, to seed more corpus cases.
 - **Blind Florida sample:** hand-label 100 to 200 rows of the private Florida
