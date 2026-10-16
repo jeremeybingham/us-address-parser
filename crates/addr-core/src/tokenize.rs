@@ -21,11 +21,14 @@
 //! - a highway prefix run into its route: `I10`, `IH280` (Pub 28 Appendix F);
 //! - a unit designator run into its number: `APT107`;
 //! - a street suffix run into a unit designator, before a number:
-//!   `CTAPT 107` -> `CT` `APT` `107`.
+//!   `CTAPT 107` -> `CT` `APT` `107`;
+//! - a street suffix run into a city a state pack knows, when the city ends
+//!   the segment or comes before a state or ZIP:
+//!   `WILSON STREETDADE CITY FL` -> `STREET` `DADE` `CITY`.
 
-use crate::classify::{is_ordinal, ORDINAL_SUFFIXES};
+use crate::classify::{is_ordinal, zip_parts, ORDINAL_SUFFIXES};
 use crate::clean::Cleaned;
-use crate::lexicon::{Lexicons, MatchKind};
+use crate::lexicon::{Lexicons, MatchKind, MAX_PLACE_WORDS};
 use crate::types::{FieldName, Span};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -91,10 +94,21 @@ pub(crate) fn tokenize(
                     .next()
                     .is_some_and(|c| c.is_ascii_digit() || c == '#')
         });
+        // The words after this piece in its segment, for a city glued to
+        // the street.
+        let after: Vec<&str> = pieces[k + 1..]
+            .iter()
+            .take_while(|&&(_, _, s)| s == seg)
+            .take(MAX_PLACE_WORDS)
+            .map(|&(na, nb, _)| text[na..nb].trim_matches(|c: char| !c.is_alphanumeric()))
+            .collect();
+        let later_seg = pieces.iter().any(|&(_, _, s)| s > seg);
         let mut p = Piece {
             cleaned,
             field,
             seg,
+            after: &after,
+            later_seg,
             out: &mut out,
         };
         let raw = &text[a..b];
@@ -116,6 +130,10 @@ struct Piece<'a> {
     cleaned: &'a Cleaned,
     field: Option<FieldName>,
     seg: usize,
+    /// The next words in the segment.
+    after: &'a [&'a str],
+    /// Whether another segment follows this one.
+    later_seg: bool,
     out: &'a mut Vec<Token>,
 }
 
@@ -221,7 +239,9 @@ impl Piece<'_> {
             return;
         }
         if t.bytes().all(|c| c.is_ascii_alphanumeric()) {
-            if let Some(cut) = glue_split(t, next_numeric, lex) {
+            let cut = glue_split(t, next_numeric, lex)
+                .or_else(|| glue_place(t, self.after, self.later_seg, lex));
+            if let Some(cut) = cut {
                 self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
                 self.emit(t[cut..].to_string(), s2 + cut, e2, paren);
                 return;
@@ -316,6 +336,37 @@ fn glue_split(t: &str, next_numeric: bool, lex: &Lexicons) -> Option<usize> {
     None
 }
 
+/// `STREETDADE` before `CITY FL`: where a street suffix ends and a city the
+/// state packs know begins. The city is the rest of the word plus some of
+/// the words after it, and must come before a state, a ZIP or another
+/// segment (with none of these the tagger could not use the split). Never
+/// splits a word that starts a place itself.
+fn glue_place(t: &str, after: &[&str], later_seg: bool, lex: &Lexicons) -> Option<usize> {
+    let n = t.len();
+    if n < 5 || !t.bytes().all(|c| c.is_ascii_alphabetic()) || known_word(t, lex) {
+        return None;
+    }
+    // The city starting with `first`, ending before word `j` of `after`.
+    let city_at = |first: &str| {
+        (0..=after.len().min(MAX_PLACE_WORDS - 1)).any(|j| {
+            let ends = match after.get(j) {
+                None => later_seg,
+                Some(w) => lex.state(w).is_some() || zip_parts(w).is_some(),
+            };
+            let mut city = first.to_string();
+            for w in &after[..j] {
+                city.push(' ');
+                city.push_str(w);
+            }
+            ends && lex.is_place(&city)
+        })
+    };
+    if city_at(t) {
+        return None;
+    }
+    (2..n - 2).find(|&cut| lex.suffix(&t[..cut]).is_some() && city_at(&t[cut..]))
+}
+
 fn known_word(t: &str, lex: &Lexicons) -> bool {
     lex.suffix(t).is_some()
         || lex.unit(t).is_some()
@@ -374,6 +425,25 @@ mod tests {
         assert_eq!(toks("APT107"), ["APT", "107"]);
         assert_eq!(toks("ACCESS UNDETERMINED"), ["ACCESS", "UNDETERMINED"]);
         assert_eq!(toks("409742ND SQ"), ["409742ND", "SQ"]);
+    }
+
+    #[cfg(feature = "state-fl")]
+    #[test]
+    fn glued_city() {
+        assert_eq!(
+            toks("13551 WILSON STREETDADE CITY FL 33525"),
+            ["13551", "WILSON", "STREET", "DADE", "CITY", "FL", "33525"]
+        );
+        assert_eq!(
+            toks("1 OAK AVETITUSVILLE, FL"),
+            ["1", "OAK", "AVE", "TITUSVILLE", "FL"]
+        );
+        // Nothing after the city to anchor it, or no suffix before it.
+        assert_eq!(
+            toks("13551 WILSON STREETDADE CITY"),
+            ["13551", "WILSON", "STREETDADE", "CITY"]
+        );
+        assert_eq!(toks("1 PARKLAND DR"), ["1", "PARKLAND", "DR"]);
     }
 
     #[test]

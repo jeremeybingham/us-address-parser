@@ -36,14 +36,15 @@ def letters(s):
 
 
 def census_names(path):
-    """Gazetteer names with and without the LSAD word (`Everglades City
-    city` is EVERGLADES CITY; `Islamorada, Village of Islands village`)."""
+    """Gazetteer names, with the LSAD word dropped and without it after a
+    comma (`Islamorada, Village of Islands village`), to each place's GEOID."""
     with path.open(encoding="utf-8") as f:
         rows = list(csv.DictReader(f, delimiter="\t"))
-    out = set()
+    out = {}
     for r in rows:
         name = LSAD.sub("", r["NAME"])
-        out |= {letters(name), letters(name.split(",")[0])}
+        for n in (name, name.split(",")[0]):
+            out[letters(n)] = r["GEOID"]
     return out
 
 
@@ -63,6 +64,15 @@ def main(src):
     places = json.loads((src / "cities_fl.json").read_text(encoding="utf-8"))
     census = census_names(src / "census_fl_places_2024.txt")
     geonames = geonames_zips(src / "geonames_fl_zip.txt")
+
+    # A variant that is the name of another Census place is that place, not
+    # a misspelling (BELLVIEW, Escambia, listed for BELLEVIEW, Marion).
+    dropped = []
+    for p in places:
+        own = census.get(letters(CENSUS_NAME.get(p["city"], p["city"])))
+        keep = [v for v in p["variants"] if census.get(letters(v), own) == own]
+        dropped += [f"{v} (for {p['city']})" for v in p["variants"] if v not in keep]
+        p["variants"] = keep
 
     main_zip, shared = {}, {}
     for p in places:
@@ -111,6 +121,8 @@ def main(src):
     nv = sum(len(p["variants"]) for p in places)
     print(f"build_fl: {len(places)} places, {nv} variants, {len(main_zip)} ZIPs "
           f"({len(shared)} shared) -> {OUT}")
+    for d in dropped:
+        print(f"build_fl: dropped variant {d}: another Census place")
 
 
 if __name__ == "__main__":

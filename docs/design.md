@@ -16,9 +16,10 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 **Status (2026-10-16):** Milestones 0 to 4 are done: data and types, the
 rule parser, the key, USPS, RESO and slug emitters, the golden corpus (258
 cases, all passing), the `addr` CLI and benchmarks. From Milestone 8, the
-usaddress comparison is done. **Next: Milestone 5, the place list (the
-Florida pack first, then a national base list), then Milestone 6, the
-Python wrapper.**
+usaddress comparison is done. Milestone 5 is in progress: the Florida pack
+is built and used (271 corpus cases, all passing). **Next: the national
+place list, the benchmark rerun and the CRF call, calibrated confidence,
+then Milestone 6, the Python wrapper.**
 Section 10 has the plan and section 13 the open items.
 
 ---
@@ -229,6 +230,7 @@ does include the city.
 - Typed Rust-backed objects exposing the same fields, plus `to_dict()`. Ship type stubs (`.pyi`) and `py.typed`.
 - `parse(str)`, `parse_fields(...)`, and **`parse_many(list[str])`**, which releases the GIL during Rust work.
 - Emitters: `to_usps()`, `to_reso()`, `key()`, `slug()`, `to_usaddress_tags()`.
+- `place` (name, state, county, kind, source) or `None`, as the CLI prints it.
 - `confidence` is exposed as `float | None` (calibrated in Milestone 5; `None` only where no score applies, such as a placeholder).
 - Errors map to Python exceptions only for unusable input.
 - No required runtime dependencies. No pandas/Polars dependency; document a short recipe instead.
@@ -311,12 +313,12 @@ calibrated confidence, and it decides Milestone 7.
 
 23. Place list data in two layers (section 11; section 13, decisions 13
     to 19):
-    - **Florida pack** (`data/packs/fl/`, feature `state-fl`), built by
+    - **Florida pack** *(done)* (`data/packs/fl/`, feature `state-fl`), built by
       `tools/packs/build_fl.py` from auction-tracker's `cities_fl.json`
       (places, county, kind, main and shared ZIPs, variant spellings
       tagged as abbreviation or typo) and checked against its Census and
       GeoNames sources. Provenance and licenses in `docs/packs/fl.md`.
-    - **National base** (`data/places/`, feature `places-us`), built by
+    - **National base** *(next)* (`data/places/`, feature `places-us`), built by
       `tools/places/build_us.py` from the Census 2024 Gazetteer (places
       and county subdivisions, public domain) and the GeoNames US postal
       file (ZIP to city, CC BY 4.0). Abbreviated spellings (`ST`/`SAINT`,
@@ -324,7 +326,8 @@ calibrated confidence, and it decides Milestone 7.
       comparison rule, not stored variants. Built after the Florida pack,
       in the same format.
 24. Use it behind the `Lexicons` interface (lookups take the state found
-    from a state token or the ZIP prefix; no state logic in the tagger):
+    from a state token or the ZIP's pack; no state logic in the tagger).
+    *Done for Florida* (`docs/packs/fl.md`; corpus `fl-001` to `fl-013`):
     - find where the city starts on one line with no commas, and separate
       cities run into the street (`13551 WILSON STREETDADE CITY`); on a
       whole line only names and abbreviation variants count, typo
@@ -402,13 +405,12 @@ state (state token or ZIP prefix), then look up places in that state.
 `docs/usaddress-comparison.md`):
 
 - A place list to find the city on one line with no commas (`ST LOUIS`,
-  `MOUNTAIN VIEW`, `W. PALM BEACH`), a city run into the street
-  (`13551 WILSON STREETDADE CITY`), cut-off cities completed from the county
-  (`WESLEY CHA`), and city from ZIP. This is the largest remaining gap on the
-  blind benchmark. The Census 2024 Gazetteer (public domain) covers 73.5% of
-  its cities; for Florida, auction-tracker's `cities_fl.json`.
-- `WINGATE ST 32507` (street plus ZIP, or city plus ZIP): only a place list
-  separates them.
+  `MOUNTAIN VIEW`, `W. PALM BEACH`). *Done for Florida*, along with a city
+  run into the street (`13551 WILSON STREETDADE CITY`), cut-off cities
+  completed from the ZIP (`WESLEY CHA`), the place from the ZIP, and
+  `WINGATE ST 32507` (street plus ZIP, not city plus ZIP). Nationally this
+  is the largest remaining gap on the blind benchmark; the Census 2024
+  Gazetteer (public domain) covers 73.5% of its cities.
 - `SR` (State Road in Florida, State Route elsewhere), `RR` as Ranch Road in
   Texas, `PR 462` (Texas private road vs Puerto Rico), `CTY ROAD`,
   `LEE ROAD 2004`-style county road names.
@@ -416,7 +418,8 @@ state (state token or ZIP prefix), then look up places in that state.
 - `--default-state` for `addr parse-file` (most of the 1,700 auction rows
   with no state).
 - `ST`/`FT`/`MT` vs `SAINT`/`FORT`/`MOUNT` in place names, and suffix
-  abbreviations inside place names (`ALTAMONTE SPGS`).
+  abbreviations inside place names (`ALTAMONTE SPGS`). *Done*: the place
+  comparison rule (`lexicon/place_key.rs`).
 
 Settled 2026-10-16 (section 13, decisions 13 to 19): add-only layering,
 compile-time packs, the pack version recorded in `pack.toml` but not yet in
@@ -541,15 +544,23 @@ extensible; no state-specific rule in the tagger.
 
 ### Open decisions (for the author)
 
-- None open; the remaining pack questions are listed in section 11.
+- **A city that is no known place, with a ZIP the pack knows** (`SINGER
+  ISLAND`, `SAINT LUCIE COUNTY`): `place` is `None` today. auction-tracker
+  uses the ZIP's place there. Filling it (source `zip`) would name the
+  place mail goes to, but would put a different name beside a real
+  community's.
 
 ### Open tasks
 
 - **Slug follows the street for dual addresses** (decision 11): change
   `emit/slug.rs`, the slug section of `docs/key-format.md`, the corpus slug
   expectations for `rg-040` to `rg-045` and `tools/corpus/emit_expect.py`.
-- **Milestone 5**, in order: the Florida pack, the national base list, the
-  benchmark rerun and the CRF call, then calibrated confidence (next).
+- **Milestone 5**, in order: the national base list (next), the benchmark
+  rerun and the CRF call, then calibrated confidence. The Florida pack is
+  done.
+- **auction-tracker's `cities_fl.json`**: drop `BELLVIEW` from BELLEVIEW's
+  variants (Bellview is a Census place in Escambia County). The pack's
+  export already drops it (`docs/packs/fl.md`).
 - **Milestone 6**, the Python wrapper.
 - **Florida code** from the author, to seed more corpus cases.
 - **Blind Florida sample:** hand-label 100 to 200 rows of the private Florida

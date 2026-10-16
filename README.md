@@ -7,15 +7,17 @@ database-ready identifiers (a stable canonical match key and a URL-safe slug).
 
 > **Status:** the Rust library and the `addr` CLI work: parser, key, USPS,
 > RESO and slug emitters, a 258-case golden corpus and a comparison with
-> usaddress. Next is the place list (Milestone 5), then the Python wrapper
-> (Milestone 6). Nothing is published yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
+> usaddress. The place list (Milestone 5) is in progress: the Florida pack is
+> built; a national place list is next, then the Python wrapper (Milestone 6). Nothing is published yet. See [`docs/design.md`](docs/design.md) for the plan and open items.
 
 ## This is not an address validator
 
 This library **parses and formats** addresses. USPS Pub 28 formatting is not
 the same as deliverability. It does not check that an address exists, that a
-ZIP matches a city, or that a street is real. Deliverability validation needs
-CASS-certified data, which is out of scope.
+street is real. The place data (below) can say that a city and ZIP disagree
+with its tables (`zip_city_mismatch`), which is a hint, not a check that the
+address is right. Deliverability validation needs CASS-certified data, which
+is out of scope.
 
 ## Goals
 
@@ -31,8 +33,19 @@ CASS-certified data, which is out of scope.
 ## Non-goals (v1)
 
 Validation or deliverability, geocoding, fuzzy matching, address correction,
-international addresses, ZIP-to-city/county lookups, and runtime-configurable
-lexicons.
+international addresses, and runtime-configurable lexicons.
+
+## Place data (state packs)
+
+A state pack gives the parser a state's place names, the misspellings seen
+in real data, and the place each ZIP belongs to. The parser uses it to find
+where the city starts on a line with no commas (`123 MAIN ST WEST PALM BEACH
+FL`), to split a city run into the street (`WILSON STREETDADE CITY`), and to
+fill `ParsedAddress::place`: the place the city stands for, a cut-off city
+completed from the ZIP (`FERNANDINA B`), or the ZIP's place when there is no
+city. `city` always keeps what the input said. Florida is the first pack
+(cargo feature `state-fl`, on by default); see
+[`docs/packs/fl.md`](docs/packs/fl.md) for its sources and licenses.
 
 ## Rust usage
 
@@ -70,8 +83,9 @@ cargo run -p addr-cli -- corpus test
 crates/addr-core/   pure Rust library (no Python dependency)
 crates/addr-cli/    `addr` command-line tool
 crates/addr-py/     PyO3 bindings (planned, Milestone 6)
-data/               lexicon tables (Pub 28 suffixes, units, states, ...),
-                    compiled into static tables by addr-core's build.rs
+data/               lexicon tables (Pub 28 suffixes, units, states, ...) and
+                    state packs (data/packs/), compiled into static tables by
+                    addr-core's build.rs
 tests/corpus/       labeled golden corpus (JSONL)
 tests/external/     usaddress's labeled test files (MIT)
 tools/              corpus and comparison scripts
@@ -85,6 +99,7 @@ docs/               design and format specs
 - [`docs/key-format.md`](docs/key-format.md): the `k1` key and the slug
 - [`docs/reso-mapping.md`](docs/reso-mapping.md): RESO field mapping
 - [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md): accuracy against usaddress
+- [`docs/packs/fl.md`](docs/packs/fl.md): the Florida pack, its sources and licenses
 
 ## Development
 
@@ -98,4 +113,5 @@ cargo bench -p addr-core --bench parse
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at
-your option.
+your option. The ZIP tables in `data/packs/` are GeoNames data under CC BY 4.0;
+see [`NOTICE`](NOTICE).

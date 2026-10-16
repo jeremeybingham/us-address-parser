@@ -516,12 +516,16 @@ pub enum Warning {
     MissingZip,
     /// A ZIP that is not 5 digits, or ZIP+4 that is not 4 digits.
     InvalidZip,
+    /// The city is a known place, but the state pack does not list the ZIP
+    /// for it (`docs/design.md` section 13, decision 14). A disagreement
+    /// with the pack's data, not a finding that the address is wrong.
+    ZipCityMismatch,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 17] = [
+    pub const ALL: [Warning; 18] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -539,6 +543,7 @@ impl Warning {
         Warning::UnknownState,
         Warning::MissingZip,
         Warning::InvalidZip,
+        Warning::ZipCityMismatch,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -562,6 +567,7 @@ impl Warning {
             Warning::UnknownState => "unknown_state",
             Warning::MissingZip => "missing_zip",
             Warning::InvalidZip => "invalid_zip",
+            Warning::ZipCityMismatch => "zip_city_mismatch",
         }
     }
 }

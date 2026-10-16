@@ -13,7 +13,7 @@ address exists or can receive mail.
 | File | Rows | Columns |
 |---|---|---|
 | `pack.toml` | | state, pack version, sources |
-| `places.tsv` | 665 places (411 municipalities, 254 other places) | `name`, `county`, `kind`, `sources`, `variants` |
+| `places.tsv` | 665 places (411 municipalities, 254 other places), 998 variants | `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 1,473 ZIPs (107 shared with a second place) | `zip`, `place` (the main place), `shared` |
 
 - `name` is the place as auction-tracker spells it: upper case, `SAINT`
@@ -58,10 +58,37 @@ The script checks, and stops on, any of these:
   only; `EVERGLADES CITY` is the Census's `Everglades`);
 - a name or variant that is not upper-case words.
 
+It drops, and reports, a variant that is the name of a different Census
+place: `BELLVIEW` was listed for BELLEVIEW (Marion County), but Bellview is
+a Census place in Escambia County (ZIP 32526). The fix belongs in
+auction-tracker's list too.
+
 `build.rs` then compiles the files and fails the build on a name or variant
 that leads to two places. A variant that the place comparison rule already
 covers (`ALTAMONTE SPGS`, `N MIAMI`) is dropped there, since the name
 matches it anyway.
+
+## How the parser uses it
+
+- **Finding the city on one line.** With the state (or, with none, the
+  ZIP's state) known, the longest run of words before the state or ZIP that
+  is a place becomes the city, preferring a place the ZIP belongs to
+  (`123 MAIN ST WEST PALM BEACH FL 33401`). A variant counts there only when
+  the ZIP agrees. Otherwise the suffix rule decides, as before.
+- **A city run into the street** (`WILSON STREETDADE CITY FL`): a word that
+  is a street suffix followed by a place is split, when a state, ZIP or
+  another segment follows the place.
+- **A street before a ZIP**: `WINGATE ST, 32507` is a street, since
+  `WINGATE ST` is no place; `PALM BEACH, 33480` is a city.
+- **`ParsedAddress::place`**: the place the city names (`name`), a listed
+  spelling (`variant`), a cut-off city that only one of the ZIP's places
+  starts with (`completed`), or the ZIP's main place when there is no city
+  (`zip`). `city` itself is never changed.
+- **`zip_city_mismatch`**: the city is a known place, but the pack does not
+  list the ZIP for it. GeoNames gives one place per ZIP, while USPS accepts
+  several city names for many ZIPs, so this flags a disagreement with the
+  pack, not a wrong address (`FORT MCCOY` with 32182, corpus case `rg-041`).
+  On auction-tracker's 276 golden rows with a city and ZIP it never fires.
 
 ## Versioning
 

@@ -12,7 +12,7 @@ mod rules;
 
 use std::ops::Range;
 
-use crate::lexicon::Lexicons;
+use crate::lexicon::{Lexicons, ZipPlaces};
 use crate::tokenize::Token;
 use crate::types::{FieldName, Warning};
 
@@ -84,6 +84,16 @@ pub(crate) struct Tagger<'a> {
     incomplete: Option<usize>,
     zero_number: bool,
     lens: LineLengths,
+    /// The state pack that applies, once the last line's state or ZIP is
+    /// known.
+    places: Option<PlaceCtx>,
+}
+
+/// The state whose pack is used to find the city, and the ZIP's places.
+#[derive(Clone, Copy)]
+pub(crate) struct PlaceCtx {
+    state: &'static str,
+    zip: Option<ZipPlaces>,
 }
 
 impl<'a> Tagger<'a> {
@@ -96,6 +106,7 @@ impl<'a> Tagger<'a> {
             incomplete: None,
             zero_number: false,
             lens,
+            places: None,
         }
     }
 

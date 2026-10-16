@@ -27,6 +27,7 @@ mod emit;
 mod input;
 pub mod lexicon;
 mod parser;
+mod place;
 mod tagger;
 mod tokenize;
 mod types;

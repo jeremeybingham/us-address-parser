@@ -73,6 +73,13 @@ and rules in `docs/usps-pub28-notes.md` ("Parser rules"):
 
 ### Left for the state packs
 
+Done in the Florida pack (`docs/packs/fl.md`, corpus `fl-pack.jsonl`): cities
+run into the street, the place list and its comparison rule, completion of
+a cut-off city (from the ZIP's places, since the parser has no county), the
+ZIP's place when there is no city, and a `zip_city_mismatch` warning. Two
+differences from auction-tracker: a city that is no known place (`SAINT
+LUCIE COUNTY`) gets no place rather than the ZIP's, and SR/CR stay open.
+
 - **Cities run into the street line**, with or without a space:
   `13551 WILSON STREETDADE CITY`, `1155 TITUS AVE TITUSVILLE`. Only safe with
   a place list; a word-boundary check stops `GRAND DRIVE` being read as
@@ -107,7 +114,7 @@ address lines in the golden CSVs under `tests/golden/v2/` (305 rows from 8
 counties) seeded `auction-tracker-golden.jsonl`; those CSVs hold the old
 parser's output, so the labels were written by hand.
 
-Open finding from that pass: `WINGATE ST 32507` parses as a street plus
-ZIP, but its USPS output (`WINGATE ST` / `32507`) re-read with a comma reads
+Finding from that pass: `WINGATE ST 32507` parses as a street plus ZIP, but
+its USPS output (`WINGATE ST` / `32507`) re-read with a comma read
 `WINGATE ST` as a city (`PALM BEACH, 32507` has the same shape). Only a place
-list separates them, so the case was left out of the corpus.
+list separates them. Fixed with the Florida pack (`fl-004`, `fl-005`).

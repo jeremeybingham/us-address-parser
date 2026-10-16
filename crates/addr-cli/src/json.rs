@@ -1,7 +1,7 @@
 //! JSON and flat-column views of a [`ParsedAddress`]. Read-only: the CLI
 //! formats what the parser produced and never re-parses it.
 
-use addr_core::{Highway, KeyOptions, ParsedAddress, UsaddressTag};
+use addr_core::{Highway, KeyOptions, ParsedAddress, PlaceKind, UsaddressTag};
 use serde_json::{json, Map, Value};
 
 /// Parsed components, by `ParsedAddress` field name. Components the parse
@@ -97,6 +97,16 @@ pub fn record(a: &ParsedAddress) -> Value {
             "last_line": usps.last_line(),
         },
         "reso": reso,
+        "place": a.place.map(|m| json!({
+            "name": m.place.name(),
+            "state": m.place.state(),
+            "county": m.place.county(),
+            "kind": match m.place.kind() {
+                PlaceKind::Municipality => "municipality",
+                PlaceKind::Place => "place",
+            },
+            "source": m.source.code(),
+        })),
     })
 }
 
@@ -112,7 +122,7 @@ pub fn usaddress_record(input: &str, tags: &[UsaddressTag]) -> Value {
 }
 
 /// Columns `addr parse-file` appends, in order.
-pub const COLUMNS: [&str; 24] = [
+pub const COLUMNS: [&str; 26] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -124,6 +134,8 @@ pub const COLUMNS: [&str; 24] = [
     "state",
     "zip5",
     "zip4",
+    "place",
+    "place_source",
     "highway",
     "po_box",
     "rural_route",
@@ -152,6 +164,14 @@ pub fn row(a: &ParsedAddress) -> Vec<String> {
             "key" => a.key(KeyOptions::property()).unwrap_or_default(),
             "key_unit" => a.key(KeyOptions::unit()).unwrap_or_default(),
             "slug" => a.slug().unwrap_or_default(),
+            "place" => a
+                .place
+                .map(|m| m.place.name().to_string())
+                .unwrap_or_default(),
+            "place_source" => a
+                .place
+                .map(|m| m.source.code().to_string())
+                .unwrap_or_default(),
             "warnings" => warning_codes(a).join(";"),
             "unparsed" => a.diagnostics.unparsed.clone().unwrap_or_default(),
             other => get(other),

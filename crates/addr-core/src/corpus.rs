@@ -41,6 +41,9 @@ pub struct Case {
     /// Expected `to_reso()` fields by Data Dictionary name; a field not
     /// listed must be empty. Absent means not checked.
     reso: Option<BTreeMap<String, String>>,
+    /// Expected `ParsedAddress::place` as `"NAME (source)"`, such as
+    /// `"WEST PALM BEACH (name)"`, or `"none"`. Absent means not checked.
+    place: Option<String>,
     #[serde(default)]
     #[allow(dead_code)]
     note: Option<String>,
@@ -125,7 +128,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 28] = [
+const FIELDS: [&str; 29] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -154,10 +157,11 @@ const FIELDS: [&str; 28] = [
     "slug",
     "usps",
     "reso",
+    "place",
 ];
 
 /// Fields checked only for the cases that give them.
-const OPTIONAL_FIELDS: [&str; 5] = ["key", "key_unit", "slug", "usps", "reso"];
+const OPTIONAL_FIELDS: [&str; 6] = ["key", "key_unit", "slug", "usps", "reso", "place"];
 
 /// Data Dictionary 2.0 names a case's `reso` object may use.
 const RESO_FIELDS: [&str; 12] = [
@@ -276,6 +280,9 @@ fn expected_values(c: &Case) -> Values {
             Some(reso_str(r.iter().map(|(k, v)| (k.as_str(), v.as_str())))),
         );
     }
+    if let Some(p) = &c.place {
+        v.insert("place", Some(p.clone()));
+    }
     v
 }
 
@@ -350,6 +357,12 @@ fn actual_values(a: &ParsedAddress) -> Values {
     v.insert(
         "reso",
         Some(reso_str(reso.iter().map(|(k, v)| (*k, v.as_str())))),
+    );
+    v.insert(
+        "place",
+        Some(a.place.map_or("none".to_string(), |m| {
+            format!("{} ({})", m.place.name(), m.source.code())
+        })),
     );
     v
 }
@@ -523,6 +536,7 @@ fn run_case(parser: &Parser, c: &Case) -> Values {
             v.insert("slug", Some("none".to_string()));
             v.insert("usps", Some(usps_str(&None, &None, &None)));
             v.insert("reso", Some(String::new()));
+            v.insert("place", Some("none".to_string()));
             v.insert("unparsed", Some("<error>".to_string()));
             v
         }

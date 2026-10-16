@@ -327,6 +327,15 @@ impl Lexicons {
         })
     }
 
+    /// Whether `s` names a place (by name, not a listed misspelling) in any
+    /// compiled-in pack.
+    pub fn is_place(&self, s: &str) -> bool {
+        tables::PACK_STATES.iter().any(|st| {
+            self.place(st, s)
+                .is_some_and(|l| l.kind == MatchKind::Standard)
+        })
+    }
+
     /// The places a 5-digit ZIP belongs to, from the compiled-in packs.
     pub fn zip_places(&self, zip5: &str) -> Option<ZipPlaces> {
         let (main, shared) = *find(tables::ZIP_INDEX, zip5)?;
