@@ -449,6 +449,10 @@ To do, in order:
 27. **Florida: rarer misspellings and the penthouse shape.** `DRT`, `LNE`,
     `SU` as observed spellings, and a penthouse after a designator read as
     one unit (`APT PH 5213` is `APT PH5213`; decision 31). **(any time)**
+    **Done:** the three spellings are `observed` entries in the base tables
+    (they are general typos, not Florida rules), and the tagger joins a PH
+    right after a designator into that designator's value. Corpus `rg-098`
+    to `rg-105`; `docs/packs/fl.md`.
 28. **Florida: communities still missing after the national list.** Item
     24 adds Census places (including unincorporated CDPs such as `TRINITY`
     and `CITRUS SPRINGS`) for Florida, so remeasure the DBPR rows with no
@@ -941,7 +945,7 @@ revisit if they cause friction.
     PH6` and `SUITE PH` (162 DBPR rows) give a designator with no number
     plus a PH unit today. They become one unit: the designator with `PH`
     joined to the number (`APT PH5213`, `UNIT PH6`; `SUITE PH` is `STE
-    PH`). Item 27.
+    PH`). Item 27 (done).
 
 ### Open decisions (for the author)
 

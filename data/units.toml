@@ -160,8 +160,9 @@ name = "SUITE"
 abbr = "STE"
 range_required = true
 forms = ["SUITE", "STE"]
-# observed: DBPR licensee data, Florida ("SUIT 300")
-observed = ["SUIT"]
+# observed: DBPR licensee data, Florida ("SUIT 300", "N WICKHAM RD SU B",
+# "ALTA MEADOWS LANE SU 612"; SU in 16 lines at 6 distinct addresses)
+observed = ["SUIT", "SU"]
 
 [[unit]]
 name = "TRAILER"

@@ -151,6 +151,20 @@ matches it anyway.
   highway_in` with the address's state (its own, or the ZIP's). Corpus
   `fl-020` to `fl-023`.
 
+- **Rarer misspellings and the penthouse shape** (item 27). These are
+  general rules, not Florida ones, so they are in the base tables
+  (`data/suffixes.toml`, `data/units.toml`, each with its evidence) and the
+  tagger; the evidence is the DBPR export. `DRT` is DR (1 row; the same
+  street in the same ZIP is written DR or DRIVE on 7 other lines), `LNE` is
+  LANE (3 rows) and `SU` is SUITE (16 rows at 6 distinct addresses, `7925
+  N WICKHAM RD SU B`), all observed spellings with
+  `non_standard_abbreviation`. A penthouse right after a designator is one
+  unit (decision 31; 162 rows): `APT PH 5213` is `APT PH5213`, `UNIT PH6`
+  stays, and `SUITE PH` is `STE PH`. Before this a designator with no
+  number and a second PH unit came out. A penthouse after a designator that
+  has its own number (`APT 4 PH 5`) stays two units. Corpus `rg-098` to
+  `rg-105`.
+
 ## To do
 
 Still open (2026-10-16): Florida work found in the DBPR licensee export
@@ -173,11 +187,6 @@ to 28 in `docs/design.md` section 10, and the decisions are in its section
   `TRINITY` and `CITRUS SPRINGS`; `docs/places.md`) with their county, and
   the observed-ZIP table was rerun with them (`TRINITY` and the others in
   `zips_observed.tsv`). Remeasure this list against the new total first.
-- **Rarer misspellings and the penthouse shape** (item 27). Suffix typos
-  `DRT` (1 row) and `LNE` (3), and the unit designator `SU` (16, `SU B`). A
-  penthouse written after a designator (`APT PH 5213`, `UNIT PH6`, `SUITE
-  PH`; 162 rows) gives a designator with no number plus a PH unit; it is to
-  be read as one unit (`APT PH5213`; `docs/design.md` decision 31).
 
 ## Versioning
 

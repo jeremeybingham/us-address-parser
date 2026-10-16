@@ -4,6 +4,16 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Rarer misspellings and the penthouse shape (item 27)
+
+- Observed spellings `DRT` (DR), `LNE` (LANE) and `SU` (SUITE), from the
+  DBPR export; they raise `non_standard_abbreviation`.
+- A penthouse right after a designator is one unit: `APT PH 5213` is unit
+  `PH5213`, `UNIT PH6` stays `PH6`, and `SUITE PH` is `STE PH` (decision
+  31; 162 DBPR lines). It used to come out as a designator with no number
+  plus a second PH unit and `missing_unit_number`. Corpus `rg-098` to
+  `rg-105`.
+
 ### Florida: `SR` is STATE ROAD, `CTY HWY` is COUNTY HIGHWAY
 
 - The Florida pack's `overrides.toml` can add highway prefix spellings

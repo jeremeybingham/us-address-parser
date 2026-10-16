@@ -165,6 +165,19 @@ pub(crate) fn assemble(
                 }
             }
             Tag::UnitNumber(n) => {
+                // A penthouse after a designator is one value: `APT PH 5213`
+                // is `APT PH5213` (design.md decision 31).
+                let text = match run {
+                    [first, rest @ ..]
+                        if !rest.is_empty()
+                            && lex
+                                .unit(&first.text)
+                                .is_some_and(|u| u.value.abbr() == "PH") =>
+                    {
+                        run.iter().map(|t| t.text.as_str()).collect()
+                    }
+                    _ => text,
+                };
                 if n == 0 {
                     set_once(&mut addr.unit_number, text);
                     record(addr, Component::UnitNumber);
