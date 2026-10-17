@@ -2,9 +2,15 @@
 
 This page specifies the **key** (below) and the **slug** (last section).
 
-The key is a **public contract**. Stored keys must keep meaning the same thing,
-so any change to what an input produces needs a new version prefix (`k2:`) and an
-update here. `k1` is never edited in place.
+The key is versioned, and a given version is a contract: stored keys must keep
+meaning the same thing, so any change to what an input produces needs a new version
+prefix (`k2:`) and an update here. `k1` is never edited in place.
+
+**This is an alpha release.** Expect new key versions as the parser improves: the
+parser's behavior is still settling, and every fix that changes how an input is read
+changes its key. If you store keys, store the version prefix with them (it is part of
+the key) and plan to re-key when a new version appears. Keys of different versions
+are never equal.
 
 A key says two inputs name the same place as far as this library can tell. It
 does not say the address exists or is deliverable (see README).

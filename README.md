@@ -21,6 +21,24 @@ For one line or separate fields it gives you:
 - **diagnostics**: warnings with stable codes and the text it could not place, so
   you can send doubtful rows to review.
 
+> **Alpha release.** This is the first version (0.1.0), and it is early.
+>
+> - **Keys will probably change.** The match key is versioned (`k1:`). As the parser
+>   improves, expect new key versions (`k2:` and later): a changed key gets a new
+>   prefix, so an old key is never silently reinterpreted, but if you store keys, store
+>   their version with them and plan to re-key. Don't treat `k1` as permanent yet.
+> - **Accuracy and speed are not guaranteed.** The numbers below were measured on one
+>   machine and a few datasets; your data may behave differently. Watch the warnings.
+> - Names in the API and the warning codes may still change before 1.0.
+
+> **Help wanted: messy addresses.** The parser gets better with real, messy data. If
+> you have addresses it parses badly (odd abbreviations, typos, cut-off lines, units
+> in strange places, county or mailing-list exports), please
+> [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md)
+> with a sample. I want to fix them. If the data is private, we can anonymize it
+> first: keep the shape and swap the names, numbers and places
+> ([how](CONTRIBUTING.md#sharing-messy-data)).
+
 > **This is not an address validator.** `doorplate` parses and formats. It does
 > not check that an address exists or can receive mail; Pub 28 formatting is not
 > deliverability, and validation needs postal-service-certified data. Warnings
@@ -65,7 +83,7 @@ One address, followed through:
 | Place | `MIAMI`, Dade County, found by name (`city` keeps what you wrote) |
 | USPS (Pub 28) | `123 N MAIN ST APT 4` / `MIAMI FL 33101` |
 | RESO | `StreetNumber` `123`, `StreetDirPrefix` `N`, `StreetName` `MAIN`, `StreetSuffix` `ST`, `UnitNumber` `APT 4`, `City` `MIAMI`, `StateOrProvince` `FL`, `PostalCode` `33101`, `UnparsedAddress` `123 N MAIN ST APT 4, MIAMI, FL 33101` |
-| Key | `k1:S|123|N|MAIN|ST||FL|33101` (with the unit: `k1:S|123|N|MAIN|ST||FL|33101|4|`) |
+| Key | `k1:S\|123\|N\|MAIN\|ST\|\|FL\|33101` (with the unit: `k1:S\|123\|N\|MAIN\|ST\|\|FL\|33101\|4\|`) |
 | Slug | `123-n-main-st-apt-4-miami-fl-33101` |
 | Warnings | none |
 
@@ -174,16 +192,11 @@ is a hint, never a fill: `state` stays empty, `missing_state` still fires, and
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A["input<br/>one line or fields"] --> B["clean<br/>and tokenize"]
-    B --> C["classify<br/>and tag"]
-    C --> D["assemble<br/>ParsedAddress"]
-    D --> E1["USPS"]
-    D --> E2["RESO"]
-    D --> E3["key and slug"]
-    D --> E4["usaddress labels"]
-    L[("Pub 28 tables<br/>place list<br/>state packs")] -.-> C
+```
+input (one line or fields)
+  -> clean and tokenize -> classify and tag -> assemble (ParsedAddress)
+       -> USPS | RESO | key | slug | usaddress labels
+  every step reads the Pub 28 tables, the place list and the state packs (Lexicons)
 ```
 
 The parser is rules plus place data. There is no machine-learned model, so the same
@@ -196,12 +209,6 @@ with warnings. [`docs/how-it-works.md`](docs/how-it-works.md) has the details.
 
 ### Place data
 
-```mermaid
-flowchart BT
-    P["Pub 28 tables<br/>suffixes, units, states, directionals"] --> N["national place list<br/>50 states, DC, Puerto Rico"]
-    N --> F["state packs<br/>Florida today"]
-    F --> X["Lexicons: the one interface the tagger reads"]
-```
 
 A **national list** of 50,375 places and 41,154 ZIPs (Census Gazetteer and GeoNames
 postal codes) lets the parser find the city on a line with no commas, tell
@@ -237,6 +244,28 @@ Method, caveats, memory and Rust timings: [`docs/benchmarks.md`](docs/benchmarks
   the input so the tables or rules can be fixed; a user-extensible layer of aliases
   and places is not part of this release.
 
+## Where it is going
+
+The next work, roughly in this order, depends on what real data shows:
+
+- **Confidence score.** `confidence` is reserved and always `None`. A useful score
+  needs a lot of messy, correctly labeled addresses to calibrate against, which is a
+  main reason messy data is wanted (see above).
+- **Customization packs.** A way to add your own spellings, places, ZIPs and
+  state-specific readings without editing the shipped tables, loaded at run time. Not
+  in this release; examples of what you would add are the best input.
+- **More state packs.** Florida is the first curated pack. Others start from real data
+  for that state.
+- **More address shapes and rules.** Named buildings without a building word, a few
+  highway and unit forms, and more (the gaps are listed in the roadmap).
+- **More output.** A mixed-case display form and a long form (`North Main Street`), a
+  batch call for pre-split fields, and a columnar result for DataFrames.
+- **Stable key versions.** A `k2` as the parser settles; the key policy is in
+  [`docs/key-format.md`](docs/key-format.md).
+
+The details, and what is deliberately not planned (validation, geocoding, international
+addresses), are in [`docs/roadmap.md`](docs/roadmap.md).
+
 ## Coming from usaddress
 
 The labels are usaddress's, so a pipeline built on them keeps working:
@@ -269,6 +298,7 @@ and small invented sample files.
 | [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md) | The source of every table and parser rule |
 | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) | usaddress-shaped output, labels, migration |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | Accuracy, speed and size |
+| [`docs/roadmap.md`](docs/roadmap.md) | Planned work, what is not planned, and what data would help |
 | [`docs/places.md`](docs/places.md), [`docs/packs/fl.md`](docs/packs/fl.md) | The place list and the Florida pack: sources and licenses |
 | [`tests/corpus/README.md`](tests/corpus/README.md) | The golden corpus format |
 | [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md) | The Python package |

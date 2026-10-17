@@ -7,7 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [0.1.0] - Unreleased
 
-The first release.
+The first release. It is an alpha: keys are likely to get new versions as the parser
+improves (store the `k1:` prefix with your keys and plan to re-key), and accuracy and
+speed are measurements on a few datasets, not guarantees. If it parses your data badly,
+please open an issue; see `CONTRIBUTING.md` for sharing messy data, anonymized if needed.
 
 ### Parsing
 
@@ -75,6 +78,7 @@ The first release.
 ### Not in this release
 
 - Address validation or deliverability, geocoding, address correction and international
-  addresses.
-- A confidence score (`confidence` is always `None`), and a user-extensible layer of
-  aliases and places.
+  addresses (not planned).
+- A confidence score (`confidence` is always `None`) and a user-extensible layer of
+  aliases and places: planned, and both depend on more real, messy data. See
+  `docs/roadmap.md`.
