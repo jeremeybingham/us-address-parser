@@ -4,6 +4,12 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Fuzz targets (item 43)
+
+- `fuzz/` (cargo-fuzz, nightly, outside the workspace): `parse` and
+  `parse_fields` run the public parse paths and every emitter. A CI job runs
+  each for a short time.
+
 ### Intersections (item 55)
 
 - `MAIN ST & 1ST AVE` (also `AND`, `@`, `AT`) is detected when a name and a

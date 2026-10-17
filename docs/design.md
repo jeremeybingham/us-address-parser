@@ -32,7 +32,8 @@ Nothing is published yet.
 Milestone 7 because calibrated confidence waits for the author's hand-labeled
 Florida sample (item 36). Milestone 8 removed the unused `model_version`
 and `crf` (item 53) and added `country_ignored` (item 54) and
-`intersection_detected` (item 55); next are fuzzing, the rename and data packaging,
+`intersection_detected` (item 55), and fuzz targets (item 43); next are the
+rename and data packaging,
 the Pub 28 recheck, and publishing. The custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the decisions and the unscheduled backlog.
@@ -193,7 +194,7 @@ Emitters never mutate the parsed struct and never re-parse.
 
 - **Deterministic.** Same input, same output, across platforms.
 - **Spans preserved.** Components keep their source byte ranges (`SourceInfo::spans`).
-- **Never panic on input.** Covered by proptest properties (`tests/no_panic.rs`); fuzz targets are Milestone 8.
+- **Never panic on input.** Covered by proptest properties (`tests/no_panic.rs`); fuzz targets (`fuzz/`, item 43) cover the public parse and emit paths.
 - **Lexicon access behind one interface** (`Lexicons`, built from `data/*.toml`, the national list and the packs at build time). The state packs and the planned custom layer plug in here.
 - No global mutable state; `Parser` is cheap and `Send + Sync`.
 
@@ -343,7 +344,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
 | **Benchmarks** (criterion): single shapes, the corpus through `parse` and `parse_many`, the emitters. | Done (`benches/parse.rs`). |
 | **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace --all-features`, corpus accuracy report, the emitter-expectation check; a Python job (maturin develop, pytest on 3.10 and 3.13). | Done (`ci.yml`). |
-| **Fuzzing** (cargo-fuzz) for the tokenizer and assembler. | Milestone 8. |
+| **Fuzzing** (cargo-fuzz, `fuzz/`, nightly): `parse` (with a `default_state` hint) and `parse_fields`, each running every emitter on the result. The tokenizer and assembler are `pub(crate)`, so they are reached through the public entry points. | Done (item 43); a short smoke run in CI. |
 | **Python tests** (pytest): the wrapper, type stubs, `parse_many` (identical to a loop, GIL released), `tag` against usaddress, pandas and Polars recipes: 27 tests. **Wheels**: abi3 wheels built and tested on Linux x86_64 and aarch64, macOS universal2 and Windows x64, on Python 3.10 and 3.13. | Done (`crates/addr-py/tests`, `wheels.yml`). |
 | **Blind accuracy**: labels neither this parser nor usaddress was tuned on. | Geocode benchmark run locally (`docs/usaddress-comparison.md`); a hand-labeled Florida sample is still open. |
 
@@ -357,7 +358,7 @@ it says little about unseen data; the blind benchmark is the better measure.
 Each milestone ends with passing tests. Each numbered item is one pull
 request (its commits listed where it has more than one), small enough to
 review on its own and leaving `main` green. Milestones 0 to 6 are done; the
-open items are 36 to 38 (Milestone 7), 43 to 46 (Milestone 8)
+open items are 36 to 38 (Milestone 7), 44 to 46 (Milestone 8)
 and 47 to 51 (Milestone 9). An item marked **(author)** needs the author's data or
 decision before it can start; **(any time)** has no dependency and can go
 in wherever it fits.
@@ -531,7 +532,7 @@ the Pub 28 recheck cover the final rules.
     `intersection_detected`; the second street stays in `unparsed` and the
     key stays `None`. No new fields. Corpus cases, including street names
     that contain `AND` (`LAND AND SEA RD`) and must not warn.
-43. **Fuzz targets** (cargo-fuzz) for the tokenizer and assembler.
+43. **Fuzz targets (done)** (cargo-fuzz) for the tokenizer and assembler, reached through `Parser::parse` and `Parser::parse_fields` plus every emitter. `fuzz/` is outside the workspace (nightly only). Run: `cargo +nightly fuzz run parse` from `fuzz/`.
 44. **Re-check every lexicon table and the USPS emitter rules against the
     live Pub 28 pages** (`docs/usps-pub28-notes.md`, "Verification
     status"). Last before release, so the check covers the final tables.
@@ -734,8 +735,9 @@ extensible; no state-specific rule in the tagger.
 - **Licensing.** Keep MIT attribution for vendored usaddress test data and
   any usaddress-derived training data. Unlicensed test data (the geocode
   benchmark) stays in `local-data/` and is never committed.
-- **Fuzzing** does not exist yet (item 43); proptest covers the never-panic
-  rule meanwhile.
+- **Fuzzing** (item 43) ran for minutes per target before the first release, not
+  hours; run longer before publishing (item 46). Proptest also covers the
+  never-panic rule.
 - **Python boundary overhead** for single-address calls (about 15 us each);
   `parse_many` is 6x faster on a batch, and the README says so.
 - **Packaging.** An sdist and a crate lack `data/` until item 45; the
