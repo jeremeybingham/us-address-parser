@@ -100,16 +100,26 @@ pub(crate) fn tokenize(
         let after: Vec<&str> = pieces[k + 1..]
             .iter()
             .take_while(|&&(_, _, s)| s == seg)
-            .take(MAX_PLACE_WORDS)
             .map(|&(na, nb, _)| text[na..nb].trim_matches(|c: char| !c.is_alphanumeric()))
             .collect();
-        let later_seg = pieces.iter().any(|&(_, _, s)| s > seg);
+        let later = || {
+            pieces[k + 1..]
+                .iter()
+                .filter(|&&(_, _, s)| s > seg)
+                .map(|&(na, nb, _)| text[na..nb].trim_matches(|c: char| !c.is_alphanumeric()))
+        };
+        // The next segment starts with a state or a ZIP: the glued city's end.
+        let later_seg = later()
+            .next()
+            .is_some_and(|w| lex.state(w).is_some() || zip_parts(w).is_some());
+        let later_anchor = later().any(|w| lex.state(w).is_some() || zip_parts(w).is_some());
         let mut p = Piece {
             cleaned,
             field,
             seg,
             after: &after,
             later_seg,
+            later_anchor,
             out: &mut out,
         };
         let raw = &text[a..b];
@@ -131,14 +141,30 @@ struct Piece<'a> {
     cleaned: &'a Cleaned,
     field: Option<FieldName>,
     seg: usize,
-    /// The next words in the segment.
+    /// The words after this piece in its segment.
     after: &'a [&'a str],
     /// Whether another segment follows this one.
     later_seg: bool,
+    /// Whether a later segment holds a state or a ZIP.
+    later_anchor: bool,
     out: &'a mut Vec<Token>,
 }
 
 impl Piece<'_> {
+    /// The words before this piece in its segment, nearest last.
+    fn before(&self) -> Vec<&str> {
+        let mut words: Vec<&str> = self
+            .out
+            .iter()
+            .rev()
+            .take_while(|t| t.seg == self.seg)
+            .take(MAX_PLACE_WORDS)
+            .map(|t| t.text.as_str())
+            .collect();
+        words.reverse();
+        words
+    }
+
     fn span(&self, a: usize, b: usize) -> Option<Span> {
         let (start, end) = self.cleaned.original_range(a, b)?;
         Some(Span {
@@ -246,9 +272,23 @@ impl Piece<'_> {
             self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
             return;
         }
+        // A value right after '#' or a unit designator is that unit's: `# 2WD`
+        // is not house number 2 and a name, `APT I4` is not highway I4.
+        let unit_value = self
+            .out
+            .last()
+            .is_some_and(|p| p.seg == self.seg && (p.is_hash() || lex.unit(&p.text).is_some()));
         if t.bytes().all(|c| c.is_ascii_alphanumeric()) {
-            let cut = glue_split(t, next_numeric, lex)
-                .or_else(|| glue_place(t, self.after, self.later_seg, lex));
+            let cut = glue_split(t, next_numeric, unit_value, lex).or_else(|| {
+                glue_place(
+                    t,
+                    self.before(),
+                    self.after,
+                    self.later_seg,
+                    self.later_anchor,
+                    lex,
+                )
+            });
             if let Some(cut) = cut {
                 self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
                 self.emit(t[cut..].to_string(), s2 + cut, e2, paren);
@@ -313,10 +353,14 @@ fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
 }
 
 /// Where to split a glued alphanumeric token, if anywhere.
-fn glue_split(t: &str, next_numeric: bool, lex: &Lexicons) -> Option<usize> {
+fn glue_split(t: &str, next_numeric: bool, after_unit: bool, lex: &Lexicons) -> Option<usize> {
     let digits_lead = t.bytes().take_while(u8::is_ascii_digit).count();
     let alpha_lead = t.bytes().take_while(u8::is_ascii_alphabetic).count();
     let n = t.len();
+    // A value right after a unit designator is whole (`# 2WD`, `APT I4`).
+    if after_unit && (digits_lead > 0 || alpha_lead < n) {
+        return None;
+    }
     if digits_lead > 0 && digits_lead < n {
         let rest = &t[digits_lead..];
         // 101BRADDOCK; not 12A, 42ND, 1ST.
@@ -365,18 +409,57 @@ fn glue_split(t: &str, next_numeric: bool, lex: &Lexicons) -> Option<usize> {
 /// state packs know begins. The city is the rest of the word plus some of
 /// the words after it, and must come before a state, a ZIP or another
 /// segment (with none of these the tagger could not use the split). Never
-/// splits a word that starts a place itself.
-fn glue_place(t: &str, after: &[&str], later_seg: bool, lex: &Lexicons) -> Option<usize> {
+/// splits a word that starts a place itself, or ends one with the words
+/// before it (`PICO RIVERA` is not `RIV` `ERA`).
+///
+/// With the national place list almost any word ends in a place name, so the
+/// anchor has to be real:
+/// - a state or ZIP in the same segment ends the city only when nothing but
+///   a ZIP follows it (`DE LA REINA` is not Delaware, `CT` in
+///   `CREEKWOOD CT, MIAMI` is not Connecticut), and only when no later
+///   segment holds the state or ZIP;
+/// - the end of the segment ends it only when the next segment starts with a
+///   state or a ZIP (`STRAND, MIAMI, FL` is not `ST` `RAND`), and the city's
+///   last word is not a street suffix.
+fn glue_place(
+    t: &str,
+    before: Vec<&str>,
+    rest: &[&str],
+    later_seg: bool,
+    later_anchor: bool,
+    lex: &Lexicons,
+) -> Option<usize> {
     let n = t.len();
     if n < 5 || !t.bytes().all(|c| c.is_ascii_alphabetic()) || known_word(t, lex) {
         return None;
     }
+    // This word ends a place that began earlier in the segment.
+    for from in 0..before.len() {
+        let mut name = before[from..].join(" ");
+        name.push(' ');
+        name.push_str(t);
+        if lex.is_place(&name) {
+            return None;
+        }
+    }
+    let after = &rest[..rest.len().min(MAX_PLACE_WORDS)];
     // The city starting with `first`, ending before word `j` of `after`.
     let city_at = |first: &str| {
         (0..=after.len().min(MAX_PLACE_WORDS - 1)).any(|j| {
             let ends = match after.get(j) {
-                None => later_seg,
-                Some(w) => lex.state(w).is_some() || zip_parts(w).is_some(),
+                // A segment-end anchor takes no street suffix as the city's
+                // last word (`DALEWOOD WAY,` is not `DALE` `WOOD WAY`).
+                None => {
+                    later_seg
+                        && j == rest.len()
+                        && !after[..j].last().is_some_and(|w| lex.suffix(w).is_some())
+                }
+                Some(w) => {
+                    (lex.state(w).is_some() || zip_parts(w).is_some())
+                        && !later_anchor
+                        && (j + 1 == rest.len()
+                            || (j + 2 == rest.len() && zip_parts(rest[j + 1]).is_some()))
+                }
             };
             let mut city = first.to_string();
             for w in &after[..j] {

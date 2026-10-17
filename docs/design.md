@@ -12,6 +12,7 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 | `docs/usaddress-comparison.md` | Comparison with usaddress, the blind benchmark, the accuracy backlog |
 | `docs/places.md` | The national place list: sources, licenses, how it is built and compiled |
 | `docs/packs/fl.md` | The Florida pack: sources, licenses, evidence, what is left |
+| `docs/future-sources.md` | Outside address sources evaluated (NAD, OpenAddresses, Netsyms, Kaggle), what v1's accuracy numbers cover, and the deferred v2 plan |
 | `docs/prior-art.md` | Lessons from the author's Florida address code |
 | `tests/corpus/README.md` | Golden-corpus record format and labeling conventions |
 | `crates/addr-py/README.md` | The Python package: API, batch and dataframe recipes, usaddress mapping |
@@ -24,8 +25,8 @@ Puerto Rico) and a curated Florida pack find cities, and `default_state`
 hints the state for input that names none. The Python wrapper
 (`us_address_parser`, abi3, `parse`/`parse_fields`/`parse_many`/`tag`/
 `parse_tokens`) is built and tested, with wheels for Linux, macOS and
-Windows built on every pull request. Measures: golden corpus 381 cases, all
-passing; blind geocode benchmark 96.1% of whole addresses (coarse) against
+Windows built on every pull request. Measures: golden corpus 404 cases, all
+passing; blind geocode benchmark 96.4% of whole addresses (coarse) against
 usaddress's 88.2%; 27 Python tests. No CRF will be built (decision 32).
 Nothing is published yet.
 **Next (section 10): Milestone 8, hardening and release**, started ahead of
@@ -338,7 +339,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 
 | Check | Status |
 |---|---|
-| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 381 cases, all passing (the runner also checks `place`, `address_type`, `tag` and `default_state` cases). |
+| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 404 cases, all passing (the runner also checks `place`, `address_type`, `tag` and `default_state` cases). |
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
@@ -532,6 +533,11 @@ the Pub 28 recheck cover the final rules.
     `intersection_detected`; the second street stays in `unparsed` and the
     key stays `None`. No new fields. Corpus cases, including street names
     that contain `AND` (`LAND AND SEA RD`) and must not warn.
+56. **Netsyms comparison (done)** (decision 40): `tools/netsyms/` (sample,
+    profile, compare), eight parser fixes found by scoring 217,906 uniform US
+    rows (99.8% whole-address on rows without source quirks, up from 99.2% to
+    99.5%), corpus `ns-001` to `ns-023` (invented addresses), results in
+    `docs/future-sources.md`. The geocode benchmark moved from 96.1% to 96.4%.
 43. **Fuzz targets (done)** (cargo-fuzz) for the tokenizer and assembler, reached through `Parser::parse` and `Parser::parse_fields` plus every emitter. `fuzz/` is outside the workspace (nightly only). Run: `cargo +nightly fuzz run parse` from `fuzz/`.
 44. **Re-check every lexicon table and the USPS emitter rules against the
     live Pub 28 pages** (`docs/usps-pub28-notes.md`, "Verification
@@ -722,9 +728,9 @@ extensible; no state-specific rule in the tagger.
 ## 12. Risks
 
 - **Accuracy parity with usaddress.** On the blind geocode benchmark (30,622
-  one-line addresses) this parser gets 96.1% of whole addresses right
-  (coarse) against usaddress's 88.2%, since the national place list (it was
-  85.7% before). On usaddress's own test files it gets 99.2% (those are
+  one-line addresses) this parser gets 96.4% of whole addresses right
+  (coarse) against usaddress's 88.2% (96.1% before the fixes from the Netsyms
+  comparison, decision 40; 85.7% before the national place list). On usaddress's own test files it gets 99.2% (those are
   usaddress's regression tests, so usaddress scores 100% by construction).
   The benchmark has no license and the rules were not tuned on it, but they
   were checked against it repeatedly; the hand-labeled Florida sample (item
@@ -977,6 +983,31 @@ Made by the author while reviewing the plan after Milestone 6.
     national list and the pack scripts now cover most communities, and a
     filled name could mislead).
 
+### Decisions recorded 2026-10-17 (outside sources)
+
+39. **Outside-source testing waits for v2 (reversed for Netsyms by decision 40).** NAD, OpenAddresses and the
+    Netsyms Address Database were evaluated (`docs/future-sources.md`); none
+    was downloaded or parsed. The first release ships on the accuracy already
+    measured (96.1% on the blind benchmark, 99.2% on usaddress's files, the
+    381-case corpus, about 900k fuzz runs), which covers street addresses
+    mostly in Florida and one-line uppercase input, not units or mixed case
+    elsewhere. No further source-driven parser rule work is scheduled before
+    release: such changes would alter keys after `k1` is public, so they wait
+    for `k2` (decision 34). A real bug found before release may still be
+    fixed under the `CLAUDE.md` rule (log the key change). Disk (about 47 GB
+    for Netsyms) is also not available. Plan: `docs/future-sources.md`.
+
+40. **Reversal of decision 39 for the Netsyms data (2026-10-17).** The author
+    freed the disk and chose to run the Netsyms full file (2026-05, 176M rows,
+    956 US sources) before the first release, accepting parser changes now:
+    until release a fix may change a key (`CLAUDE.md`), logged in
+    `docs/key-format.md`. Done: `tools/netsyms/` (`sample.py`, `profile.py`,
+    `compare.py`), eight parser fixes with corpus `ns-001` to `ns-023`
+    (invented addresses; the data stays in `local-data/`), and the results in
+    `docs/future-sources.md`. NAD direct and OpenAddresses stay deferred to v2
+    (`k2`). Decision 39's other points stand: private data is never committed,
+    and only numbers and our own fixes ship.
+
 ### Open decisions (for the author)
 
 Intersections, the trailing country and the city that is no known place were
@@ -1008,6 +1039,10 @@ when it is scheduled.
   (`3324 N, ANDREWS AVE`, 17 DBPR rows), a PO Box on line 2 beside a street
   with no number, a unit followed by business words (`STE 903 BLU SPA`, left
   unparsed), and `possibly_truncated` firing on complete units.
+- **Outside-source benchmark and place-list gaps** (v2, decision 39;
+  `docs/future-sources.md`): NAD or Netsyms rows rendered in several styles,
+  compared per state and per source, feeding corpus cases, place-list gaps and
+  pack priorities.
 - **A batch call for pre-split fields** (`parse_fields_many`) and a columnar
   or Arrow result for dataframes: reading attributes from Python objects is
   now most of the time in a Polars or pandas pipeline (`crates/addr-py/README.md`).

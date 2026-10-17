@@ -4,6 +4,30 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Netsyms comparison and eight parser fixes (item 56, decision 40)
+
+- `tools/netsyms/` samples, profiles and scores the parser against the Netsyms
+  Address Database (private data, kept in `local-data/`). On 217,906 uniform
+  US rows (213,551 without malformed source fields) the whole address matches
+  the source on all six fields in 99.81% to 99.86% of rows, up from 99.20% to
+  99.54%. Blind geocode benchmark: 96.1% to 96.4% whole-address.
+- Fixes (corpus `ns-001` to `ns-023`, key changes in `docs/key-format.md`):
+  a suffix glued to a city is split only with a real anchor (`PICO RIVERA`,
+  `CREEKWOOD`, `AVENIDA DE LA LUNA`, `STRAND` stay whole); a word after `#`
+  and a letter range are units; values after `#` or a designator are not
+  split (`# 2WD`, `APT I4`); `U S ROUTE 23` keeps its house number; a
+  postdirectional is no longer dropped as a cut-off copy of a city starting
+  with NE; `CT`, `LA` and `WY` are states on one line when the ZIP and a place
+  say so; `WASHINGTON DC` keeps its city.
+
+### Outside sources deferred (decision 39)
+
+- `docs/future-sources.md`: NAD, OpenAddresses, the Netsyms Address Database
+  and a Kaggle address list evaluated (terms, fields, what each could test),
+  what the v1 accuracy numbers cover and do not, and a v2 plan. Nothing was
+  downloaded or parsed. Design.md decision 39 defers source-driven parser
+  work to the `k2` version.
+
 ### Fuzz targets (item 43)
 
 - `fuzz/` (cargo-fuzz, nightly, outside the workspace): `parse` and
