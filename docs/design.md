@@ -29,13 +29,14 @@ Windows built on every pull request. Measures: golden corpus 404 cases, all
 passing; blind geocode benchmark 96.4% of whole addresses (coarse) against
 usaddress's 88.2%; 27 Python tests. No CRF will be built (decision 32).
 Nothing is published yet.
-**Next (section 10): Milestone 8, hardening and release**, started ahead of
-Milestone 7 because calibrated confidence waits for the author's hand-labeled
-Florida sample (item 36). Milestone 8 removed the unused `model_version`
-and `crf` (item 53) and added `country_ignored` (item 54) and
-`intersection_detected` (item 55), and fuzz targets (item 43); next are the
-rename and data packaging,
-the Pub 28 recheck, and publishing. The custom layer is Milestone 9.
+**Next (section 10): Milestone 7, calibrated confidence**, then the rest of
+Milestone 8 (decision 41). Milestone 8's parser and hardening work is done:
+the unused `model_version` and `crf` removed (item 53), `country_ignored`
+(item 54), `intersection_detected` (item 55), the Netsyms fixes (item 56) and
+fuzz targets (item 43). What is left of it (the Pub 28 recheck, the rename
+and data packaging, publishing) waits for Milestone 7: item 37 (the tagger
+records its uncertain decisions), the author's hand-labeled Florida sample
+(item 36), then the fitted score (item 38). The custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the decisions and the unscheduled backlog.
 
@@ -360,7 +361,8 @@ Each milestone ends with passing tests. Each numbered item is one pull
 request (its commits listed where it has more than one), small enough to
 review on its own and leaving `main` green. Milestones 0 to 6 are done; the
 open items are 36 to 38 (Milestone 7), 44 to 46 (Milestone 8)
-and 47 to 51 (Milestone 9). An item marked **(author)** needs the author's data or
+and 47 to 51 (Milestone 9). Build order (decision 41): 37, 36, 38, then 44,
+45, 46; Milestone 9 may run beside them. An item marked **(author)** needs the author's data or
 decision before it can start; **(any time)** has no dependency and can go
 in wherever it fits.
 
@@ -484,8 +486,11 @@ designators joined to values, a name on line 1, BAY and STUDIO units), corpus
 
 ### Milestone 7: calibrated confidence
 
-Waits for the author's hand-labeled Florida sample (item 36), so Milestone 8
-runs first (decision 38). Item 37 can start at any time.
+Runs before the rest of Milestone 8 (items 44 to 46; decision 41, which
+replaces the order of decision 38): the Florida sample can find parser bugs
+that change keys, and those must land before `k1` freezes at the first
+release. Order: item 37 (no dependency), item 36 (the author's labeling),
+item 38.
 
 Calibrated confidence (decision 12):
 
@@ -517,8 +522,11 @@ Python toolchain and no retraining.
 
 ### Milestone 8: hardening and release
 
-In this order. The parser changes (53 to 55) come first so that fuzzing and
-the Pub 28 recheck cover the final rules.
+In this order. The parser changes (53 to 56) came first so that fuzzing and
+the Pub 28 recheck cover the final rules. Items 44 to 46 wait for Milestone 7
+(decision 41): the Pub 28 recheck must cover any rule the Florida sample
+changes, and packaging must carry item 38's fitted table. The rename and
+packaging checks of item 45 may be tried early, but are redone after item 38.
 
 53. **Remove the unused surface (done)** (decision 35): `Diagnostics::model_version`
     (Rust, Python property, stub) and the empty `crf` cargo feature. No parse
@@ -978,7 +986,8 @@ Made by the author while reviewing the plan after Milestone 6.
     stays `None`. Cross-street fields and a key form are revisited only if real
     data shows the volume. Item 55.
 38. **Order, and the other two answers.** Milestone 8 runs before Milestone 7
-    because the author is labeling the Florida sample (item 36). A city that is
+    because the author is labeling the Florida sample (item 36); this order
+    was replaced by decision 41 once items 53 to 56 and 43 were done. A city that is
     no known place keeps `place = None` even when the ZIP is known (the
     national list and the pack scripts now cover most communities, and a
     filled name could mislead).
@@ -1008,6 +1017,27 @@ Made by the author while reviewing the plan after Milestone 6.
     (`k2`). Decision 39's other points stand: private data is never committed,
     and only numbers and our own fixes ship.
 
+### Decisions recorded 2026-10-17 (release order)
+
+41. **Milestone 7 before the rest of Milestone 8.** Decision 38 ran
+    Milestone 8 first while the Florida sample was being labeled. Its parser
+    and hardening items (53 to 56, 43) are done; what is left (44 to 46) is
+    the release itself, and should follow Milestone 7:
+    - The Florida sample (item 36) is a blind test on the data this library
+      targets. A parser bug it finds changes keys; before the first release
+      that is a logged fix, after it a `k2` (decision 34).
+    - Decision 27 already put calibration before the first release; a first
+      release with `confidence` always `None` would ship an empty feature.
+    - The Pub 28 recheck (item 44) is meant to cover the final tables, and
+      fixes from the sample may add spellings.
+    - Item 38 adds a fitted table to `data/`, which item 45 copies into the
+      crate.
+    - Decision 32 (no CRF) is to be reopened if the sample shows a class of
+      parses rules cannot reach; that answer is wanted before publishing.
+    Order: 37, 36, 38, 44, 45, 46. Milestone 9 may run beside them, and item
+    45's rename and packaging checks may be tried early and redone after
+    item 38.
+
 ### Open decisions (for the author)
 
 Intersections, the trailing country and the city that is no known place were
@@ -1032,7 +1062,8 @@ when it is scheduled.
 
 - **Florida code** from the author **(author)**, to seed more corpus cases.
 - **The hand-labeled Florida sample** (item 36, **author**) is scheduled; it
-  is listed here too because it gates Milestone 7.
+  is listed here too because it gates Milestone 7 and so the first release
+  (decision 41).
 - **Accuracy, not tied to packs** (`docs/usaddress-comparison.md`): named
   buildings without a building word (`THE GARRETT`), highway modifiers such as
   BUSINESS before a city on one line, a comma after a directional

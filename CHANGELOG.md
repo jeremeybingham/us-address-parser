@@ -4,6 +4,13 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Release order (decision 41)
+
+- Milestone 7 (calibrated confidence) now runs before the rest of Milestone 8
+  (the Pub 28 recheck, the rename and packaging, publishing): the hand-labeled
+  Florida sample may find key-changing bugs, which must land before `k1`
+  freezes. Order: items 37, 36, 38, 44, 45, 46.
+
 ### Netsyms comparison and eight parser fixes (item 56, decision 40)
 
 - `tools/netsyms/` samples, profiles and scores the parser against the Netsyms
