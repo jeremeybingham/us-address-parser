@@ -499,6 +499,19 @@ Calibrated confidence (decision 12):
     conventions of `tests/corpus/README.md`. It is calibration data and a
     blind test on the data this library targets. The rows never leave
     `local-data/`; only numbers fitted from them ship.
+    - Commit 1 (done): `tools/calibrate/sample_fl.py` draws 150 rows
+      uniformly (seeded) from distinct auction and DBPR addresses, plus 40
+      from rows the parser flags, skipping corpus inputs, and writes them as
+      corpus records pre-filled with the current parse (`TODO` in the note
+      until checked). Drawn 2026-10-17 into `local-data/florida-sample/`
+      (190 records), with a labeling guide there; scored by
+      `addr corpus test --dir local-data/florida-sample`.
+    - Commit 2 (done): `tools/calibrate/label.py`, a terminal tool for the
+      labeling: the draft hidden until asked for, standard values picked
+      from `data/*.toml`, the field-driven warnings computed, each row
+      checked by the corpus runner before it is saved, and `NOTES.md`
+      written from the differences with the parser.
+    - Then **(author)**: label the 190 records and note the parser errors.
 37. **Record the tagger's uncertain decisions (done).** `tagger::Decision`
     in `Tagged::decisions`, each once in the order made: `CityByComma`,
     `CityBySuffix`, `CityByPlace`, `StateWithoutZip`, `BareUnit` (after the
