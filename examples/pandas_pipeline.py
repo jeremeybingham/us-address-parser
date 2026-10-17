@@ -1,6 +1,6 @@
 """Parse a CSV of addresses with pandas.
 
-    pip install "us-address-parser[pandas]"
+    pip install "doorplate[pandas]"
     python examples/pandas_pipeline.py [--out parsed.csv]
 
 All addresses in examples/data are invented. This library formats and
@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pandas as pd
 
-import us_address_parser as uap
-from us_address_parser.pandas import parse_column
+import doorplate as uap
+from doorplate.pandas import parse_column
 
 DATA = Path(__file__).parent / "data"
 

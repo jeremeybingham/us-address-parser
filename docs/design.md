@@ -15,17 +15,17 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 | `docs/future-sources.md` | Outside address sources evaluated (NAD, OpenAddresses, Netsyms, Kaggle), what v1's accuracy numbers cover, and the deferred v2 plan |
 | `docs/prior-art.md` | Lessons from the author's Florida address code |
 | `tests/corpus/README.md` | Golden-corpus record format and labeling conventions |
-| `crates/addr-py/README.md` | The Python package: API, batch and dataframe recipes, usaddress mapping |
-| `examples/` | Notebook tour, Polars and pandas pipelines and invented sample inputs (item 59); run by `crates/addr-py/tests/test_examples.py` |
+| `crates/doorplate-py/README.md` | The Python package: API, batch and dataframe recipes, usaddress mapping |
+| `examples/` | Notebook tour, Polars and pandas pipelines and invented sample inputs (item 59); run by `crates/doorplate-py/tests/test_examples.py` |
 | `docs/repository_cleaning.md` | Text changes deferred to the fresh repository before the first release (decision 42) |
 | `CHANGELOG.md` | What changed, newest first (everything is "Unreleased" until item 46) |
 
 **Status (2026-10-16):** Milestones 0 to 6 are done. The Rust library and
-the `addr` CLI parse, emit USPS Pub 28 and RESO output, build the `k1` key
+the `doorplate` CLI parse, emit USPS Pub 28 and RESO output, build the `k1` key
 and the slug, and report diagnostics; a national place list (50 states, DC,
 Puerto Rico) and a curated Florida pack find cities, and `default_state`
 hints the state for input that names none. The Python wrapper
-(`us_address_parser`, abi3, `parse`/`parse_fields`/`parse_many`/`tag`/
+(`doorplate`, abi3, `parse`/`parse_fields`/`parse_many`/`tag`/
 `parse_tokens`) is built and tested, with wheels for Linux, macOS and
 Windows built on every pull request. Measures: golden corpus 428 cases, all
 passing; blind geocode benchmark 96.4% of whole addresses (coarse) against
@@ -40,11 +40,11 @@ that exists supports only a coarse score, so `Diagnostics::confidence` stays
 the unused `model_version` and `crf` removed (item 53), `country_ignored`
 (item 54), `intersection_detected` (item 55), the Netsyms fixes (item 56) and
 fuzz targets (item 43). The last two Florida sample errors are fixed.
-**The release plan is decided (decisions 44 and 45):** the dataframe helpers
-and examples first (items 50 and 59), then the Pub 28 recheck (44),
-benchmarks (57), the name (58), the rename and packaging (45), the text
-cleaning in `docs/repository_cleaning.md` (61), a fresh repository with no
-history (62) and publishing from it (46). The custom layer (items 47 to 49)
+**The release plan is decided (decisions 44, 45 and 46):** the dataframe
+helpers and examples (items 50 and 59) are done, and the name is `doorplate`
+(item 58, decision 46). The rename (45) comes next, then the Pub 28 recheck
+(44), benchmarks (57), the text cleaning in `docs/repository_cleaning.md`
+(61), a fresh repository with no history (62) and publishing from it (46). The custom layer (items 47 to 49)
 and its guide (60) are deferred past the first release (decision 45).
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the decisions and the unscheduled backlog.
@@ -136,7 +136,7 @@ they cause friction.
 | 7 | Lexicon extensibility | Shipped lexicons and state packs are fixed at compile time. Users customize through an add-only runtime **custom layer** in the state-pack format (section 11; decision 22), deferred past the first release (decision 45). |
 | 8 | Data sources | USPS Pub 28 and the RESO Data Dictionary; provenance of each table documented. |
 | 9 | Python surface *(default)* | Done: typed objects plus `to_dict()`, and a usaddress-shaped `tag()` with `address_type` (decision 23). No pandas/Polars dependency in the wheel; tested recipes in the README, and optional dataframe helpers come later as extras (decision 26). |
-| 10 | Distribution *(default)* | abi3 wheels (built on every pull request for Linux, macOS and Windows); library and key-format versions tracked independently. Names: to be chosen (item 58, decision 42); decision 33's PyPI `us-address-parser` and crates.io `us-addr-core`, `us-addr-cli` are dropped. |
+| 10 | Distribution *(default)* | abi3 wheels (built on every pull request for Linux, macOS and Windows); library and key-format versions tracked independently. Names (decision 46): `doorplate` on PyPI and crates.io, `doorplate-cli` for the CLI crate, binary `doorplate` with `addr` as an alias; decision 33's names are replaced. |
 | 11 | Compatibility | Own schema; optional usaddress-compatible output, both done: per-token labels (`to_usaddress_tags()`) and joined components with an address type (`tag()`; decision 23). |
 | 12 | License | MIT OR Apache-2.0 (confirmed 2026-10-15). |
 | 13 | Component spans | Byte ranges into the **original** input, not the cleaned text. `clean.rs` keeps a map from cleaned to original offsets. For multi-field input a span also names its field. |
@@ -153,18 +153,18 @@ Later decisions, made while building, are in section 13.
 As built; items marked *(planned)* do not exist yet.
 
 ```
-Cargo.toml                  # workspace: addr-core, addr-cli, addr-py
-rust-toolchain.toml, .cargo/config.toml   # stable toolchain; MSRV-aware resolver (MSRV 1.80; addr-py needs 1.83)
+Cargo.toml                  # workspace: doorplate, doorplate-cli, doorplate-py
+rust-toolchain.toml, .cargo/config.toml   # stable toolchain; MSRV-aware resolver (MSRV 1.80; doorplate-py needs 1.83)
 README.md, CLAUDE.md, CHANGELOG.md, NOTICE, LICENSE-MIT, LICENSE-APACHE
 docs/                       # this document and the specs listed at the top
 crates/
-  addr-core/                # pure Rust, no Python dependency
+  doorplate/                # pure Rust, no Python dependency
     build.rs                # compiles data/*.toml into static tables
     src/                    # clean, tokenize, classify, tagger/, assemble, parser,
                             # input, place, lexicon, types, emit/{key,usps,reso,slug,usaddress}, corpus
     tests/                  # corpus.rs, no_panic.rs (proptest), usaddress_gold.rs
-  addr-cli/                 # `addr` binary: parse, parse-file, corpus test
-  addr-py/                  # PyO3 bindings: src/lib.rs, python/us_address_parser/ (package, stubs),
+  doorplate-cli/                 # `doorplate` binary (alias `addr`): parse, parse-file, corpus test
+  doorplate-py/                  # PyO3 bindings: src/lib.rs, python/doorplate/ (package, stubs),
                             # tests/ (pytest), benchmarks/
 data/                       # suffixes, directionals, units, states, special (.toml)
   places/                   # the national place list (generated), compiled behind `places-us`
@@ -186,7 +186,7 @@ local-data/                 # gitignored: private and unlicensed test data, neve
 
 ---
 
-## 5. Core design (`addr-core`)
+## 5. Core design (`doorplate`)
 
 ### Pipeline
 
@@ -212,7 +212,7 @@ Emitters never mutate the parsed struct and never re-parse.
 
 ### `ParsedAddress`
 
-Defined in `crates/addr-core/src/types.rs`. Fields: street number,
+Defined in `crates/doorplate/src/types.rs`. Fields: street number,
 pre/post directional, street name, suffix (`StreetSuffix`), `highway`
 (state, prefix, route), first and second unit (type and number), `po_box`,
 `rural_route` (RR/HC, route, box), `general_delivery`, `military` and
@@ -304,12 +304,12 @@ does include the city.
 
 ---
 
-## 7. Python wrapper (`addr-py`, done)
+## 7. Python wrapper (`doorplate-py`, done)
 
-Package `us_address_parser` (a working name; the published name is chosen in item 58, decision 42), the
-extension module `us_address_parser._core`: PyO3 0.30 with maturin, **abi3
+Package `doorplate` (decision 46), the
+extension module `doorplate._core`: PyO3 0.30 with maturin, **abi3
 wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
-`crates/addr-py/README.md`.
+`crates/doorplate-py/README.md`.
 
 - `parse(text)`, `parse_fields(...)` and **`parse_many(texts)`** (a list or
   tuple; releases the GIL and parses in parallel with Rust threads; `None` for
@@ -339,12 +339,12 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 
 ---
 
-## 8. CLI (`addr-cli`, done)
+## 8. CLI (`doorplate-cli`, done)
 
-- `addr parse "<address>"` prints one JSON record (components, warnings, key, slug, USPS and RESO output); `--pretty`, `--usps`, `--usaddress`, `--tag`, field options (`--line1` ... `--zip`), or one address per stdin line.
-- `addr parse-file IN.csv --column NAME [--line2 ...] [-o OUT.csv]` appends `addr_`-prefixed columns.
-- `addr corpus test [--dir DIR] [--verbose] [--update-baseline]` runs the golden corpus and prints the accuracy report.
-- `--default-state ST` on `parse` and `parse-file` (decision 24). Deferred (decision 45): `--custom-layer PATH` on `parse`, `parse-file` and `corpus test`, plus `addr layer check PATH` to validate a layer file (item 49).
+- `doorplate parse "<address>"` prints one JSON record (components, warnings, key, slug, USPS and RESO output); `--pretty`, `--usps`, `--usaddress`, `--tag`, field options (`--line1` ... `--zip`), or one address per stdin line.
+- `doorplate parse-file IN.csv --column NAME [--line2 ...] [-o OUT.csv]` appends `addr_`-prefixed columns.
+- `doorplate corpus test [--dir DIR] [--verbose] [--update-baseline]` runs the golden corpus and prints the accuracy report.
+- `--default-state ST` on `parse` and `parse-file` (decision 24). Deferred (decision 45): `--custom-layer PATH` on `parse`, `parse-file` and `corpus test`, plus `doorplate layer check PATH` to validate a layer file (item 49).
 
 ---
 
@@ -359,7 +359,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 | **Benchmarks** (criterion): single shapes, the corpus through `parse` and `parse_many`, the emitters. | Done (`benches/parse.rs`). |
 | **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace --all-features`, corpus accuracy report, the emitter-expectation check; a Python job (maturin develop, pytest on 3.10 and 3.13). | Done (`ci.yml`). |
 | **Fuzzing** (cargo-fuzz, `fuzz/`, nightly): `parse` (with a `default_state` hint) and `parse_fields`, each running every emitter on the result. The tokenizer and assembler are `pub(crate)`, so they are reached through the public entry points. | Done (item 43); a short smoke run in CI. |
-| **Python tests** (pytest): the wrapper, type stubs, `parse_many` (identical to a loop, GIL released), `tag` against usaddress, pandas and Polars recipes: 27 tests. **Wheels**: abi3 wheels built and tested on Linux x86_64 and aarch64, macOS universal2 and Windows x64, on Python 3.10 and 3.13. | Done (`crates/addr-py/tests`, `wheels.yml`). |
+| **Python tests** (pytest): the wrapper, type stubs, `parse_many` (identical to a loop, GIL released), `tag` against usaddress, pandas and Polars recipes: 27 tests. **Wheels**: abi3 wheels built and tested on Linux x86_64 and aarch64, macOS universal2 and Windows x64, on Python 3.10 and 3.13. | Done (`crates/doorplate-py/tests`, `wheels.yml`). |
 | **Blind accuracy**: labels neither this parser nor usaddress was tuned on. | Geocode benchmark run locally (`docs/usaddress-comparison.md`); a hand-labeled Florida sample is still open. |
 
 The corpus is hand-labeled and the rules were tuned against it, so 100% on
@@ -387,13 +387,13 @@ in wherever it fits.
 1. Workspace `Cargo.toml`, `rust-toolchain.toml`, `.gitignore`, licenses
 2. `README.md` (with the non-goals and the not-a-validator statement)
 3. `CLAUDE.md`
-4. `crates/addr-core` skeleton
+4. `crates/doorplate` skeleton
 5. `.github/workflows/ci.yml`
 
 ### Milestone 1: data and types (done)
 
 6. `data/*.toml`, each with its source; verified against the live Pub 28 pages (`docs/usps-pub28-notes.md`)
-7. `crates/addr-core/build.rs` (compile and validate the TOML into static tables)
+7. `crates/doorplate/build.rs` (compile and validate the TOML into static tables)
 8. `src/types.rs`
 9. `src/lexicon.rs`
 
@@ -415,9 +415,9 @@ in wherever it fits.
 ### Milestone 4: corpus and CLI (done)
 
 19. Golden corpus seeded from auction-tracker's tests and golden CSVs, Pub 28's own examples and regression cases. The author's own Florida code is still pending (backlog, section 13).
-20. Corpus runner: the `addr_core::corpus` module (feature `corpus`), used by `tests/corpus.rs` and `addr corpus test`. Exit codes: 0 ok, 2 malformed corpus, 3 regression or stale baseline.
-21. `addr` CLI (section 8). The CLI, not the core, depends on `csv` and `serde_json`.
-22. `benches/parse.rs`. First numbers (quick run, 2026-10-15): about 4 to 11 µs per address, about 110K addresses/s one by one, about 3x that through `parse_many` with `rayon`. Run `cargo bench -p addr-core --bench parse` (add `--features rayon`).
+20. Corpus runner: the `doorplate::corpus` module (feature `corpus`), used by `tests/corpus.rs` and `doorplate corpus test`. Exit codes: 0 ok, 2 malformed corpus, 3 regression or stale baseline.
+21. `doorplate` CLI (alias `addr`) (section 8). The CLI, not the core, depends on `csv` and `serde_json`.
+22. `benches/parse.rs`. First numbers (quick run, 2026-10-15): about 4 to 11 µs per address, about 110K addresses/s one by one, about 3x that through `parse_many` with `rayon`. Run `cargo bench -p doorplate --bench parse` (add `--features rayon`).
 
 Also done ahead of its milestone: the usaddress comparison script and
 results (`tools/compare/compare_usaddress.py`,
@@ -482,13 +482,13 @@ designators joined to values, a name on line 1, BAY and STUDIO units), corpus
     Florida auction rows a place is found for 8,828 of 9,314 (1,273 without).
 31. **`tag()` and `address_type()`** (decision 23): `ParsedAddress::tag()`
     (`TaggedAddress`), `address_type()`, `Warning::RepeatedLabel` (reported by
-    `tag()`, never in `Diagnostics`), `addr parse --tag`, corpus fields
+    `tag()`, never in `Diagnostics`), `doorplate parse --tag`, corpus fields
     `address_type`, `tag`, `tag_repeated` (`tg-001` to `tg-008`), and
     `compare_usaddress.py tag`: the joined dicts are identical to
     `usaddress.tag()` on 99.3% of 8,103 addresses, the types on 99.8%.
 32. **Migration notes:** the README's "Coming from usaddress" and the Python
     README's table.
-33. **The wrapper:** `crates/addr-py` in the workspace (`test = false`, so
+33. **The wrapper:** `crates/doorplate-py` in the workspace (`test = false`, so
     plain `cargo test` and `clippy` need no libpython), the package, stubs and
     `py.typed`, 27 pytest tests, a CI job. Section 7.
 34. **`parse_many`:** releases the GIL and parses in parallel; `test_batch.py`,
@@ -522,7 +522,7 @@ Calibrated confidence (decision 12):
       corpus records pre-filled with the current parse (`TODO` in the note
       until checked). Drawn 2026-10-17 into `local-data/florida-sample/`
       (190 records), with a labeling guide there; scored by
-      `addr corpus test --dir local-data/florida-sample`.
+      `doorplate corpus test --dir local-data/florida-sample`.
     - Commit 2 (done): `tools/calibrate/label.py`, a terminal tool for the
       labeling: the draft hidden until asked for, standard values picked
       from `data/*.toml`, the field-driven warnings computed, each row
@@ -553,7 +553,7 @@ Calibrated confidence (decision 12):
       was used to fix seven rules (item 36, commit 4), so it is scored with a
       parser built before those fixes; the geocode benchmark is kept for
       checking. The tagger's decisions reach `Diagnostics` (internal) and the
-      tools read them from `addr corpus features` and `addr parse --features`.
+      tools read them from `doorplate corpus features` and `doorplate parse --features`.
       No parse or output change.
     - Result, which is why the rest is deferred: the unconstrained fit was
       unstable and misleading (it rewarded `missing_state`, a feature of the
@@ -615,7 +615,7 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     measured: it is `None` (decision 43). Scripts in `benchmarks/` so the numbers can be
     rerun; machine and versions recorded. usaddress is one reference point,
     not the frame.
-58. **Choose the name** **(author)** (decision 42, replacing the names of
+58. **Choose the name (done: `doorplate`, decision 46)** **(author)** (decision 42, replacing the names of
     decision 33): one name for the Rust crates, the Python package, the
     import, the CLI and the repository, free on crates.io, PyPI and GitHub
     and not easily confused with an existing crate or package (the current
@@ -624,11 +624,12 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     space) in `docs/naming.md`, with a short list for the author; the author
     picks. Output: the names and a rename map (every crate, package, module,
     binary, path, URL, doc and example) that item 45 applies.
-45. **Rename and package for publishing** (names from item 58):
-    - Apply item 58's rename map in one pass: crates, the Python package and
+45. **Rename and package for publishing** (names from item 58; the rename
+    is done, the packaging is not):
+    - **(done)** Apply item 58's rename map in one pass: crates, the Python package and
       import, the CLI binary if renamed, paths, CI, docs and examples; then
       `git grep` for every old name (decision 33's names are replaced).
-    - Put the data inside the packages: copy `data/` into the `us-addr-core`
+    - Put the data inside the packages: copy `data/` into the `doorplate`
       crate (`build.rs` already looks for a crate-local `data/` first) so
       `cargo package` succeeds and `maturin sdist` carries the tables;
       keep one source of truth (a script or a check that the copies match).
@@ -655,7 +656,7 @@ Features that make the library adaptable to a user's own data. None of them
 changes the shipped data or the `k1` key format.
 
 47. **Deferred (decision 45).** **Custom layer, format and loader** (section 11, "Custom layer"; decision
-    22): `CustomLayer` in `addr-core` (feature `custom-layer`), built from
+    22): `CustomLayer` in `doorplate` (feature `custom-layer`), built from
     TOML text with the same table shapes as a state pack (`pack.toml`,
     `places.tsv`, `zips.tsv`, `overrides.toml`) plus `aliases.toml` for
     suffix, unit, directional and city spellings. Validation errors name the
@@ -671,7 +672,7 @@ changes the shipped data or the `k1` key format.
     per-parse warning is added. Documented in `docs/key-format.md`: the key
     depends on the layer in use, so users who store keys must keep the layer
     fixed or re-key.
-49. **Deferred (decision 45).** **CLI and Python access:** `addr --custom-layer PATH`, `addr layer check
+49. **Deferred (decision 45).** **CLI and Python access:** `doorplate --custom-layer PATH`, `doorplate layer check
     PATH`, `Parser(custom_layer=...)` and a test suite that runs the golden
     corpus with a sample layer (`tests/corpus/layers/`).
 59. **Examples (done)** (decision 42; no layer example, decision 45): an `examples/` directory with invented
@@ -680,18 +681,18 @@ changes the shipped data or the `k1` key format.
     `parse_fields`, keys and slugs, the CLI on a file), and
     Polars and pandas pipelines (over item 50's helpers once they exist).
     Run in CI (the notebook executed with `nbclient` inside
-    `crates/addr-py/tests/test_examples.py`) so it
+    `crates/doorplate-py/tests/test_examples.py`) so it
     stays current. Lands before item 61, which links to it.
 60. **Deferred with items 47 to 49 (decision 45).** **Customization guide** (decision 42): one place, `custom/` at the
     repository root (or `docs/customizing.md` with `custom/template/`),
     that a new developer, or a capable LLM given the guide, can follow to
     build a layer without reading the code: what each file changes, a
     commented template layer, worked examples (a local community, a street
-    spelling, a state-scoped reading), the checks to run (`addr layer
+    spelling, a state-scoped reading), the checks to run (`doorplate layer
     check`, the corpus with the layer), and a ready prompt for an LLM.
     After items 47 to 49.
-50. **Dataframe helpers (done; optional extras):** `us_address_parser.pandas.parse_column`
-    and `us_address_parser.polars.parse_column` return component columns, key,
+50. **Dataframe helpers (done; optional extras):** `doorplate.pandas.parse_column`
+    and `doorplate.polars.parse_column` return component columns, key,
     slug, address type and warnings (`confidence` is `None`, decision 43, so
     it is left out); implemented over `parse_many` through one shared column
     reader (`_columns.py`); the library is imported when the function is
@@ -763,7 +764,7 @@ state (state token or ZIP prefix), then look up places in that state.
   `SR` and `CTY HWY` are done (item 26); the rest are in the backlog.
 - Queens-style hyphenated house numbers, Puerto Rico urbanizations
   (backlog).
-- `--default-state` for `addr parse-file` (most of the 1,700 auction rows
+- `--default-state` for `doorplate parse-file` (most of the 1,700 auction rows
   with no state). *Done* (item 30, decision 24): `ParseOptions::default_state`
   and `--default-state`.
 - `ST`/`FT`/`MT` vs `SAINT`/`FORT`/`MOUNT` in place names, and suffix
@@ -775,8 +776,8 @@ compile-time packs, the pack version recorded in `pack.toml` but not yet in
 output, and GeoNames (CC BY 4.0) as the ZIP source. Packs carry no model
 (decision 32). Still open, in the backlog (section 13):
 
-- A required golden-test corpus per pack, enforced in CI (`addr pack test`).
-  The custom layer reuses it: `addr corpus test --custom-layer`.
+- A required golden-test corpus per pack, enforced in CI (`doorplate pack test`).
+  The custom layer reuses it: `doorplate corpus test --custom-layer`.
 - Reporting the pack version in output. For the custom layer the fingerprint
   is reported (Milestone 9, item 48); shipped packs may follow.
 
@@ -818,7 +819,7 @@ through the `Lexicons` interface.
   Lookups go through `Lexicons`, which merges base, pack and layer.
 - *Provenance:* `Diagnostics::custom_layer` carries the layer's name,
   version and content fingerprint (Milestone 9, item 48).
-- *I/O outside the core:* `addr-core` takes layer text; the CLI and the
+- *I/O outside the core:* `doorplate` takes layer text; the CLI and the
   Python wrapper read files.
 
 **Effect on the key.** A layer can change how a string is read (an alias moves
@@ -872,7 +873,7 @@ extensible; no state-specific rule in the tagger.
 - **Python boundary overhead** for single-address calls (about 15 us each);
   `parse_many` is 6x faster on a batch, and the README says so.
 - **Packaging.** An sdist and a crate lack `data/` until item 45; the
-  crates.io name `us-address-parser` is taken (decision 33). Both are known
+  crates.io name `doorplate` is taken (decision 33). Both are known
   and scheduled.
 - **Migration friction from usaddress.** Users expect `tag()`, the label names
   and an `address_type`, and a way to adapt the parser to odd data. The first
@@ -1205,7 +1206,7 @@ Made by the author while reviewing the plan after Milestone 6.
       reversed: an honest `None` beats a coarse number.
     - **Kept** (small, no output change, needed by any later fit): the
       tagger's decisions (item 37) and their export (`Diagnostics` internal
-      field, `addr corpus features`, `addr parse --features`,
+      field, `doorplate corpus features`, `doorplate parse --features`,
       `Corpus::features`), `tools/calibrate/` (labeling tools and `fit.py`),
       and the Florida sample in `local-data/`.
     - **Dropped from the release path:** the fitted table in `data/`, its
@@ -1260,6 +1261,28 @@ Made by the author while reviewing the plan after Milestone 6.
       a private field, so no code outside the crate can construct it or match
       it without `..`; adding it is not a semver break.
     - **Reopen** with the backlog entry "Custom layer".
+
+### Decisions recorded 2026-10-17 (the name)
+
+46. **The name is `doorplate`.** Chosen by the author from the options in
+    `docs/naming.md` (item 58), which also has the checks and the options
+    ruled out:
+    - **Names:** `doorplate` (Rust core crate, Python package and import,
+      repository), `doorplate-cli` (CLI crate) with the binary `doorplate`,
+      and `addr` kept as an alias binary built from the same code
+      (`crates/doorplate-cli/src/bin/addr.rs`). Directories are
+      `crates/doorplate`, `crates/doorplate-cli`, `crates/doorplate-py` and
+      `fuzz/` (`doorplate-fuzz`). The key prefix stays `k1:`; the name is not
+      part of the key format.
+    - **Order change:** the rename (item 45, first half) runs before items 44
+      and 57, so the recheck and the benchmarks use the final names. The
+      packaging half of item 45 (data inside the crate) stays where it was.
+    - **Still the author's:** a USPTO clearance search and a placeholder
+      reservation on crates.io and PyPI before publishing. The web search in
+      `docs/naming.md` is not a trademark search.
+    - **History:** older decisions and `docs/naming.md` keep the old names
+      (`addr-core`, `us-address-parser`) where they describe what was
+      decided then; item 61 removes old names from the text.
 
 ### Open decisions (for the author)
 
@@ -1336,13 +1359,13 @@ when it is scheduled.
   pack priorities.
 - **A batch call for pre-split fields** (`parse_fields_many`) and a columnar
   or Arrow result for dataframes: reading attributes from Python objects is
-  now most of the time in a Polars or pandas pipeline (`crates/addr-py/README.md`).
+  now most of the time in a Polars or pandas pipeline (`crates/doorplate-py/README.md`).
 - **Other state-pack rules** (section 11): `RR` as Ranch Road in Texas,
   `PR 462` (Texas private road or Puerto Rico), `LEE ROAD 2004`-style
   county road names, Queens-style hyphenated house numbers, Puerto Rico
   urbanizations. Each waits for real data from that state.
 - **Pack infrastructure** (section 11): the pack version in output, a
-  required corpus per pack enforced in CI (`addr pack test`).
+  required corpus per pack enforced in CI (`doorplate pack test`).
 - **Outside this repository:** drop `BELLVIEW` from BELLEVIEW's variants in
   auction-tracker's `cities_fl.json` (Bellview is a Census place in
   Escambia County). The pack's export already drops it.

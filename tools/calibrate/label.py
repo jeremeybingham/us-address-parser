@@ -13,7 +13,7 @@ rules it applies are the corpus conventions in `tests/corpus/README.md`:
 - The warnings that follow from the fields (`missing_city`,
   `missing_state`, `missing_zip`, `unparsed_remainder`,
   `missing_street_number`) are computed; the rest are toggled.
-- A row is saved only if the corpus runner accepts it (`addr corpus test`
+- A row is saved only if the corpus runner accepts it (`doorplate corpus test`
   on that row alone).
 - When the label differs from the parser's answer, a line goes to
   `NOTES.md` beside the sample (`fs-042: <reason>`); a row that matches the
@@ -41,7 +41,7 @@ import sample_fl  # noqa: E402
 
 DATA = ROOT / "data"
 
-# Corpus `expect` keys in the runner's order (crates/addr-core/src/corpus.rs).
+# Corpus `expect` keys in the runner's order (crates/doorplate/src/corpus.rs).
 FIELDS = [
     "street_number", "street_dir_prefix", "street_name", "street_suffix",
     "street_dir_suffix", "highway", "unit_type", "unit_number",

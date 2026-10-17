@@ -6,15 +6,15 @@ and 10), and the results.
 
 ## Tools
 
-- `ParsedAddress::to_usaddress_tags()` (`crates/addr-core/src/emit/usaddress.rs`):
+- `ParsedAddress::to_usaddress_tags()` (`crates/doorplate/src/emit/usaddress.rs`):
   every input token with the label usaddress would use. Built from the
   component spans; it never re-parses.
-- `addr parse --usaddress`: those tags as JSON, one record per input line.
+- `doorplate parse --usaddress`: those tags as JSON, one record per input line.
 - `tools/compare/compare_usaddress.py`: runs both parsers on the same strings
   and scores them by the same rules.
 
   ```
-  cargo build --release -p addr-cli
+  cargo build --release -p doorplate-cli
   uv run --with usaddress python tools/compare/compare_usaddress.py \
       gold tests/external/usaddress/*.xml --out report.md
   uv run --with usaddress python tools/compare/compare_usaddress.py \
@@ -23,7 +23,7 @@ and 10), and the results.
   ```
 
 - `tag` mode of the same script compares the joined dicts of
-  `ParsedAddress::tag()` (`addr parse --tag`) with `usaddress.tag()`, and the
+  `ParsedAddress::tag()` (`doorplate parse --tag`) with `usaddress.tag()`, and the
   address types:
 
   ```
@@ -31,7 +31,7 @@ and 10), and the results.
       --out tag-report.md tag tests/external/usaddress/*.xml
   ```
 
-- `crates/addr-core/tests/usaddress_gold.rs`: scores this parser alone on
+- `crates/doorplate/tests/usaddress_gold.rs`: scores this parser alone on
   the vendored test files in `cargo test`, and fails if the score falls below
   the recorded floor. No Python needed.
 

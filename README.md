@@ -1,12 +1,12 @@
-# us-address-parser
+# doorplate
 
 A Rust-core US address parser with a Python package. It parses US address
 strings (or pre-split fields) into components, emits **USPS Publication 28**
 style and **RESO Data Dictionary** output, and produces database-ready
 identifiers (a canonical match key and a URL-safe slug).
 
-> **Status:** the Rust library, the `addr` CLI and the Python package
-> (`us_address_parser`) work: parser, key, USPS, RESO and slug emitters, a
+> **Status:** the Rust library, the `doorplate` CLI and the Python package
+> (`doorplate`) work: parser, key, USPS, RESO and slug emitters, a
 > 428-case golden corpus, a national place list plus a curated Florida pack,
 > and abi3 wheels for Linux, macOS and Windows built on every pull request. On
 > a blind benchmark of 30,622 one-line addresses it gets 96.4% of whole
@@ -54,8 +54,8 @@ The labels are usaddress's, so a pipeline built on them keeps working:
 
 | usaddress | This library: Rust and CLI | Python |
 |---|---|---|
-| `usaddress.parse(s)`: `[(token, label)]` | `a.to_usaddress_tags()`; `addr parse --usaddress` | `parse_tokens(s)` |
-| `usaddress.tag(s)`: `(dict, type)` | `a.tag()` and `a.tag().usaddress_type()`; `addr parse --tag` | `tag(s)` |
+| `usaddress.parse(s)`: `[(token, label)]` | `a.to_usaddress_tags()`; `doorplate parse --usaddress` | `parse_tokens(s)` |
+| `usaddress.tag(s)`: `(dict, type)` | `a.tag()` and `a.tag().usaddress_type()`; `doorplate parse --tag` | `tag(s)` |
 | `RepeatedLabelError` | not raised: the runs are joined and `tag().repeated_labels()` lists the labels | `parse(s).repeated_labels()` |
 | `Street Address`, `PO Box`, `Ambiguous` | `a.address_type()` is finer (`Street`, `PoBox`, `RuralRoute`, `Military`, `GeneralDelivery`, `Dual`, `Unknown`); `usaddress_type()` gives the three by usaddress's own rule | `parse(s).address_type()`; `tag(s)` returns the three |
 | Retrain to fix a misparse | no model to retrain; a custom layer of aliases and places is designed but deferred past the first release, so report the input to get the shipped tables fixed | the same |
@@ -106,7 +106,7 @@ statement that an address exists or can receive mail.
 ## Rust usage
 
 ```rust
-use addr_core::{KeyOptions, Parser};
+use doorplate::{KeyOptions, Parser};
 
 let parser = Parser::new();
 let a = parser.parse("123 north main street apt 4, Miami FL 33101")?;
@@ -133,7 +133,7 @@ place or a reading (`281 EVELYN DR DOTHAN` finds DOTHAN with `AL`). The CLI has
 ## Python usage
 
 ```python
-import us_address_parser as uap
+import doorplate as uap
 
 a = uap.parse("123 north main street apt 4, Miami FL 33101")
 a.street_name, a.unit_number        # ("MAIN", "4")
@@ -145,31 +145,31 @@ uap.tag("PO Box 12, Tampa FL 33601")  # ({...usaddress labels...}, "PO Box")
 
 Typed (`py.typed`), no dependencies, Python 3.10 and later. The API, the pandas
 and Polars recipes and the benchmark are in
-[`crates/addr-py/README.md`](crates/addr-py/README.md). Build from source with
-`maturin develop` in `crates/addr-py`.
+[`crates/doorplate-py/README.md`](crates/doorplate-py/README.md). Build from source with
+`maturin develop` in `crates/doorplate-py`.
 
 ## CLI
 
 ```sh
-cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101" --pretty
-cargo run -p addr-cli -- parse-file in.csv --column address -o out.csv
-cargo run -p addr-cli -- parse "281 EVELYN DR DOTHAN" --default-state AL
-cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101" --tag      # usaddress-style joined labels
-cargo run -p addr-cli -- corpus test
+cargo run -p doorplate-cli -- parse "123 N Main St, Miami FL 33101" --pretty
+cargo run -p doorplate-cli -- parse-file in.csv --column address -o out.csv
+cargo run -p doorplate-cli -- parse "281 EVELYN DR DOTHAN" --default-state AL
+cargo run -p doorplate-cli -- parse "123 N Main St, Miami FL 33101" --tag      # usaddress-style joined labels
+cargo run -p doorplate-cli -- corpus test
 ```
 
-`addr --help` lists every option.
+`doorplate --help` lists every option (`addr` is a short alias for the same binary).
 
 ## Layout
 
 ```
-crates/addr-core/   pure Rust library (no Python dependency)
-crates/addr-cli/    `addr` command-line tool
-crates/addr-py/     PyO3 bindings and the `us_address_parser` package (pytest, benchmarks)
+crates/doorplate/   pure Rust library (no Python dependency)
+crates/doorplate-cli/    `doorplate` command-line tool (alias `addr`)
+crates/doorplate-py/     PyO3 bindings and the `doorplate` package (pytest, benchmarks)
 data/               lexicon tables (Pub 28 suffixes, units, states, ...) and
                     national place list (data/places/), state
                     packs (data/packs/), compiled into static tables by
-                    addr-core's build.rs
+                    doorplate's build.rs
 examples/           notebook, Polars and pandas pipelines, invented sample data
 tests/corpus/       labeled golden corpus (JSONL)
 tests/external/     usaddress's labeled test files (MIT)
@@ -179,9 +179,9 @@ docs/               design and format specs
 ```
 
 Published names (nothing is published yet): the Python package is
-`us-address-parser` on PyPI; the Rust crates will be `us-addr-core` and
-`us-addr-cli` (`us-address-parser` is taken on crates.io; design.md decision
-33); the CLI binary is `addr`.
+`doorplate` on PyPI; the Rust crates will be `doorplate` and
+`doorplate-cli` (`doorplate` is taken on crates.io; design.md decision
+33); the CLI binary is `doorplate`, with `addr` as an alias.
 
 ## Documentation
 
@@ -192,7 +192,7 @@ Published names (nothing is published yet): the Python package is
 - [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md): accuracy against usaddress
 - [`docs/packs/fl.md`](docs/packs/fl.md): the Florida pack, its sources and licenses
 - [`docs/places.md`](docs/places.md): the national place list, its sources and licenses
-- [`crates/addr-py/README.md`](crates/addr-py/README.md): the Python package
+- [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md): the Python package
 - [`examples/`](examples/README.md): a notebook tour and dataframe pipelines
 - [`CHANGELOG.md`](CHANGELOG.md): what changed, newest first
 - [`tests/corpus/README.md`](tests/corpus/README.md): the golden corpus format
@@ -203,14 +203,14 @@ Published names (nothing is published yet): the Python package is
 cargo fmt --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
-cargo bench -p addr-core --bench parse
+cargo bench -p doorplate --bench parse
 
 # Python (in a virtualenv with maturin and pytest)
-cd crates/addr-py && maturin develop --release && cd ../..
-pytest crates/addr-py/tests
+cd crates/doorplate-py && maturin develop --release && cd ../..
+pytest crates/doorplate-py/tests
 ```
 
-Plain `cargo test` and `clippy` need no Python: the `addr-py` crate has no
+Plain `cargo test` and `clippy` need no Python: the `doorplate-py` crate has no
 Rust test target, and maturin supplies the extension-module build settings.
 
 ## License

@@ -1,10 +1,10 @@
 """Compare this parser with the Python usaddress library, token by token.
 
 Both parsers label the same input tokens with usaddress's labels: ours
-through `addr parse --usaddress` (ParsedAddress::to_usaddress_tags), theirs
+through `doorplate parse --usaddress` (ParsedAddress::to_usaddress_tags), theirs
 through `usaddress.parse`. Run with usaddress available, for example:
 
-    cargo build --release -p addr-cli
+    cargo build --release -p doorplate-cli
     uv run --with usaddress python tools/compare/compare_usaddress.py \
         --out report.md gold tests/external/usaddress/*.xml
 
@@ -18,7 +18,7 @@ through `usaddress.parse`. Run with usaddress available, for example:
 `gold` scores both against usaddress's own labeled test files (held out from
 its training data; see tests/external/usaddress/README.md). `raw` has no
 labels: it reports where the two parsers disagree. `tag` compares the joined
-dicts of `ParsedAddress::tag()` (`addr parse --tag`) with `usaddress.tag()` on
+dicts of `ParsedAddress::tag()` (`doorplate parse --tag`) with `usaddress.tag()` on
 the strings of the same files, and the address types. The scoring rules are
 in docs/usaddress-comparison.md.
 """
@@ -76,7 +76,7 @@ def overlap_label(span, predicted):
 
 
 def ours(strings, binary):
-    """[(start, end, label)] per string, from `addr parse --usaddress`."""
+    """[(start, end, label)] per string, from `doorplate parse --usaddress`."""
     text = "\n".join(s.replace("\n", " ") for s in strings) + "\n"
     run = subprocess.run(
         [binary, "parse", "--usaddress"], input=text.encode(),
@@ -103,7 +103,7 @@ def theirs(strings):
 
 
 def ours_tags(strings, binary):
-    """[record or None] per string, from `addr parse --tag`."""
+    """[record or None] per string, from `doorplate parse --tag`."""
     text = "\n".join(s.replace("\n", " ") for s in strings) + "\n"
     run = subprocess.run(
         [binary, "parse", "--tag"], input=text.encode(), capture_output=True, check=False
@@ -442,7 +442,7 @@ def tag_cmd(args):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--addr", default="target/release/addr", help="path to the addr binary")
+    ap.add_argument("--addr", default="target/release/doorplate", help="path to the doorplate binary")
     ap.add_argument("--out", help="write the markdown report here (default: stdout)")
     ap.add_argument("--top", type=int, default=15, help="rows per error table")
     sub = ap.add_subparsers(dest="cmd", required=True)

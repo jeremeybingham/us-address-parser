@@ -1,12 +1,12 @@
 [workspace]
 resolver = "2"
-members = ["crates/addr-core", "crates/addr-cli", "crates/addr-py"]
+members = ["crates/doorplate", "crates/doorplate-cli", "crates/doorplate-py"]
 
 [workspace.package]
 version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/jeremeybingham/us-address-parser"
+repository = "https://github.com/jeremeybingham/doorplate"
 rust-version = "1.80"
 
 [workspace.lints.clippy]

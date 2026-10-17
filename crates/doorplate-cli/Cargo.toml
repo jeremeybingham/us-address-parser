@@ -1,0 +1,25 @@
+[package]
+name = "doorplate-cli"
+description = "Command-line tool for the doorplate US address parser"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "doorplate"
+path = "src/main.rs"
+
+# A short alias for `doorplate`: same code, so the two cannot differ.
+[[bin]]
+name = "addr"
+path = "src/bin/addr.rs"
+
+[dependencies]
+doorplate = { path = "../doorplate", features = ["corpus"] }
+csv = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[lints]
+workspace = true

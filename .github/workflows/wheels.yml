@@ -35,7 +35,7 @@ jobs:
       - uses: PyO3/maturin-action@v1
         with:
           command: build
-          args: --release --out dist --manifest-path crates/addr-py/Cargo.toml
+          args: --release --out dist --manifest-path crates/doorplate-py/Cargo.toml
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
           rust-toolchain: stable
@@ -77,7 +77,7 @@ jobs:
       - name: Install the wheel (not the source tree)
         run: |
           python -m pip install --upgrade pip
-          pip install --no-index --find-links dist us-address-parser
+          pip install --no-index --find-links dist doorplate
           pip install pytest
       - name: Optional comparison and dataframe libraries
         # Wheels for these may be missing on some platforms; the tests that
@@ -85,4 +85,4 @@ jobs:
         continue-on-error: true
         run: pip install usaddress pandas polars nbclient nbformat ipykernel
       - name: Python tests
-        run: pytest crates/addr-py/tests -q
+        run: pytest crates/doorplate-py/tests -q

@@ -17,7 +17,7 @@ docs/places.md; every choice is also commented where it is made.
 
 The builder stops on anything it cannot explain: a name that is not upper-case
 words, two places that the parser's place comparison rule (`place_key`, copied
-from crates/addr-core/src/lexicon/place_key.rs) would treat as one, a ZIP whose
+from crates/doorplate/src/lexicon/place_key.rs) would treat as one, a ZIP whose
 place is missing, a state with no places.
 """
 import argparse

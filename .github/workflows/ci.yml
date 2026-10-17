@@ -20,7 +20,7 @@ jobs:
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - run: cargo test --workspace --all-features
       - name: Golden corpus accuracy report
-        run: cargo test -p addr-core --test corpus -- --nocapture
+        run: cargo test -p doorplate --test corpus -- --nocapture
       - name: Corpus emitter expectations agree with emit_expect.py
         run: python3 tools/corpus/emit_expect.py --check tests/corpus/*.jsonl
 
@@ -57,5 +57,5 @@ jobs:
           python -m venv .venv
           . .venv/bin/activate
           pip install maturin pytest usaddress pandas polars nbclient nbformat ipykernel
-          maturin develop --manifest-path crates/addr-py/Cargo.toml
-          pytest crates/addr-py/tests -q
+          maturin develop --manifest-path crates/doorplate-py/Cargo.toml
+          pytest crates/doorplate-py/tests -q
