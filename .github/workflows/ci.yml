@@ -33,11 +33,12 @@ jobs:
         with:
           workspaces: fuzz
       - run: cargo install cargo-fuzz --locked
+      # rust-toolchain.toml pins stable, so name nightly explicitly.
       - name: Short smoke run of each target
         working-directory: fuzz
         run: |
-          cargo fuzz run parse -- -max_total_time=30 -max_len=200
-          cargo fuzz run parse_fields -- -max_total_time=30 -max_len=200
+          cargo +nightly fuzz run parse -- -max_total_time=30 -max_len=200
+          cargo +nightly fuzz run parse_fields -- -max_total_time=30 -max_len=200
 
   python:
     runs-on: ubuntu-latest
