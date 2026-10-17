@@ -4,6 +4,25 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Documentation review after Milestone 6
+
+- Status, plan and layout brought up to date in `docs/design.md` and the
+  README: Milestones 0 to 6 done (353 corpus cases, 27 Python tests, wheels),
+  the Python package documented, completed items condensed, and Milestone 8
+  re-planned with items 53 to 55 first.
+- New decisions 33 to 38 (design.md): the Rust crates will be published as
+  `us-addr-core` and `us-addr-cli` because `us-address-parser` is taken on
+  crates.io (PyPI keeps `us-address-parser`); `k1` freezes at the first
+  release, with a dated change log in `docs/key-format.md`; the unused
+  `model_version` and `crf` go (item 53); a trailing country and intersections
+  get warnings only (items 54 and 55); a non-place city keeps `place = None`;
+  Milestone 8 runs before Milestone 7.
+- `docs/usps-pub28-notes.md` lists the source of every rule added since
+  2026-10-16; `docs/usaddress-comparison.md`, `docs/packs/fl.md` and
+  `tests/corpus/README.md` are refreshed; `CLAUDE.md` states the key policy and
+  the current commands. The `models/` placeholder (for the dropped CRF) is
+  removed.
+
 ### Wheels for Linux, macOS and Windows (Milestone 6, item 35)
 
 - `.github/workflows/wheels.yml` builds abi3 wheels with maturin on every pull

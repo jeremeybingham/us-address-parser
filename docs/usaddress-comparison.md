@@ -44,8 +44,8 @@ plan items are in `docs/design.md`).
 
 | Area | usaddress | This library | Plan |
 |---|---|---|---|
-| Install and call | `pip install`; `parse`, `tag` | Rust crate and CLI; Python wrapper not built | Milestone 6 |
-| Token labels | `parse()` | `to_usaddress_tags()` | Done; `parse_tokens` in Python |
+| Install and call | `pip install`; `parse`, `tag` | Rust crate, CLI and a Python package (`parse`, `parse_many`, `tag`, `parse_tokens`); abi3 wheels built for Linux, macOS and Windows, not yet published | Done; publishing is Milestone 8 |
+| Token labels | `parse()` | `to_usaddress_tags()`; `parse_tokens()` in Python | Done |
 | Joined components and type | `tag()` returns a dict and `Street Address` / `PO Box` / `Ambiguous`; raises `RepeatedLabelError` | `tag()`, `address_type()`; a repeated label is reported, not an error (decision 23) | Done; Python in Milestone 6 |
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) | Done |
 | Default state | None | `default_state` hint, `--default-state` (decision 24) | Done |
@@ -53,10 +53,10 @@ plan items are in `docs/design.md`).
 | Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; confidence planned (calibrated rule paths) | Milestone 7 |
 | Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit | Done |
 | Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer (decision 22, Milestone 9) |
-| Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed` | Open decisions in design section 13 |
+| Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed`. A trailing country is ignored with `country_ignored` and an intersection raises `intersection_detected` (planned) | Milestone 8, items 54 and 55; the rest stays unmodeled (design section 13) |
 | Display casing, long form | Keeps input case | Uppercase only | Open decisions (Milestone 9, item 51) |
-| Batch and dataframes | Loop yourself | `parse_many` (parallel with `rayon`) | Pandas/Polars extras (decision 26, Milestone 9) |
-| Accuracy | Higher on suffix-less streets (84.8% vs 50.3% on the blind benchmark) | Higher with no city (99.0% vs 18.0%) | National place list (Milestone 5) |
+| Batch and dataframes | Loop yourself | `parse_many` (parallel; GIL released in Python, 6x a loop); tested pandas and Polars recipes | Optional extras (decision 26, Milestone 9) |
+| Accuracy | Whole address on the blind benchmark: 88.2% | 96.1% (higher with no city, 99.0% vs 18.0%; the national place list closed the suffix-less gap) | Done (Milestone 5) |
 
 **Customization without retraining.** usaddress adapts by labeling data and
 retraining offline. This parser does not build a CRF (design.md decision 32):
@@ -265,9 +265,11 @@ Done on 2026-10-15 (corpus cases `rg-050` to `rg-081`; rules in
 
 Still open:
 
-1. **City on one line with no comma** (`ST LOUIS`, `W. PALM BEACH`,
-   `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`): needs the
-   place list (state packs).
+1. ~~City on one line with no comma~~ (`ST LOUIS`, `W. PALM BEACH`,
+   `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`): *done* with the
+   national place list (corpus `pl-001` to `pl-008`). What is left is a city the
+   list does not know, and a line with no state and no ZIP (`281 EVELYN DR
+   DOTHAN`), which needs `default_state`.
 2. **Named buildings without a building word** (`THE GARRETT`, `THE
    CHADWICK`, `UPTOWN SQUARE`, `FOREST COVE APARTMENTS`) stay unparsed.
 3. **Highway modifiers** (`NORTH HIGHWAY 71 BUSINESS LOWELL`): BUSINESS stays
@@ -275,14 +277,21 @@ Still open:
 4. **Two unit numbers** (`STE 4 551`): left unparsed, as decided.
 5. **Letters alone as house numbers** (`L HATHWAY AVENUE`): not taken, as
    decided.
-6. **State-pack items:** SR, `PR 462`, Queens-style numbers, Puerto Rico
-   urbanizations, `LEE ROAD 2004`-style county road names, `CTY ROAD`.
+6. **State-pack items:** `PR 462`, Queens-style numbers, Puerto Rico
+   urbanizations, `LEE ROAD 2004`-style county road names, `CTY ROAD` (`SR` in
+   Florida is done).
+7. **From three more DBPR files** (design.md backlog): a comma after a
+   directional (`3324 N, ANDREWS AVE`), a PO Box on line 2 beside a street with
+   no number, a unit followed by business words (`STE 903 BLU SPA`).
 
 ## Next steps
 
 - Done: the place list and the full rerun with the CRF call (design.md items
   24 to 29): no CRF, decision 32.
 - The geocode benchmark is the blind test; rerun it after each rule change
-  (commands in the local, uncommitted `local-data/README.md`). A hand-labeled sample (100 to 200 rows) of the
-  Florida files would add a blind test on the data this library targets
-  (item 36).
+  (commands in the local, uncommitted `local-data/README.md`). The rules were
+  checked against it repeatedly, so a hand-labeled sample (100 to 200 rows) of
+  the Florida files (item 36, the author's) is the cleaner blind test on the
+  data this library targets.
+- Rerun `compare_usaddress.py gold`, `tag` and the geocode benchmark before
+  the first release (Milestone 8) and refresh the tables above.

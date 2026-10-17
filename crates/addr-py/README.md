@@ -36,6 +36,12 @@ uap.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
   `ValueError`.
 - `confidence` is `None` until it is calibrated.
 
+## Install
+
+Not published yet. Wheels are built for Linux, macOS and Windows on every pull
+request; the package will be `us-address-parser` on PyPI (import
+`us_address_parser`). Until then, build from source (below).
+
 ## Batches and pandas
 
 `parse_many(texts)` takes a list or tuple of strings, releases the GIL and

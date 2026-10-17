@@ -1,20 +1,21 @@
 # us-address-parser
 
-A Rust-core US address parser, with a Python wrapper planned. It parses US
-address strings (or pre-split fields) into components, emits **USPS
-Publication 28** style and **RESO Data Dictionary** output, and produces
-database-ready identifiers (a stable canonical match key and a URL-safe slug).
+A Rust-core US address parser with a Python package. It parses US address
+strings (or pre-split fields) into components, emits **USPS Publication 28**
+style and **RESO Data Dictionary** output, and produces database-ready
+identifiers (a canonical match key and a URL-safe slug).
 
-> **Status:** the Rust library and the `addr` CLI work: parser, key, USPS,
-> RESO and slug emitters, a 317-case golden corpus and a comparison with
-> usaddress. The place list (Milestone 5) is built: a national list for every
-> state and a curated Florida pack (open items in
-> [`docs/packs/fl.md`](docs/packs/fl.md)). The benchmark rerun found no gap
-> for a CRF fallback to close, so none will be built (design.md decision
-> 32). The Python wrapper (Milestone 6) and calibrated confidence
-> (Milestone 7) follow. Nothing is
-> published yet. [`docs/design.md`](docs/design.md) section 10 has the plan in
-> build order; section 13 has the open decisions.
+> **Status:** the Rust library, the `addr` CLI and the Python package
+> (`us_address_parser`) work: parser, key, USPS, RESO and slug emitters, a
+> 353-case golden corpus, a national place list plus a curated Florida pack,
+> and abi3 wheels for Linux, macOS and Windows built on every pull request. On
+> a blind benchmark of 30,622 one-line addresses it gets 96.1% of whole
+> addresses right (coarse) against usaddress's 88.2%
+> ([`docs/usaddress-comparison.md`](docs/usaddress-comparison.md)). **Nothing is
+> published yet**: next is release hardening (fuzzing, packaging, the Pub 28
+> recheck), then calibrated confidence and a custom layer.
+> [`docs/design.md`](docs/design.md) section 10 has the plan in build order;
+> section 13 has the decisions.
 
 ## This is not an address validator
 
@@ -33,26 +34,28 @@ is out of scope.
 - Report diagnostics (warnings with stable codes, unparsed remainder)
   instead of failing on partial parses; an error is returned only for
   unusable input such as an empty string.
-- Usable from Rust and from Python (PyO3) with no C library or runtime data
-  download.
+- Usable from Rust and from Python (PyO3, abi3 wheels) with no C library or
+  runtime data download.
+- No machine-learned model: the parser is rules plus place data, so it is
+  deterministic and a fix is a rule or a data line, not a retraining.
 
 ## Non-goals (v1)
 
 Validation or deliverability, geocoding, fuzzy matching, address correction,
 and international addresses. The shipped lexicons are fixed at compile time;
-customization is a planned add-only custom layer (see below).
+customization will be an add-only custom layer (planned, Milestone 9).
 
 ## Coming from usaddress
 
 The labels are usaddress's, so a pipeline built on them keeps working:
 
-| usaddress | This library (Rust and CLI today; the Python wrapper is planned) |
-|---|---|
-| `usaddress.parse(s)`: `[(token, label)]` | `a.to_usaddress_tags()`; `addr parse --usaddress` |
-| `usaddress.tag(s)`: `(dict, type)` | `a.tag()` and `a.tag().usaddress_type()`; `addr parse --tag` |
-| `RepeatedLabelError` | not raised: the runs are joined and `tag().repeated_labels()` lists the labels |
-| `Street Address`, `PO Box`, `Ambiguous` | `a.address_type()` is finer (`Street`, `PoBox`, `RuralRoute`, `Military`, `GeneralDelivery`, `Dual`, `Unknown`); `usaddress_type()` gives the three by usaddress's own rule |
-| Retrain to fix a misparse | no model to retrain; a custom layer of aliases and places is planned (Milestone 9) |
+| usaddress | This library: Rust and CLI | Python |
+|---|---|---|
+| `usaddress.parse(s)`: `[(token, label)]` | `a.to_usaddress_tags()`; `addr parse --usaddress` | `parse_tokens(s)` |
+| `usaddress.tag(s)`: `(dict, type)` | `a.tag()` and `a.tag().usaddress_type()`; `addr parse --tag` | `tag(s)` |
+| `RepeatedLabelError` | not raised: the runs are joined and `tag().repeated_labels()` lists the labels | `parse(s).repeated_labels()` |
+| `Street Address`, `PO Box`, `Ambiguous` | `a.address_type()` is finer (`Street`, `PoBox`, `RuralRoute`, `Military`, `GeneralDelivery`, `Dual`, `Unknown`); `usaddress_type()` gives the three by usaddress's own rule | `parse(s).address_type()`; `tag(s)` returns the three |
+| Retrain to fix a misparse | no model to retrain; a custom layer of aliases and places is planned (Milestone 9) | the same |
 
 What differs:
 
@@ -67,8 +70,9 @@ What differs:
   `StreetNamePreType`, as in usaddress; a rural, highway contract or
   military line uses the `USPSBoxGroup*` and `USPSBox*` labels.
 - Not in usaddress: `Parser::with_options(ParseOptions { default_state })`
-  (a state hint for input with no state), the Pub 28 and RESO output, the
-  match key and slug, byte spans, `place` and warnings.
+  and `parse(s, default_state="FL")` (a state hint for input with no state),
+  the Pub 28 and RESO output, the match key and slug, byte spans, `place` and
+  warnings.
 
 On the joined dicts of usaddress's own test files the two agree on 99.3% of
 8,103 addresses (`docs/usaddress-comparison.md`). The feature-by-feature
@@ -123,12 +127,31 @@ stays empty, and the warning `default_state_applied` says when it decided a
 place or a reading (`281 EVELYN DR DOTHAN` finds DOTHAN with `AL`). The CLI has
 `--default-state ST`.
 
+## Python usage
+
+```python
+import us_address_parser as uap
+
+a = uap.parse("123 north main street apt 4, Miami FL 33101")
+a.street_name, a.unit_number        # ("MAIN", "4")
+a.to_usps()["line1"]                # "123 N MAIN ST APT 4"
+a.key(), a.slug()                   # "k1:S|123|N|MAIN|ST||FL|33101", "123-n-main-st-apt-4-miami-fl-33101"
+uap.parse_many(addresses)           # releases the GIL, parses in parallel: 6x a loop of parse
+uap.tag("PO Box 12, Tampa FL 33601")  # ({...usaddress labels...}, "PO Box")
+```
+
+Typed (`py.typed`), no dependencies, Python 3.10 and later. The API, the pandas
+and Polars recipes and the benchmark are in
+[`crates/addr-py/README.md`](crates/addr-py/README.md). Build from source with
+`maturin develop` in `crates/addr-py`.
+
 ## CLI
 
 ```sh
 cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101" --pretty
 cargo run -p addr-cli -- parse-file in.csv --column address -o out.csv
 cargo run -p addr-cli -- parse "281 EVELYN DR DOTHAN" --default-state AL
+cargo run -p addr-cli -- parse "123 N Main St, Miami FL 33101" --tag      # usaddress-style joined labels
 cargo run -p addr-cli -- corpus test
 ```
 
@@ -139,16 +162,22 @@ cargo run -p addr-cli -- corpus test
 ```
 crates/addr-core/   pure Rust library (no Python dependency)
 crates/addr-cli/    `addr` command-line tool
-crates/addr-py/     PyO3 bindings and the `us_address_parser` package
+crates/addr-py/     PyO3 bindings and the `us_address_parser` package (pytest, benchmarks)
 data/               lexicon tables (Pub 28 suffixes, units, states, ...) and
                     national place list (data/places/), state
                     packs (data/packs/), compiled into static tables by
                     addr-core's build.rs
 tests/corpus/       labeled golden corpus (JSONL)
 tests/external/     usaddress's labeled test files (MIT)
-tools/              corpus and comparison scripts
+tools/              corpus, comparison, place-list and pack scripts
 docs/               design and format specs
+.github/workflows/  ci.yml (Rust and Python tests) and wheels.yml (abi3 wheels)
 ```
+
+Published names (nothing is published yet): the Python package is
+`us-address-parser` on PyPI; the Rust crates will be `us-addr-core` and
+`us-addr-cli` (`us-address-parser` is taken on crates.io; design.md decision
+33); the CLI binary is `addr`.
 
 ## Documentation
 
@@ -159,15 +188,25 @@ docs/               design and format specs
 - [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md): accuracy against usaddress
 - [`docs/packs/fl.md`](docs/packs/fl.md): the Florida pack, its sources and licenses
 - [`docs/places.md`](docs/places.md): the national place list, its sources and licenses
+- [`crates/addr-py/README.md`](crates/addr-py/README.md): the Python package
+- [`CHANGELOG.md`](CHANGELOG.md): what changed, newest first
+- [`tests/corpus/README.md`](tests/corpus/README.md): the golden corpus format
 
 ## Development
 
 ```sh
 cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-features
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-features
 cargo bench -p addr-core --bench parse
+
+# Python (in a virtualenv with maturin and pytest)
+cd crates/addr-py && maturin develop --release && cd ../..
+pytest crates/addr-py/tests
 ```
+
+Plain `cargo test` and `clippy` need no Python: the `addr-py` crate has no
+Rust test target, and maturin supplies the extension-module build settings.
 
 ## License
 

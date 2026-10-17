@@ -237,21 +237,24 @@ matches it anyway.
 
 ## To do
 
-Still open (2026-10-16): Florida work found in the DBPR licensee export
-(counts are rows out of 445,252 Florida addresses, after the 2026-10-16
-fixes). This section keeps the evidence; the work is scheduled as items 26
-to 28 in `docs/design.md` section 10 (all three done; what is left is below), and the decisions are in its section
-13.
+Still open (2026-10-16). Counts are from all five DBPR exports together
+(961,275 distinct Florida addresses; `tools/packs/measure_fl_places.py`).
 
-- **Unmatched cities still left** (after item 28): 1,348 rows. The largest
-  are `MIDDLETON` (61 addresses, ZIP 34762; not identified as a community,
-  so not added), `DEER ISLAND` (10), and communities just under the
-  10-address line (`CAPE HAZE`, `MATLACHA ISLES`, `BELLA COLLINA`, `CAROL
-  CITY`, `VILLAGE OF GOLF`, `WILBUR BY THE SEA`, `SEACREST`). The rest are
-  one-off typos and abbreviations (`OVEIDO`, `JAX BEACH`, `PCB`). Rerun
-  `measure_fl_places.py` to see the list. Related open decision in
-  `docs/design.md` section 13: a city that is no known place, with a ZIP
-  the pack knows.
+- **Unmatched cities still left:** 3,806 rows (3,769 distinct addresses) in
+  2,573 cities match no place, down from 4,618 before the second round of
+  additions. The largest are not communities: placeholders and counties
+  written as the city (`FLORIDA` 35, `FL`, `MIAMI DADE`, `BROWARD`), and
+  communities and spellings just under the 10-address line (`VILLAGES` 13,
+  `ROTUNDA WEST`, `HALLENDALE`, `OVIDEO`, `ORMAND BEACH`, `VALKARIA`, `WEEKIE
+  WACHEE`, `PCB`). Rerun the script to see the list; add what reaches 10
+  addresses and is a real place or a clear spelling.
+- **`zip_city_mismatch`** is still 4,505 rows on the three newer files, a long
+  tail of about 2,900 pairs, mostly a nearby big city written for a suburb,
+  which the warning should keep flagging.
+- **A city that is no known place, with a ZIP the pack knows:** `place` stays
+  `None` (design.md decision 38).
+- **Upstream:** auction-tracker's `cities_fl.json` still lists `BELLVIEW` as a
+  variant of BELLEVIEW (design.md backlog).
 
 ## Versioning
 
