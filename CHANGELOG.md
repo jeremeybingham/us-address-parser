@@ -4,6 +4,18 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Benchmarks (item 57)
+
+- `benchmarks/`: `accuracy.py`, `speed_python.py`, `speed_rust.py` and
+  `size_memory.py` print Markdown from the golden corpus, usaddress's test
+  files, the geocode benchmark and the Florida sample (private ones skipped when
+  absent), criterion, a CLI file run, and size and memory against usaddress.
+- `docs/benchmarks.md` has the results of 2026-10-17: 96.4% of geocode-benchmark
+  addresses right (usaddress 88.2%), 21 us per Python call against 82 us,
+  `parse_many` 26x a loop of `usaddress.parse` on 14 threads, a 1.7 MB wheel.
+  The Python README's batch table is refreshed (6.6x, not 6.3x).
+- The parser is 24% slower than on 2026-10-16; recorded in the backlog.
+
 ### Pub 28 re-check (item 44)
 
 - `tools/pub28/verify.py` compares `data/suffixes.toml`, `units.toml`,
