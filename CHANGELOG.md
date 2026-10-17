@@ -4,6 +4,16 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Blind Florida sample drawn (Milestone 7, item 36)
+
+- `tools/calibrate/sample_fl.py` draws the sample for calibrated confidence
+  from the private Florida files (auction listings and four DBPR exports,
+  address columns only): 150 rows uniformly at random over distinct
+  addresses with a fixed seed, plus a 40-row stratum the parser flags,
+  skipping inputs already in the corpus. It writes corpus-format records
+  pre-filled with the current parse for the author to correct; `--status`
+  counts what is left. The rows stay in `local-data/`.
+
 ### The tagger records its uncertain decisions (Milestone 7, item 37)
 
 - Internal only: the tagger now notes which uncertain rules settled a parse
