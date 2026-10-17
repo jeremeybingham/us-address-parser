@@ -4,6 +4,34 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Parser fixes from the Florida sample (item 36)
+
+- A highway route may start with a letter after a highway prefix
+  (`HIGHWAY A1A`); a lone number on the next line after a highway is a unit.
+- `178ST` is split into `178 ST` when `ST` (or `RD`) is not the number's
+  ordinal ending; `21ST` stays whole.
+- `DR E 203` is postdirectional E and unit 203; `E 203` on its own line is
+  still the unit.
+- `2ND FLOOR #260` is floor 2 and unit 260; `PH FLOOR` is the unit PH.
+- A copy of the city after a unit (`UNIT 412 INLET BEACH`), or repeating the
+  city's last words in its own segment (`RD,CLOUD`), is dropped.
+- A period after an abbreviation separates words (`ST.CLOUD` is `ST CLOUD`)
+  unless the pieces form a known word (`BLV.D`); `BOX.2351` is split like
+  `APT.1285`.
+- Corpus `rg-121` to `rg-136`. Keys change where the old parse was wrong
+  (`docs/key-format.md`): 1,691 property keys and 1,865 unit-level keys of
+  961,275 distinct Florida licensee addresses.
+
+### Collaborative labeling for the Florida sample (item 36)
+
+- `tools/calibrate/triage.py` checks each unlabeled draft without trusting
+  the parser (every input word accounted for, in address order; a known
+  city; no warnings; nothing that needs judgment), accepts checked drafts in
+  bulk (`by=assistant` in the note), and applies approved recommendations
+  (`by=assistant+author`), adding their parser errors to `NOTES.md`.
+- `tools/calibrate/README.md` documents the tools and the collaborative
+  mode, so labeling can stop and restart at any step.
+
 ### Release preparation planned (decision 42)
 
 - New plan items before the first release: benchmarks (57), choosing a new

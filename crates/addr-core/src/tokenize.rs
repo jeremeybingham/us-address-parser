@@ -11,12 +11,18 @@
 //! - A hyphen alone is a separator token (`N/A - MAGNOLIA AVE`). Leading and
 //!   trailing hyphens are dropped (`-UNIT`, `FL-`); inner ones are kept
 //!   (`C-22`, `1204-1206`).
-//! - Periods are dropped except between digits (`ST.` -> `ST`, `39.2`).
+//! - Periods are dropped except between digits (`ST.` -> `ST`, `39.2`). A
+//!   period after an abbreviation of two letters or more, with letters right
+//!   after it, separates words: `ST.CLOUD` -> `ST` `CLOUD` (initials such as
+//!   `P.O.` and `U.S.A.` stay joined).
 //! - Trailing colons and quotes are dropped.
 //!
 //! Glued tokens are split when the pieces are unambiguous:
 //! - house number run into a name: `101BRADDOCK` -> `101` `BRADDOCK`, but
 //!   not an ordinal (`42ND`) or a one-letter suffix (`12A`);
+//! - a number run into the suffix `ST` or `RD` when that is not the number's
+//!   ordinal ending: `178ST` -> `178` `ST` (178's ordinal is `178TH`), but
+//!   `21ST` and `3RD` stay whole;
 //! - a name run into a ZIP: `TAMPA33616` -> `TAMPA` `33616`;
 //! - a highway prefix run into its route: `I10`, `IH280` (Pub 28 Appendix F);
 //! - a unit designator run into its number: `APT107`, `APT3D`, or joined by
@@ -29,7 +35,7 @@
 
 use crate::classify::{is_ordinal, zip_parts, ORDINAL_SUFFIXES};
 use crate::clean::Cleaned;
-use crate::lexicon::{Lexicons, MatchKind, MAX_PLACE_WORDS};
+use crate::lexicon::{Lexicons, MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{FieldName, Span};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -272,6 +278,15 @@ impl Piece<'_> {
             self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
             return;
         }
+        // `ST.CLOUD`, `FT.MYERS`: a period after two letters or more, with a
+        // letter after it, ends a word.
+        if let Some(cut) =
+            word_period(t).filter(|&c| !known_word(&format!("{}{}", &t[..c], &t[c + 1..]), lex))
+        {
+            self.sub(s2, s2 + cut, pa, pb, paren, next_numeric, lex);
+            self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
+            return;
+        }
         // A value right after '#' or a unit designator is that unit's: `# 2WD`
         // is not house number 2 and a name, `APT I4` is not highway I4.
         let unit_value = self
@@ -337,8 +352,32 @@ fn route_hyphen(t: &str, lex: &Lexicons) -> Option<usize> {
     (lex.highway(letters).is_some() || state).then_some(letters.len())
 }
 
+/// The index of the first period in `t` that has two letters or more right
+/// before it (back to the start or another period) and a letter right after.
+/// The caller keeps the token whole when the pieces join into a known word
+/// (`BLV.D` is `BLVD`).
+fn word_period(t: &str) -> Option<usize> {
+    let b = t.as_bytes();
+    let mut start = 0;
+    for (i, &c) in b.iter().enumerate() {
+        if c != b'.' {
+            continue;
+        }
+        let before = &b[start..i];
+        if before.len() >= 2
+            && before.iter().all(u8::is_ascii_alphabetic)
+            && b.get(i + 1).is_some_and(u8::is_ascii_alphabetic)
+        {
+            return Some(i);
+        }
+        start = i + 1;
+    }
+    None
+}
+
 /// The index of the punctuation in `APT.1285`, `STE.200`, `APT:201`,
-/// `UNIT-4`: a unit designator, one of `.` `:` `-`, then the value.
+/// `UNIT-4`, `BOX.2351`: a unit designator or box word, one of `.` `:` `-`,
+/// then the value.
 fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
     let cut = t.find(['.', ':', '-'])?;
     let (letters, rest) = (&t[..cut], &t[cut + 1..]);
@@ -348,7 +387,10 @@ fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
             .bytes()
             .next()
             .is_some_and(|c| c.is_ascii_alphanumeric())
-        && lex.unit(letters).is_some();
+        && (lex.unit(letters).is_some()
+            || lex
+                .special(letters)
+                .is_some_and(|l| matches!(l.value, Special::Box | Special::PoBox)));
     ok.then_some(cut)
 }
 
@@ -368,6 +410,15 @@ fn glue_split(t: &str, next_numeric: bool, after_unit: bool, lex: &Lexicons) -> 
             && rest.bytes().all(|c| c.is_ascii_alphabetic())
             && !ORDINAL_SUFFIXES.contains(&rest)
             && !is_ordinal(t)
+        {
+            return Some(digits_lead);
+        }
+        // 178ST, 54RD: an ordinal ending the number does not take is the
+        // street suffix. Four digits or more stay whole (`409722ST` may be
+        // a house number run into the street; see `is_glued_ordinal`).
+        if digits_lead <= 3
+            && matches!(rest, "ST" | "RD")
+            && ordinal_ending(&t[..digits_lead]) != Some(rest)
         {
             return Some(digits_lead);
         }
@@ -403,6 +454,20 @@ fn glue_split(t: &str, next_numeric: bool, after_unit: bool, lex: &Lexicons) -> 
         }
     }
     None
+}
+
+/// The ordinal ending English writes after the number `n`: `ST`, `ND`,
+/// `RD` or `TH` (11 to 13 take `TH`).
+fn ordinal_ending(n: &str) -> Option<&'static str> {
+    let b = n.as_bytes();
+    let last = *b.last()?;
+    let tens = b.len() >= 2 && b[b.len() - 2] == b'1';
+    Some(match (tens, last) {
+        (false, b'1') => "ST",
+        (false, b'2') => "ND",
+        (false, b'3') => "RD",
+        _ => "TH",
+    })
 }
 
 /// `STREETDADE` before `CITY FL`: where a street suffix ends and a city the
@@ -515,6 +580,10 @@ mod tests {
             ["ST", "PETERSBURG", "FL", "33701"]
         );
         assert_eq!(toks("P.O. Box 7"), ["PO", "BOX", "7"]);
+        assert_eq!(toks("ST.CLOUD FT.MYERS"), ["ST", "CLOUD", "FT", "MYERS"]);
+        assert_eq!(toks("U.S.A. N.W. P.O.BOX"), ["USA", "NW", "POBOX"]);
+        assert_eq!(toks("HARBOR BLV.D CR.N"), ["HARBOR", "BLVD", "CR", "N"]);
+        assert_eq!(toks("PO.BOX.2351"), ["PO", "BOX", "2351"]);
         assert_eq!(toks("39.2 RD"), ["39.2", "RD"]);
         assert_eq!(toks("C-22 1204-1206"), ["C-22", "1204-1206"]);
     }
@@ -533,6 +602,13 @@ mod tests {
         assert_eq!(toks("APT107"), ["APT", "107"]);
         assert_eq!(toks("ACCESS UNDETERMINED"), ["ACCESS", "UNDETERMINED"]);
         assert_eq!(toks("409742ND SQ"), ["409742ND", "SQ"]);
+        assert_eq!(toks("NE 178ST"), ["NE", "178", "ST"]);
+        assert_eq!(toks("NW 54RD 112ST"), ["NW", "54", "RD", "112", "ST"]);
+        assert_eq!(
+            toks("21ST 3RD 11ST 101ST"),
+            ["21ST", "3RD", "11", "ST", "101ST"]
+        );
+        assert_eq!(toks("409722ST"), ["409722ST"]);
     }
 
     #[test]
@@ -543,7 +619,7 @@ mod tests {
         assert_eq!(toks("APT3D"), ["APT", "3D"]);
         // Not a designator: a route, a name with a period, a hyphenated value.
         assert_eq!(toks("GA-25"), ["GA", "25"]);
-        assert_eq!(toks("ST.LUCIE"), ["STLUCIE"]);
+        assert_eq!(toks("ST.LUCIE"), ["ST", "LUCIE"]);
         assert_eq!(toks("C-22"), ["C-22"]);
     }
 
