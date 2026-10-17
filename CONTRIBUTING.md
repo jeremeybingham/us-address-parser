@@ -8,11 +8,37 @@ Open an issue with:
 
 - the input exactly as you gave it (one line, or each field),
 - what you expected for each component, and what `doorplate parse "<input>" --pretty`
-  printed (the version is in the output),
+  printed,
+- the version (`python -c "import doorplate; print(doorplate.__version__)"` or the crate
+  version),
 - where the shape comes from, if you know (a county list, a form), so similar cases
   can be found.
 
 Please use invented or public addresses. Do not paste personal data.
+
+## Sharing messy data
+
+The most valuable thing you can give this project is real, messy addresses: the kind
+that come from county exports, mailing lists, forms and old databases. If a sample
+parses badly, or you are not sure it parses well, open an issue (the template asks for
+the right details) and attach what you can.
+
+If the data is private, anonymize it first; an anonymized sample is just as useful as
+long as it keeps the *shape* of each address:
+
+- keep the abbreviations, punctuation, spacing, case, typos and the order of the parts;
+- replace personal and business names, and house numbers, with invented ones of the same
+  form (`4417` can become `1305`, `A12` can become `B27`);
+- replace street and city names with other real or invented names of similar length and
+  structure, but keep the words that affect parsing: suffixes (`ST`, `LN`), directionals,
+  unit designators, and place names that contain suffix words (`MOUNTAIN VIEW`);
+- keep the state, and a ZIP of the same state, when the parse depends on them;
+- never send anything that could identify a person.
+
+If you cannot share even that, say so in the issue and describe the shapes in words
+(for example "unit written before the street, then the city cut off at 30 characters");
+we can work out an anonymization together. You can also send counts: how many of your
+rows come back with each warning.
 
 ## Building and testing
 

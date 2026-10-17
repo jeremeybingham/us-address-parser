@@ -11,6 +11,16 @@ to download.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
+> **Alpha release (0.1.0).** Expect rough edges. The match key is versioned (`k1:`) and
+> will probably get new versions as the parser improves, so store the version prefix
+> with your keys and plan to re-key. Accuracy and speed are measurements on a few
+> datasets, not guarantees.
+>
+> **Help wanted: messy addresses.** If it parses your addresses badly, please
+> [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md)
+> with a sample. I want to fix them. Private data can be anonymized first
+> ([how](https://github.com/jeremeybingham/doorplate/blob/main/CONTRIBUTING.md#sharing-messy-data)).
+
 ## Quickstart
 
 ```sh
@@ -199,8 +209,10 @@ Tokens that cannot be placed are left out of `tag()`, and some usaddress labels
 
 - [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does,
   the Rust library, the command-line tool.
-- [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md)
-  and [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md).
+- [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md),
+  [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)
+  and the [roadmap](https://github.com/jeremeybingham/doorplate/blob/main/docs/roadmap.md)
+  (a confidence score and customization packs are planned).
 - [Examples](https://github.com/jeremeybingham/doorplate/tree/main/examples): a
   notebook tour and DataFrame pipelines.
 
