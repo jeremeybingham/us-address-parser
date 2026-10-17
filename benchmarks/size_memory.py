@@ -74,6 +74,12 @@ def main():
         with zipfile.ZipFile(wheel) as z:
             so = sum(i.file_size for i in z.infolist() if i.filename.endswith(".so"))
             unpacked = sum(i.file_size for i in z.infolist())
+    # What would be published: the crate package and the Python source distribution.
+    run(["cargo", "package", "-p", "doorplate", "--allow-dirty", "--no-verify"], cwd=ROOT)
+    crate = next((ROOT / "target" / "package").glob("doorplate-*.crate")).stat().st_size
+    with tempfile.TemporaryDirectory() as d:
+        run(["maturin", "sdist", "-o", d, "-m", str(ROOT / "crates/doorplate-py/Cargo.toml")])
+        sdist = next(Path(d).glob("*.tar.gz")).stat().st_size
     print("## Size\n")
     print("| | Size |\n|---|---|")
     print(f"| `doorplate` CLI binary (release, as built) | {mb(cli)} |")
@@ -82,6 +88,8 @@ def main():
     print(f"| `doorplate` wheel (abi3, this platform) | {mb(wheel_size)} |")
     print(f"| the extension module inside it | {mb(so)} |")
     print(f"| the wheel unpacked | {mb(unpacked)} |")
+    print(f"| `doorplate` crate package (`.crate`, compressed; carries the tables) | {mb(crate)} |")
+    print(f"| `doorplate` Python source distribution (sdist) | {mb(sdist)} |")
 
     # usaddress and its dependencies, installed into a scratch directory.
     with tempfile.TemporaryDirectory() as d:

@@ -9,7 +9,7 @@ rules it applies are the corpus conventions in `tests/corpus/README.md`:
 
 - Values are picked from the input's own words or, for suffixes,
   directionals, unit types, states and highway prefixes, from the standard
-  forms in `data/*.toml`; typed text is uppercased with periods dropped.
+  forms in `crates/doorplate/data/*.toml`; typed text is uppercased with periods dropped.
 - The warnings that follow from the fields (`missing_city`,
   `missing_state`, `missing_zip`, `unparsed_remainder`,
   `missing_street_number`) are computed; the rest are toggled.
@@ -39,7 +39,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sample_fl  # noqa: E402
 
-DATA = ROOT / "data"
+DATA = ROOT / "crates" / "doorplate" / "data"
 
 # Corpus `expect` keys in the runner's order (crates/doorplate/src/corpus.rs).
 FIELDS = [

@@ -3,7 +3,7 @@
 
     python benchmarks/speed_rust.py [--csv FILE --column NAME [--line2 C --city C --state C --zip C]]
 
-Runs `cargo bench -p doorplate --bench parse --features rayon` (benches/parse.rs:
+Runs `cargo bench -p doorplate --bench parse --features rayon` (crates/doorplate/benches/parse.rs:
 single addresses by shape, the golden corpus one by one and with `parse_many`,
 and the emitters) and prints the median of each. With --csv it also times
 `doorplate parse-file` on that file (one thread, CSV in and out, so it includes

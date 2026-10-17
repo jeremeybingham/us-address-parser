@@ -53,7 +53,7 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
   Structured values:
   - `rural_route`: `{"kind": "RR" | "HC", "route": "2", "box": "152"}`
   - `highway`: `{"prefix": "COUNTY ROAD", "route": "23"}`, with the
-    standard prefix from `data/special.toml` `[[highway]]`, plus `"state": "KY"`
+    standard prefix from `crates/doorplate/data/special.toml` `[[highway]]`, plus `"state": "KY"`
     when the name holds a state (`KY STATE HIGHWAY 1`, Appendix F)
   - `military`: `{"kind": "PSC", "number": "1650", "box": "10"}`
   - `military_post_office`: `"APO"`, `"FPO"` or `"DPO"`

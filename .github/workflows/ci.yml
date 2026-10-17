@@ -23,6 +23,26 @@ jobs:
         run: cargo test -p doorplate --test corpus -- --nocapture
       - name: Corpus emitter expectations agree with emit_expect.py
         run: python3 tools/corpus/emit_expect.py --check tests/corpus/*.jsonl
+      - name: The crate packages and builds on its own (the tables are inside it)
+        run: cargo package -p doorplate
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: The source distribution builds and parses in a clean environment
+        run: |
+          python -m venv build-env && . build-env/bin/activate
+          pip install maturin
+          maturin sdist -m crates/doorplate-py/Cargo.toml -o dist-sdist
+          python -m venv clean-env
+          clean-env/bin/pip install dist-sdist/*.tar.gz
+          clean-env/bin/python -c "import doorplate as d; a = d.parse('123 N Main St Apt 4, Miami FL 33101'); assert a.key() == 'k1:S|123|N|MAIN|ST||FL|33101', a.key(); assert a.place['name'] == 'MIAMI'"
 
   fuzz:
     runs-on: ubuntu-latest

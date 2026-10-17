@@ -1,4 +1,4 @@
-"""Build the Florida pack's observed ZIP table (data/packs/fl/zips_observed.tsv)
+"""Build the Florida pack's observed ZIP table (crates/doorplate/data/packs/fl/zips_observed.tsv)
 from the DBPR real estate licensee export.
 
     cargo build --release -p doorplate-cli
@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dbpr import write_parse_input  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-PACK = ROOT / "data" / "packs" / "fl"
+PACK = ROOT / "crates" / "doorplate" / "data" / "packs" / "fl"
 ADDR = ROOT / "target" / "release" / "addr"
 MIN_ADDRESSES = 10
 MIN_SMALL = 3

@@ -22,6 +22,6 @@ workspace = true
 
 [dependencies]
 # rayon: `parse_many` parses in parallel while the GIL is released.
-doorplate = { path = "../doorplate", features = ["rayon"] }
+doorplate = { workspace = true, features = ["rayon"] }
 # abi3: one wheel per platform for Python 3.10 and later.
 pyo3 = { version = "0.30", features = ["abi3-py310"] }

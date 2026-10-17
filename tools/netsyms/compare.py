@@ -53,7 +53,7 @@ def strip_nulls(v):
 # Spellings that differ by convention only are not mismatches: the Pub 28
 # abbreviations against the spelled-out word the source kept. Built from the
 # committed data tables, so both sides are reduced the same way.
-DATA = Path(__file__).resolve().parents[2] / "data"
+DATA = Path(__file__).resolve().parents[2] / "crates" / "doorplate" / "data"
 
 
 def _canon_table():

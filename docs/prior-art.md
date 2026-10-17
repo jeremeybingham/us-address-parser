@@ -37,14 +37,14 @@ Django "address quality" page counts rows by status with no re-parse.
 | Lesson | Where it landed |
 |---|---|
 | Statuses are what make bulk data usable: users filter and count by them. | `Warning` gained variants for each street status, and `Warning::code()` gives a stable snake_case name for a database column (`types.rs`). |
-| Placeholder text ("NO SITUS", "NOT ASSIGNED", "0 UNKNOWN", "UNASSIGNED LOCATION RE", "-") is common in assessor data and must not be parsed as a street. | `data/special.toml` `[placeholder]`, `Lexicons::is_placeholder`, `Warning::Placeholder`. |
+| Placeholder text ("NO SITUS", "NOT ASSIGNED", "0 UNKNOWN", "UNASSIGNED LOCATION RE", "-") is common in assessor data and must not be parsed as a street. | `crates/doorplate/data/special.toml` `[placeholder]`, `Lexicons::is_placeholder`, `Warning::Placeholder`. |
 | House number 0 means "no number" (usually vacant land). | `Warning::ZeroStreetNumber`. |
 | "5210/5212 BRISTO ST", "1204-1206 COLT ST": several addresses in one field. | `Warning::MultipleAddresses`. |
 | "409742ND SQ": a number run into a numbered street can't be split reliably. | `Warning::AmbiguousStreetNumber`. |
 | County sites cut lines at about 30 characters, mid-street or mid-unit. | `Warning::PossiblyTruncated`. |
 | A unit word with nothing after it ("... DR #", "... TRL UNIT"). | `Warning::MissingUnitNumber`, plus `UnitType::range_required` from Pub 28 C2 so the tagger knows when a number is expected. |
 | Real data uses spellings Pub 28 doesn't list: `TRC` (trace), `UN` (unit, Pasco), `LT` (lot). | `observed = [...]` lists in `suffixes.toml` / `units.toml`, resolved with `MatchKind::Observed` so the parser can raise `Warning::NonStandardAbbreviation`. Every other street type in its `STREET_TYPES` set (`TERR`, `TR`, `WY`, `AV`, ...) is already a Pub 28 C1 variant. |
-| "8932 HWY 2301", "3911 HIGHWAY 97": the number after a highway word is the road's, not a unit. | `data/special.toml` `[[highway]]`, `Lexicons::highway`. |
+| "8932 HWY 2301", "3911 HIGHWAY 97": the number after a highway word is the road's, not a unit. | `crates/doorplate/data/special.toml` `[[highway]]`, `Lexicons::highway`. |
 | "2108 AVENUE G", "147 SE AVENUE A": a suffix word can start the street name, and the letter after it is the name, not a unit. | Recorded for the tagger (below); no table change needed. |
 
 ### Lessons carried into the parser (Milestone 2)

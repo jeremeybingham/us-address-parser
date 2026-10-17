@@ -159,17 +159,18 @@ README.md, CLAUDE.md, CHANGELOG.md, NOTICE, LICENSE-MIT, LICENSE-APACHE
 docs/                       # this document and the specs listed at the top
 crates/
   doorplate/                # pure Rust, no Python dependency
-    build.rs                # compiles data/*.toml into static tables
+    build.rs                # compiles crates/doorplate/data/*.toml into static tables
     src/                    # clean, tokenize, classify, tagger/, assemble, parser,
                             # input, place, lexicon, types, emit/{key,usps,reso,slug,usaddress}, corpus
     tests/                  # corpus.rs, no_panic.rs (proptest), usaddress_gold.rs
+    data/                   # suffixes, directionals, units, states, special (.toml); inside the
+                            # crate so the published package carries it (item 45)
+      places/               # the national place list (generated), compiled behind `places-us`
+      packs/fl/             # the Florida pack, compiled behind `state-fl` (section 11)
   doorplate-cli/                 # `doorplate` binary (alias `addr`): parse, parse-file, corpus test
   doorplate-py/                  # PyO3 bindings: src/lib.rs, python/doorplate/ (package, stubs),
                             # tests/ (pytest), benchmarks/
-data/                       # suffixes, directionals, units, states, special (.toml)
-  places/                   # the national place list (generated), compiled behind `places-us`
-  packs/fl/                 # the Florida pack, compiled behind `state-fl` (section 11)
-benches/parse.rs            # criterion benches
+crates/doorplate/benches/parse.rs            # criterion benches
 tests/
   corpus/                   # golden corpus (JSONL) and passing.txt baseline
   external/usaddress/       # usaddress's labeled test files (MIT, vendored)
@@ -207,7 +208,7 @@ Emitters never mutate the parsed struct and never re-parse.
 - **Deterministic.** Same input, same output, across platforms.
 - **Spans preserved.** Components keep their source byte ranges (`SourceInfo::spans`).
 - **Never panic on input.** Covered by proptest properties (`tests/no_panic.rs`); fuzz targets (`fuzz/`, item 43) cover the public parse and emit paths.
-- **Lexicon access behind one interface** (`Lexicons`, built from `data/*.toml`, the national list and the packs at build time). The state packs and the deferred custom layer (decision 45) plug in here.
+- **Lexicon access behind one interface** (`Lexicons`, built from `crates/doorplate/data/*.toml`, the national list and the packs at build time). The state packs and the deferred custom layer (decision 45) plug in here.
 - No global mutable state; `Parser` is cheap and `Send + Sync`.
 
 ### `ParsedAddress`
@@ -356,7 +357,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
-| **Benchmarks** (criterion): single shapes, the corpus through `parse` and `parse_many`, the emitters. | Done (`benches/parse.rs`). |
+| **Benchmarks** (criterion): single shapes, the corpus through `parse` and `parse_many`, the emitters. | Done (`crates/doorplate/benches/parse.rs`). |
 | **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace --all-features`, corpus accuracy report, the emitter-expectation check; a Python job (maturin develop, pytest on 3.10 and 3.13). | Done (`ci.yml`). |
 | **Fuzzing** (cargo-fuzz, `fuzz/`, nightly): `parse` (with a `default_state` hint) and `parse_fields`, each running every emitter on the result. The tokenizer and assembler are `pub(crate)`, so they are reached through the public entry points. | Done (item 43); a short smoke run in CI. |
 | **Python tests** (pytest): the wrapper, type stubs, `parse_many` (identical to a loop, GIL released), `tag` against usaddress, pandas and Polars recipes: 27 tests. **Wheels**: abi3 wheels built and tested on Linux x86_64 and aarch64, macOS universal2 and Windows x64, on Python 3.10 and 3.13. | Done (`crates/doorplate-py/tests`, `wheels.yml`). |
@@ -392,7 +393,7 @@ in wherever it fits.
 
 ### Milestone 1: data and types (done)
 
-6. `data/*.toml`, each with its source; verified against the live Pub 28 pages (`docs/usps-pub28-notes.md`)
+6. `crates/doorplate/data/*.toml`, each with its source; verified against the live Pub 28 pages (`docs/usps-pub28-notes.md`)
 7. `crates/doorplate/build.rs` (compile and validate the TOML into static tables)
 8. `src/types.rs`
 9. `src/lexicon.rs`
@@ -417,7 +418,7 @@ in wherever it fits.
 19. Golden corpus seeded from auction-tracker's tests and golden CSVs, Pub 28's own examples and regression cases. The author's own Florida code is still pending (backlog, section 13).
 20. Corpus runner: the `doorplate::corpus` module (feature `corpus`), used by `tests/corpus.rs` and `doorplate corpus test`. Exit codes: 0 ok, 2 malformed corpus, 3 regression or stale baseline.
 21. `doorplate` CLI (alias `addr`) (section 8). The CLI, not the core, depends on `csv` and `serde_json`.
-22. `benches/parse.rs`. First numbers (quick run, 2026-10-15): about 4 to 11 µs per address, about 110K addresses/s one by one, about 3x that through `parse_many` with `rayon`. Run `cargo bench -p doorplate --bench parse` (add `--features rayon`).
+22. `crates/doorplate/benches/parse.rs`. First numbers (quick run, 2026-10-15): about 4 to 11 µs per address, about 110K addresses/s one by one, about 3x that through `parse_many` with `rayon`. Run `cargo bench -p doorplate --bench parse` (add `--features rayon`).
 
 Also done ahead of its milestone: the usaddress comparison script and
 results (`tools/compare/compare_usaddress.py`,
@@ -430,7 +431,7 @@ find the city. It ended with the benchmark rerun that made the CRF call: no
 CRF (decisions 10 and 32). What each item built, with the evidence in
 `CHANGELOG.md`, `docs/places.md` and `docs/packs/fl.md`:
 
-- **Florida pack** (`data/packs/fl/`, feature `state-fl`), built by
+- **Florida pack** (`crates/doorplate/data/packs/fl/`, feature `state-fl`), built by
   `tools/packs/build_fl.py` from auction-tracker's `cities_fl.json`, plus
   observed ZIP places from the DBPR export and the `CR` override; decisions 13
   to 21. Florida lookups behind the `Lexicons` interface: the city on one line
@@ -439,7 +440,7 @@ CRF (decisions 10 and 32). What each item built, with the evidence in
   Corpus `fl-001` to `fl-033`.
 23. **Slug follows the street for dual addresses** (decision 11). `rg-040` to
     `rg-044` changed.
-24. **National place data** (`data/places/`, feature `places-us`):
+24. **National place data** (`crates/doorplate/data/places/`, feature `places-us`):
     `tools/places/build_us.py` builds 50,375 places and 41,154 ZIPs for the 50
     states, DC and Puerto Rico from the Census Gazetteer and GeoNames;
     `build.rs` compiles them under the packs (decision 29) as packed binary
@@ -525,7 +526,7 @@ Calibrated confidence (decision 12):
       `doorplate corpus test --dir local-data/florida-sample`.
     - Commit 2 (done): `tools/calibrate/label.py`, a terminal tool for the
       labeling: the draft hidden until asked for, standard values picked
-      from `data/*.toml`, the field-driven warnings computed, each row
+      from `crates/doorplate/data/*.toml`, the field-driven warnings computed, each row
       checked by the corpus runner before it is saved, and `NOTES.md`
       written from the differences with the parser.
     - Commit 3 (done): `tools/calibrate/triage.py` and the collaborative
@@ -638,10 +639,10 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     - **(done)** Apply item 58's rename map in one pass: crates, the Python package and
       import, the CLI binary if renamed, paths, CI, docs and examples; then
       `git grep` for every old name (decision 33's names are replaced).
-    - Put the data inside the packages: copy `data/` into the `doorplate`
-      crate (`build.rs` already looks for a crate-local `data/` first) so
-      `cargo package` succeeds and `maturin sdist` carries the tables;
-      keep one source of truth (a script or a check that the copies match).
+    - **(done)** Put the data inside the packages: `data/` moved into the
+      `doorplate` crate (`crates/doorplate/data/`, one copy; `build.rs` reads
+      only that), so `cargo package` and `maturin sdist` carry the tables;
+      the tools, docs and tests point at the new path.
     - Check the names again just before publishing.
 61. **Text cleaning** (decision 42): apply `docs/repository_cleaning.md` in
     full: build-process language out of the docs and comments (`design.md`
@@ -729,17 +730,17 @@ for them.
 **Idea:** the base parser is US-wide and state-agnostic. Data comes in
 layers, each a set of files compiled in by `build.rs`:
 
-1. **Base lexicons** (`data/*.toml`): Pub 28 and RESO tables.
-2. **National place list** (`data/places/`, feature `places-us`, on by
+1. **Base lexicons** (`crates/doorplate/data/*.toml`): Pub 28 and RESO tables.
+2. **National place list** (`crates/doorplate/data/places/`, feature `places-us`, on by
    default): generated for every state, DC and Puerto Rico from public
    data (Census Gazetteer, GeoNames ZIPs). Good enough to find cities and
    match ZIPs everywhere; no misspellings.
-3. **Curated state packs** (`data/packs/<st>/`, feature `state-<st>`):
+3. **Curated state packs** (`crates/doorplate/data/packs/<st>/`, feature `state-<st>`):
    hand-checked data for a state, added where real data shows a need.
    Florida is the first (on by default).
 
 ```
-data/packs/fl/
+crates/doorplate/data/packs/fl/
   pack.toml        # state code, pack version, sources and licenses
   places.tsv       # canonical place names, county, kind, variants (abbreviation or typo)
   zips.tsv         # ZIP -> main place, shared places
@@ -883,7 +884,7 @@ extensible; no state-specific rule in the tagger.
   takes about what the Rust parse does (21 us against 22 us on the corpus,
   `docs/benchmarks.md`); `parse_many` is 6.6x faster on a batch, and the README
   says so.
-- **Packaging.** An sdist and a crate lack `data/` until item 45; the
+- **Packaging.** The tables are inside the crate (item 45); the
   name must be reserved on crates.io and PyPI before publishing (decision 46).
   Both are known and scheduled.
 - **Migration friction from usaddress.** Users expect `tag()`, the label names

@@ -1,4 +1,4 @@
-# National place list (`data/places/`)
+# National place list (`crates/doorplate/data/places/`)
 
 Layer 2 of the lexicon (`docs/design.md` section 11, Milestone 5): place
 names and ZIP places for every state, DC and Puerto Rico, generated from
@@ -111,7 +111,7 @@ no places or no ZIPs.
 
 ## How it is compiled in
 
-`build.rs` compiles `data/places/` when the `places-us` cargo feature is on
+`build.rs` compiles `crates/doorplate/data/places/` when the `places-us` cargo feature is on
 (it is by default), under the state packs (decision 29):
 
 - A state with a curated pack keeps the pack's places and ZIPs. A national

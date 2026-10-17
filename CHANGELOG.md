@@ -4,6 +4,18 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Packaging (item 45, second half)
+
+- The lexicon tables, the national place list and the state packs moved from
+  `data/` into the crate (`crates/doorplate/data/`); `build.rs` reads only
+  that. `cargo package` (47 files, 0.8 MB compressed) and `maturin sdist`
+  (0.8 MB) now carry the tables and build in a clean directory; CI checks both.
+- The criterion benchmarks moved into the crate
+  (`crates/doorplate/benches/parse.rs`); the two tests that read the repository's
+  corpus and vendored test files do nothing in a published package.
+- The core crate's version is declared once in the workspace
+  (`[workspace.dependencies]`) so `doorplate-cli` can be published.
+
 ### Benchmarks (item 57)
 
 - `benchmarks/`: `accuracy.py`, `speed_python.py`, `speed_rust.py` and
@@ -622,7 +634,7 @@ Corpus cases `rg-017` to `rg-039` (auction listings, DBPR license files):
   DIR] [--verbose] [--update-baseline]`.
 - Corpus runner moved into `doorplate::corpus` (feature `corpus`, optional
   serde and serde_json; the default build is still dependency-free).
-- `benches/parse.rs`: criterion benchmarks for six address shapes, the whole
+- `crates/doorplate/benches/parse.rs`: criterion benchmarks for six address shapes, the whole
   corpus (`parse` and `parse_many`) and the four emitters.
 - Corpus: `auction-tracker-golden.jsonl` from the raw address lines of
   auction-tracker's golden CSVs, hand-labeled. Emitter expectations (`key`,
