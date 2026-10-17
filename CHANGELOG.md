@@ -4,6 +4,14 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Outside sources deferred (decision 39)
+
+- `docs/future-sources.md`: NAD, OpenAddresses, the Netsyms Address Database
+  and a Kaggle address list evaluated (terms, fields, what each could test),
+  what the v1 accuracy numbers cover and do not, and a v2 plan. Nothing was
+  downloaded or parsed. Design.md decision 39 defers source-driven parser
+  work to the `k2` version.
+
 ### Fuzz targets (item 43)
 
 - `fuzz/` (cargo-fuzz, nightly, outside the workspace): `parse` and

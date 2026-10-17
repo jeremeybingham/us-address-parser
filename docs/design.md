@@ -12,6 +12,7 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 | `docs/usaddress-comparison.md` | Comparison with usaddress, the blind benchmark, the accuracy backlog |
 | `docs/places.md` | The national place list: sources, licenses, how it is built and compiled |
 | `docs/packs/fl.md` | The Florida pack: sources, licenses, evidence, what is left |
+| `docs/future-sources.md` | Outside address sources evaluated (NAD, OpenAddresses, Netsyms, Kaggle), what v1's accuracy numbers cover, and the deferred v2 plan |
 | `docs/prior-art.md` | Lessons from the author's Florida address code |
 | `tests/corpus/README.md` | Golden-corpus record format and labeling conventions |
 | `crates/addr-py/README.md` | The Python package: API, batch and dataframe recipes, usaddress mapping |
@@ -977,6 +978,20 @@ Made by the author while reviewing the plan after Milestone 6.
     national list and the pack scripts now cover most communities, and a
     filled name could mislead).
 
+### Decisions recorded 2026-10-17 (outside sources)
+
+39. **Outside-source testing waits for v2.** NAD, OpenAddresses and the
+    Netsyms Address Database were evaluated (`docs/future-sources.md`); none
+    was downloaded or parsed. The first release ships on the accuracy already
+    measured (96.1% on the blind benchmark, 99.2% on usaddress's files, the
+    381-case corpus, about 900k fuzz runs), which covers street addresses
+    mostly in Florida and one-line uppercase input, not units or mixed case
+    elsewhere. No further source-driven parser rule work is scheduled before
+    release: such changes would alter keys after `k1` is public, so they wait
+    for `k2` (decision 34). A real bug found before release may still be
+    fixed under the `CLAUDE.md` rule (log the key change). Disk (about 47 GB
+    for Netsyms) is also not available. Plan: `docs/future-sources.md`.
+
 ### Open decisions (for the author)
 
 Intersections, the trailing country and the city that is no known place were
@@ -1008,6 +1023,10 @@ when it is scheduled.
   (`3324 N, ANDREWS AVE`, 17 DBPR rows), a PO Box on line 2 beside a street
   with no number, a unit followed by business words (`STE 903 BLU SPA`, left
   unparsed), and `possibly_truncated` firing on complete units.
+- **Outside-source benchmark and place-list gaps** (v2, decision 39;
+  `docs/future-sources.md`): NAD or Netsyms rows rendered in several styles,
+  compared per state and per source, feeding corpus cases, place-list gaps and
+  pack priorities.
 - **A batch call for pre-split fields** (`parse_fields_many`) and a columnar
   or Arrow result for dataframes: reading attributes from Python objects is
   now most of the time in a Polars or pandas pipeline (`crates/addr-py/README.md`).
