@@ -30,21 +30,17 @@ reported beside it (`place`).
 
 ## The pipeline
 
-```mermaid
-flowchart TD
-    A["raw input<br/>one line or fields"] --> B["clean<br/>whitespace, accents, punctuation,<br/>uppercase; map back to the original"]
-    B --> C["tokenize<br/>tokens with original spans,<br/>lines and comma segments, glued tokens split"]
-    C --> D["classify<br/>token shapes and<br/>longest-match lexicon lookups"]
-    D --> E["tagger<br/>rules and place lookups"]
-    E --> F["assemble<br/>ParsedAddress, spans, warnings"]
-    F --> G1["USPS"]
-    F --> G2["RESO"]
-    F --> G3["key"]
-    F --> G4["slug"]
-    F --> G5["usaddress tags"]
-    L[("Lexicons<br/>Pub 28 tables, national places,<br/>state packs")] -.-> D
-    L -.-> E
-    L -.-> F
+```
+raw input
+  -> clean      whitespace, accents, punctuation, uppercase; a map back to the original
+  -> tokenize   tokens with original spans; lines and comma segments; glued tokens split
+  -> classify   token shapes and longest-match lexicon lookups
+  -> tagger     rules and place lookups
+  -> assemble   ParsedAddress, component spans, warnings
+  -> emitters   USPS, RESO, key, slug, usaddress tags (read-only)
+
+Lexicons (Pub 28 tables, national places, state packs) are read by classify, the
+tagger and assemble.
 ```
 
 1. **clean** produces uppercase, single-spaced text and keeps a map from every
@@ -158,7 +154,8 @@ Unit inclusion is an option (off by default, property level).
 
 The key format is versioned (`k1:`). Any change to what an input produces needs a
 new version prefix (`k2:`) and an update to `docs/key-format.md`; `k1` is never
-edited in place. The slug is built from the
+edited in place. This is an alpha release, so expect new key versions as the parser
+improves; store the version with your keys. The slug is built from the
 USPS output, is for display, and is not unique or versioned.
 
 ## Lexicon layers
@@ -272,3 +269,4 @@ docs/                       this page and the references below
 | [`packs/fl.md`](packs/fl.md) | The Florida pack |
 | [`usaddress-compat.md`](usaddress-compat.md) | usaddress-shaped output, label mapping, migration |
 | [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size |
+| [`roadmap.md`](roadmap.md) | Planned work and what data would help |
