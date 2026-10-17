@@ -10,7 +10,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "target" / "release" / "doorplate"
 GEOCODE = ROOT / "local-data" / "geocode-benchmark"
-FLORIDA_SAMPLE = ROOT / "local-data" / "florida-sample"
 
 
 def machine():

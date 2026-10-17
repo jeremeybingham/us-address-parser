@@ -43,7 +43,7 @@ Over every row of the uniform draw, quirks included: 97.77% to 98.14%
 blind geocode benchmark moved from 96.1% to 96.4% whole-address (token
 accuracy 99.2% to 99.3%). Rows with units (clean units): 98.2% to 99.9%.
 
-**What was found and fixed** (docs/usps-pub28-notes.md, `ns-001` to `ns-023`;
+**What was found and fixed** (docs/usps-pub28-notes.md, `nat-001` to `nat-023`;
 the key changes are logged in docs/key-format.md):
 
 1. A word that began with a suffix spelling and ended in a place name was

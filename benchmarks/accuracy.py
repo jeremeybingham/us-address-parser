@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Accuracy: golden corpus, usaddress's test files, geocode benchmark, Florida sample.
+"""Accuracy: golden corpus, usaddress's test files and the geocode benchmark.
 
     python benchmarks/accuracy.py
 
 Needs the release CLI and `usaddress` (pip install usaddress). The geocode
-benchmark and the Florida sample are in `local-data/` (private); a missing one
-is skipped. Prints Markdown.
+benchmark is not in the repository (`benchmarks/README.md` says how to get it);
+without it that part is skipped. Prints Markdown.
 """
 import re
 import sys
@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import CLI, FLORIDA_SAMPLE, GEOCODE, ROOT, machine, need_cli, run  # noqa: E402
+from _common import CLI, GEOCODE, ROOT, machine, need_cli, run  # noqa: E402
 
 
 def corpus_report(directory):
@@ -77,14 +77,6 @@ def main():
             print(f"| Whole address (fine) | {row[9]} | {row[10]} |\n")
     else:
         print("## Geocode benchmark\n\nSkipped: `local-data/geocode-benchmark/` is not here.\n")
-
-    if (FLORIDA_SAMPLE / "sample.jsonl").exists():
-        cases, ok, total, pct = corpus_report(FLORIDA_SAMPLE)
-        print("## Hand-labeled Florida sample (190 addresses)\n")
-        print(f"{ok} of {total} whole addresses right ({pct}%), scored after the parser fixes that the sample's")
-        print("errors led to (146 of the 150 uniformly drawn rows were right before them).\n")
-    else:
-        print("## Florida sample\n\nSkipped: `local-data/florida-sample/` is not here.\n")
 
 
 if __name__ == "__main__":
