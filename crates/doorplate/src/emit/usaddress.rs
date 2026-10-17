@@ -1,4 +1,4 @@
-//! usaddress-compatible token labels (design decision 11): each
+//! usaddress-compatible token labels: each
 //! whitespace-delimited token of the input with the label the Python
 //! `usaddress` library uses for it (`AddressNumber`, `StreetName`, ...). For
 //! migration and for comparing the two parsers on usaddress's labeled data
@@ -152,7 +152,7 @@ impl ParsedAddress {
     }
 
     /// The parse joined by usaddress label, the counterpart of
-    /// `usaddress.tag()` (design.md decision 23): tokens that share a label
+    /// `usaddress.tag()`: tokens that share a label
     /// are joined with a space in input order, the ends of each value are
     /// stripped of spaces, commas and semicolons, and tokens the parse did
     /// not place are left out. A label in two separate runs is joined and

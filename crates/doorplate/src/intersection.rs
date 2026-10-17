@@ -1,4 +1,4 @@
-//! Intersections (item 55, decision 37).
+//! Intersections.
 //!
 //! `MAIN ST & 1ST AVE` names a corner, not a place with a house number. The
 //! parser reads the first street as usual, leaves the second one (the

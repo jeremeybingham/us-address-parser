@@ -1,4 +1,4 @@
-//! Public parser entry point (item 16).
+//! Public parser entry point.
 //!
 //! Pipeline: [`crate::clean`] -> [`crate::tokenize`] -> tagger
 //! ([`crate::classify`] shapes and lexicon lookups) -> [`crate::assemble`].
@@ -38,7 +38,7 @@ pub struct ParseOptions {
     /// A state (USPS code or name) to assume when the input names none and
     /// its ZIP (if any) is unknown: the place list looks cities up in that
     /// state, and the state's pack readings (`CR` is CIRCLE in Florida)
-    /// apply. It is a hint, never a fill (design.md decision 24): the parsed
+    /// apply. It is a hint, never a fill: the parsed
     /// `state` stays empty, `missing_state` still fires and the key is
     /// unchanged. [`Warning::DefaultStateApplied`] says when it decided
     /// something.
@@ -143,7 +143,7 @@ impl Parser {
     }
 
     /// Parse pre-split fields. Each field is tagged on its own, with the
-    /// field as a strong signal (decision 14): the city field is the city.
+    /// field as a strong signal: the city field is the city.
     /// When only the address lines are given, they are read like a single
     /// line, so a `CITY, ST ZIP` second line still parses.
     pub fn parse_fields(&self, fields: &Fields) -> Result<ParsedAddress, ParseError> {

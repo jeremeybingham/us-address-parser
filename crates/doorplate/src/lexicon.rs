@@ -5,9 +5,9 @@
 //! `data/*.toml` by `build.rs` into sorted static arrays, so lookups are a
 //! key normalization plus a binary search, with no runtime data loading.
 //!
-//! `Lexicons` is the seam where state tuning packs will plug in later
-//! (`docs/design.md` section 11): a pack adds spellings that resolve to the
-//! same Pub 28 entries, so the value types keep pointing at the base tables.
+//! `Lexicons` is the one interface the tagger reads through. State packs plug
+//! in here: a pack adds spellings that resolve to the same Pub 28 entries, so
+//! the value types keep pointing at the base tables.
 
 mod key;
 mod place_key;

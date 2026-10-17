@@ -1,5 +1,5 @@
-//! Tagging rules. Sources for each rule are in `docs/usps-pub28-notes.md`
-//! (Pub 28) and `docs/prior-art.md` (shapes seen in county data).
+//! Tagging rules. The source of each rule (a Pub 28 section, or an address
+//! shape observed in Florida address data) is in `docs/usps-pub28-notes.md`.
 
 use std::ops::Range;
 
@@ -265,7 +265,7 @@ impl Tagger<'_> {
 
     /// `WINGATE ST, 32507`: with a state pack, a first segment of plain words
     /// that ends in a street suffix and is no place the pack knows is the
-    /// street, not the city (`docs/prior-art.md`).
+    /// street, not the city.
     fn known_street(&self, lo: usize, hi: usize) -> bool {
         let Some(ctx) = self.places else {
             return false;
@@ -459,7 +459,7 @@ impl Tagger<'_> {
 
     /// Drop a copy of the city at the end of the delivery line, possibly cut
     /// off: `85231 BOSTWICK DR FERNANDINA B` before `FERNANDINA BEACH`,
-    /// `SEVENTH AV HILLIARD` before `HILLIARD` (`docs/prior-art.md`).
+    /// `SEVENTH AV HILLIARD` before `HILLIARD`.
     /// Returns the new end of the delivery line.
     pub(super) fn drop_city_copy(
         &mut self,
@@ -742,8 +742,8 @@ impl Tagger<'_> {
         e
     }
 
-    /// A cut-off copy of the address ahead of the whole address, as the
-    /// DBPR mailing fields write it: `624 E COLONI 624 E COLONIAL DR`. The
+    /// A cut-off copy of the address ahead of the whole address, as some
+    /// mailing-address fields write it: `624 E COLONI 624 E COLONIAL DR`. The
     /// house number comes again after words that match the start of what
     /// follows (the last one may be cut short), all in one segment. The copy
     /// is dropped. Returns the start of the address.
@@ -1633,7 +1633,7 @@ impl Tagger<'_> {
             }) {
                 if j - w > name_lo + 1 {
                     // A penthouse right after a designator is its number
-                    // (`APT PH 5213`, `SUITE PH`; design.md decision 31).
+                    // (`APT PH 5213`, `SUITE PH`).
                     if let Some((ty, num)) = found.last_mut() {
                         if u.value.abbr() != "PH" && ty.start == j && self.is_penthouse(ty) {
                             let end = if num.start == num.end {

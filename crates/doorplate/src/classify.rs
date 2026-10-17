@@ -1,4 +1,4 @@
-//! Token classification (pipeline step 3, item 12).
+//! Token classification (pipeline step 3).
 //!
 //! Shape tests on single tokens (numbers, ZIPs, ordinals, unit values) and
 //! longest-match lexicon lookups over runs of tokens. The tagger decides

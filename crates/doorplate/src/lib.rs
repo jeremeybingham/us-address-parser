@@ -16,7 +16,7 @@
 //!
 //! Emitters: [`ParsedAddress::to_usps`], [`ParsedAddress::to_reso`],
 //! [`ParsedAddress::key`], [`ParsedAddress::slug`] and
-//! [`ParsedAddress::to_usaddress_tags`]. See `docs/design.md` for the plan.
+//! [`ParsedAddress::to_usaddress_tags`].
 
 mod assemble;
 mod classify;

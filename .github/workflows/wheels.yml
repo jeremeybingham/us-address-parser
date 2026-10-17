@@ -1,6 +1,6 @@
 name: Wheels
 # abi3 wheels (one per platform, Python 3.10 and later), built and tested on
-# every pull request. Nothing is published here (design.md item 46).
+# every pull request.
 on:
   push:
     branches: [main]
