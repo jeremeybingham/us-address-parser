@@ -26,7 +26,7 @@ Puerto Rico) and a curated Florida pack find cities, and `default_state`
 hints the state for input that names none. The Python wrapper
 (`us_address_parser`, abi3, `parse`/`parse_fields`/`parse_many`/`tag`/
 `parse_tokens`) is built and tested, with wheels for Linux, macOS and
-Windows built on every pull request. Measures: golden corpus 404 cases, all
+Windows built on every pull request. Measures: golden corpus 428 cases, all
 passing; blind geocode benchmark 96.4% of whole addresses (coarse) against
 usaddress's 88.2%; 27 Python tests. No CRF will be built (decision 32).
 Nothing is published yet.
@@ -38,12 +38,12 @@ that exists supports only a coarse score, so `Diagnostics::confidence` stays
 `None` in the first release. Milestone 8's parser and hardening work is done:
 the unused `model_version` and `crf` removed (item 53), `country_ignored`
 (item 54), `intersection_detected` (item 55), the Netsyms fixes (item 56) and
-fuzz targets (item 43). What is left of it is the Pub 28 recheck, the rename
-and data packaging, and publishing. The custom layer is Milestone 9.
-Before release (decision 42): benchmarks (item 57), a new name (item 58),
-examples (item 59), a customization guide (item 60), the text cleaning in
-`docs/repository_cleaning.md` (item 61), and a fresh repository with no
-history (item 62), from which the first release is published.
+fuzz targets (item 43). The last two Florida sample errors are fixed.
+**The release plan is decided (decision 44):** the custom layer and its
+companions first (items 47 to 50, then the examples and guide, 59 and 60),
+then the Pub 28 recheck (44), benchmarks (57), the name (58), the rename and
+packaging (45), the text cleaning in `docs/repository_cleaning.md` (61), a
+fresh repository with no history (62) and publishing from it (46).
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the decisions and the unscheduled backlog.
 
@@ -349,7 +349,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 
 | Check | Status |
 |---|---|
-| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 404 cases, all passing (the runner also checks `place`, `address_type`, `tag` and `default_state` cases). |
+| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 428 cases, all passing (the runner also checks `place`, `address_type`, `tag` and `default_state` cases). |
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
@@ -371,11 +371,11 @@ request (its commits listed where it has more than one), small enough to
 review on its own and leaving `main` green. Milestones 0 to 6 are done; the
 open items are 44 to 46, 57, 58, 61
 and 62 (Milestone 8; Milestone 7 is closed and its item 38 deferred,
-decision 43), and 47 to 51, 59 and 60 (Milestone 9). Build order
-(decisions 41 to 43): 44, 57, 58, 45, 61, 62, 46 (items 36 and 37 are
-done; item 38 is deferred).
-Milestone 9 may run beside them; the items chosen for the first release
-(section 13, open decisions) land before 61. An item marked **(author)** needs the author's data or
+decision 43), and 47 to 51, 59 and 60 (Milestone 9). **Build order
+(decision 44):** 47, 48, 49, 50, 59, 60, then 44, 57, 58, 45, 61, 62, 46.
+Items 36 and 37 are done, item 38 is deferred (decision 43) and item 51 is
+not in the first release. Item 58 (the name, the author's research) may run
+beside the Milestone 9 items. An item marked **(author)** needs the author's data or
 decision before it can start; **(any time)** has no dependency and can go
 in wherever it fits.
 
@@ -579,7 +579,7 @@ the Pub 28 recheck cover the final rules. Items 44 to 46 followed Milestone 7
 Item 38's fitted table is not packaged (decision 43).
 Items 57, 58, 61 and 62 (decision 42) prepare the release: measured
 benchmarks, a name, the text cleaning and a fresh repository. Release order:
-44, 57, 58, 45, 61, 62, 46.
+44, 57, 58, 45, 61, 62, 46 (preceded by the Milestone 9 items of decision 44).
 
 53. **Remove the unused surface (done)** (decision 35): `Diagnostics::model_version`
     (Rust, Python property, stub) and the empty `crf` cargo feature. No parse
@@ -646,7 +646,7 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     from then on a change to what an input produces needs `k2` (decision
     34).
 
-### Milestone 9: customization and extras (after Milestone 6; may run beside 7 and 8)
+### Milestone 9: customization and extras (items 47 to 50, 59 and 60 ship in the first release and come first, decision 44; item 51 does not)
 
 Features that make the library adaptable to a user's own data. None of them
 changes the shipped data or the `k1` key format.
@@ -674,7 +674,7 @@ changes the shipped data or the `k1` key format.
 59. **Examples** (decision 42): an `examples/` directory with invented
     addresses only: sample CSV and text input files (one line, split fields,
     messy real-world shapes), a Jupyter notebook (`parse`, `parse_many`,
-    `parse_fields`, keys and slugs, confidence, the CLI on a file), and
+    `parse_fields`, keys and slugs, the CLI on a file), and
     Polars and pandas pipelines (over item 50's helpers once they exist).
     Run in CI (the notebook executed with `nbconvert` or `nbmake`) so it
     stays current. Lands before item 61, which links to it.
@@ -689,12 +689,13 @@ changes the shipped data or the `k1` key format.
 50. **Dataframe helpers (optional extras):** `us_address_parser.pandas.parse_column`
     and `us_address_parser.polars.parse_column` (plus a Polars expression
     namespace if it proves cheap) returning component columns, key, slug and
-    `confidence`; implemented over `parse_many`; imported lazily; tests skip
+    (`confidence` is `None`, decision 43, so it is left out); implemented over
+    `parse_many`; imported lazily; tests skip
     when the library is absent; extras `[pandas]` and `[polars]`. Decision 26.
 51. **Optional emitters, if wanted** (the display-form and long-form open
     decisions in section 13): a mixed-case display form and a long-form
-    (unabbreviated) form, one pull request each. **(author)**: not started
-    until decided.
+    (unabbreviated) form, one pull request each. Not in the first release
+    (decision 44); stays an option for a later version.
 52. **User model file: dropped** (decision 32). There is no CRF to load a
     model into. Item number kept.
 
@@ -1205,16 +1206,35 @@ Made by the author while reviewing the plan after Milestone 6.
       `docs/repository_cleaning.md` section 8.
     - **Reopen** with the backlog entry "Calibrated confidence".
 
+### Decisions recorded 2026-10-17 (release plan)
+
+44. **The release plan and its order.** Made by the author, after the
+    confidence score was deferred (decision 43):
+    - **Sample bugs first (done).** The last two fixable errors from the
+      Florida sample (two house numbers; box words before a numbered street,
+      with the spaced `N W` directionals they exposed) land before any
+      packaging, because they change keys and `k1` freezes at the release
+      (`docs/key-format.md`, corpus `rg-137` to `rg-144`).
+    - **Milestone 9 in the first release:** items 47 to 49 (the custom layer,
+      its provenance in output, CLI and Python access), 50 (dataframe
+      helpers) and, describing them, 59 (examples) and 60 (customization
+      guide). Item 51 (display and long-form emitters) is not in the first
+      release.
+    - **Order:** 47, 48, 49, 50, 59, 60; then 44 (Pub 28 recheck over the
+      final tables), 57 (benchmarks), 58 (the name; the author's research
+      may start any time), 45 (rename and packaging), 61 (text cleaning),
+      62 (fresh repository), 46 (publishing). Examples and the guide come
+      before the rename because item 45's rename map covers them.
+    - Not in the first release: the confidence score (decision 43), item 51,
+      NAD and OpenAddresses (v2, decision 39).
+
 ### Open decisions (for the author)
 
 Intersections, the trailing country and the city that is no known place were
 decided (decisions 36 to 38). These remain:
 
 - **The name** (item 58): from the short list in `docs/naming.md`.
-- **Which Milestone 9 items ship in the first release.** Recommend items 59
-  and 60 (examples, guide) and therefore 47 to 49 (the layer they describe)
-  and 50 (dataframe helpers, used by the examples); 51 only if decided
-  below. Whatever ships lands before item 61.
+- *Decided (decision 44):* the Milestone 9 items in the first release.
 
 - **Recipient and name lines, landmarks, `CornerOf`, `NotAddress`:** stay
   unmodeled. Recommend documenting them (decision 25, done in the README) and
@@ -1270,12 +1290,6 @@ when it is scheduled.
   (`3324 N, ANDREWS AVE`, 17 DBPR rows), a PO Box on line 2 beside a street
   with no number, a unit followed by business words (`STE 903 BLU SPA`, left
   unparsed), and `possibly_truncated` firing on complete units.
-- **From the Florida sample** (item 36, `NOTES.md` beside it): two house
-  numbers separated by a space (`1309 1329 E VINE ST`, read as street name
-  `1329 E VINE`; label: first number, the second unparsed with
-  `multiple_addresses`), and stray `P O BOX` words before a street address
-  (`P O BOX 8491 N W 17TH STREET` / `#102`, read as a PO Box with the street
-  unparsed).
 - **Outside-source benchmark and place-list gaps** (v2, decision 39;
   `docs/future-sources.md`): NAD or Netsyms rows rendered in several styles,
   compared per state and per source, feeding corpus cases, place-list gaps and

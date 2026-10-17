@@ -12,9 +12,9 @@ the plan or the backlog (`CLAUDE.md`).
 
 ## When
 
-After the code for the first release is final: items 44, 57,
-58 and 45, and whichever Milestone 9 items ship in the first release
-(section 13, open decisions). Code changes after the cleaning pass mean
+After the code for the first release is final: items 47 to 50, 59
+and 60 (the Milestone 9 items that ship, decision 44), then 44, 57, 58
+and 45. Code changes after the cleaning pass mean
 re-checking the sections below for the files they touch.
 
 ## What the released text should be
