@@ -669,16 +669,6 @@ fn show(v: &Option<String>) -> String {
     }
 }
 
-/// One case's pass or fail with the inputs of the confidence score.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CaseFeatures {
-    pub id: String,
-    pub file: String,
-    pub pass: bool,
-    pub decisions: Vec<&'static str>,
-    pub warnings: Vec<&'static str>,
-}
-
 /// Results of running a corpus.
 pub struct Report {
     total: usize,
@@ -741,32 +731,6 @@ impl Corpus {
                 }
             })
             .filter(|s| !s.trim().is_empty())
-            .collect()
-    }
-
-    /// What the confidence score may depend on, per case, beside whether the
-    /// case passes: the tagger's decisions and the warnings. For
-    /// `tools/calibrate/`.
-    pub fn features(&self, parser: &Parser) -> Vec<CaseFeatures> {
-        let report = self.run(parser);
-        self.cases
-            .iter()
-            .map(|(file, c)| {
-                let (decisions, warnings) = match parse_case(parser, c) {
-                    Some(a) => (
-                        a.diagnostics.decision_codes(),
-                        a.diagnostics.warnings.iter().map(Warning::code).collect(),
-                    ),
-                    None => (Vec::new(), Vec::new()),
-                };
-                CaseFeatures {
-                    id: c.id.clone(),
-                    file: file.clone(),
-                    pass: report.passing.contains(&c.id),
-                    decisions,
-                    warnings,
-                }
-            })
             .collect()
     }
 

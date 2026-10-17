@@ -1,7 +1,7 @@
 //! `doorplate` command-line tool (also built as `addr`).
 //!
 //! ```text
-//! doorplate parse "<address>" [--pretty] [--usps | --usaddress | --tag | --features] [--default-state ST]
+//! doorplate parse "<address>" [--pretty] [--usps | --usaddress | --tag] [--default-state ST]
 //! doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! doorplate parse            (no argument or "-": one address per stdin line, JSONL out)
 //! doorplate parse-file IN.csv --column NAME [-o OUT.csv] [--default-state ST]
@@ -18,23 +18,19 @@ use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:
-  doorplate parse \"<address>\" [--pretty] [--usps | --usaddress | --tag | --features]
+  doorplate parse \"<address>\" [--pretty] [--usps | --usaddress | --tag]
                   [--default-state ST]
   doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X] [--pretty] [--usps]
                   [--default-state ST]
   doorplate parse [-]                 read one address per line from stdin
                                  (--usaddress: tokens with usaddress labels;
-                                 --tag: joined by label, like usaddress.tag();
-                                 --features: decisions and warnings, for
-                                 tools/calibrate/)
+                                 --tag: joined by label, like usaddress.tag())
   doorplate parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
                   [--zip NAME] [-o OUT.csv] [--default-state ST]
                                  --default-state: look cities up in ST when the
                                  input names no state (a hint, never a fill)
   doorplate corpus test [--dir DIR] [--verbose] [--update-baseline]
-                                 run the golden corpus (default dir: tests/corpus)
-  doorplate corpus features [--dir DIR]
-                                 one JSON line per case: pass, decisions, warnings";
+                                 run the golden corpus (default dir: tests/corpus)";
 
 pub fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -137,7 +133,7 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
             "--zip",
             "--default-state",
         ],
-        &["--pretty", "--usps", "--usaddress", "--tag", "--features"],
+        &["--pretty", "--usps", "--usaddress", "--tag"],
     )?;
     let parser = parser_for(&o)?;
     let fields = Fields {
@@ -179,8 +175,6 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
                             writeln!(out, "{v}")?;
                         } else if o.has("--tag") {
                             writeln!(out, "{}", json::tag_record(&line, None))?;
-                        } else if o.has("--features") {
-                            writeln!(out, "{}", json::features_record(&line, None))?;
                         }
                     }
                 }
@@ -212,8 +206,6 @@ fn print_parsed(out: &mut impl Write, a: &ParsedAddress, o: &Opts) -> io::Result
         json::usaddress_record(&a.source.original, &a.to_usaddress_tags())
     } else if o.has("--tag") {
         json::tag_record(&a.source.original, Some(a))
-    } else if o.has("--features") {
-        json::features_record(&a.source.original, Some(a))
     } else {
         json::record(a)
     };
@@ -315,41 +307,13 @@ fn parse_file_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     Ok(ExitCode::SUCCESS)
 }
 
-/// `doorplate corpus features`: one JSON line per case with whether it passes and
-/// the inputs of the confidence score, for `tools/calibrate/`.
-fn corpus_features_cmd(args: &[String]) -> Result<ExitCode, CliError> {
-    let o = Opts::parse(args, &["--dir"], &[])?;
-    if !o.positional.is_empty() {
-        return Err(CliError::Usage("corpus features takes no arguments".into()));
-    }
-    let dir = std::path::PathBuf::from(o.value("--dir").unwrap_or("tests/corpus"));
-    let loaded = corpus::load(&dir).map_err(|errors| {
-        CliError::Failed(format!("malformed corpus:\n  {}", errors.join("\n  ")))
-    })?;
-    let out = io::stdout();
-    let mut out = out.lock();
-    for f in loaded.features(&Parser::new()) {
-        let v = serde_json::json!({
-            "id": f.id, "file": f.file, "pass": f.pass,
-            "decisions": f.decisions, "warnings": f.warnings,
-        });
-        writeln!(out, "{v}")?;
-    }
-    Ok(ExitCode::SUCCESS)
-}
-
 /// `doorplate corpus test`: the accuracy harness. Exit 0 when no case in the
 /// baseline regressed, 2 when the corpus is malformed or unreadable, 3 on a
 /// regression or a stale baseline.
 fn corpus_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     let [sub, rest @ ..] = args else {
-        return Err(CliError::Usage(
-            "corpus needs a subcommand (test, features)".into(),
-        ));
+        return Err(CliError::Usage("corpus needs a subcommand (test)".into()));
     };
-    if sub == "features" {
-        return corpus_features_cmd(rest);
-    }
     if sub != "test" {
         return Err(CliError::Usage(format!("unknown corpus subcommand {sub}")));
     }
