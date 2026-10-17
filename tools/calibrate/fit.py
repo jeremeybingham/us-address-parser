@@ -3,13 +3,13 @@
 
 The label is "the whole parse is right". The features are what the parser
 knew while parsing: the uncertain decisions its tagger made (item 37) and the
-warnings it raised. Both come from the binary (`addr corpus features`,
-`addr parse --features`), so this script never re-implements a rule.
+warnings it raised. Both come from the binary (`doorplate corpus features`,
+`doorplate parse --features`), so this script never re-implements a rule.
 
 Fit data (licensed or our own; the geocode benchmark is never read here, it
 only checks the result, `check_benchmark.py`):
 
-  corpus    tests/corpus (`addr corpus features`): pass is the corpus
+  corpus    tests/corpus (`doorplate corpus features`): pass is the corpus
             runner's whole-case result.
   usaddress tests/external/usaddress/*.xml (MIT): pass is the coarse
             whole-address score of docs/usaddress-comparison.md; addresses
@@ -20,7 +20,7 @@ only checks the result, `check_benchmark.py`):
             fixes, which were made from this sample's errors, do not make it
             look better than it was.
 
-    cargo build --release -p addr-cli
+    cargo build --release -p doorplate-cli
     python3 tools/calibrate/fit.py --sample-addr PATH/TO/PRE-FIX/addr \
         [--out data/confidence.toml] [--report local-data/reports/fit.md]
 
@@ -365,7 +365,7 @@ def pct(n, d):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--addr", default=os.path.join(ROOT, "target/release/addr"))
+    ap.add_argument("--addr", default=os.path.join(ROOT, "target/release/doorplate"))
     ap.add_argument("--sample-addr", help="addr built before item 36's fixes, "
                     "for the Florida sample (default: --addr, optimistic)")
     ap.add_argument("--corpus", default=os.path.join(ROOT, "tests/corpus"))

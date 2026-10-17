@@ -7,7 +7,7 @@ __pycache__/
 *.pyd
 .venv/
 dist/
-/crates/addr-py/python/us_address_parser/*.so
+/crates/doorplate-py/python/doorplate/*.so
 .DS_Store
 
 # Local test data: unlicensed or private, never committed (local-data/README.md).

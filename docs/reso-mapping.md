@@ -1,6 +1,6 @@
 # RESO field mapping (Data Dictionary 2.0)
 
-Implemented by `crates/addr-core/src/emit/reso.rs` (`ParsedAddress::to_reso`).
+Implemented by `crates/doorplate/src/emit/reso.rs` (`ParsedAddress::to_reso`).
 
 This maps a parse to RESO field names and shapes. It does not validate
 deliverability, and it does not check values against any server's lookups.

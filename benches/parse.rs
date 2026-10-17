@@ -1,4 +1,4 @@
-//! Parse and emit benchmarks: `cargo bench -p addr-core --bench parse`.
+//! Parse and emit benchmarks: `cargo bench -p doorplate --bench parse`.
 //!
 //! Inputs are the golden corpus (`tests/corpus/*.jsonl`), so the numbers
 //! track the shapes the library is tested on. Speed is not the library's
@@ -11,8 +11,8 @@
 use std::hint::black_box;
 use std::path::Path;
 
-use addr_core::{corpus, Fields, KeyOptions, Parser};
 use criterion::{criterion_group, criterion_main, Criterion, Throughput};
+use doorplate::{corpus, Fields, KeyOptions, Parser};
 
 /// One address per common shape, from the corpus README's examples.
 const SHAPES: [(&str, &str); 6] = [

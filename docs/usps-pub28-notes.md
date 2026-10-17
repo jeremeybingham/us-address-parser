@@ -12,8 +12,8 @@ exists or is deliverable.
 
 ## Lexicon tables (Milestone 1)
 
-`data/*.toml` is compiled into static tables by `crates/addr-core/build.rs`
-and read only through `Lexicons` (`crates/addr-core/src/lexicon.rs`).
+`data/*.toml` is compiled into static tables by `crates/doorplate/build.rs`
+and read only through `Lexicons` (`crates/doorplate/src/lexicon.rs`).
 `build.rs` rejects malformed tables: a spelling that maps to two entries, a
 duplicate abbreviation or code, a form that is not a normalized key, or an
 entry whose `forms` leave out its own name or abbreviation.
@@ -107,7 +107,7 @@ emitted.
 
 ## Parser rules (Milestone 2)
 
-How the tagger (`crates/addr-core/src/tagger/`) reads an address, and where
+How the tagger (`crates/doorplate/src/tagger/`) reads an address, and where
 each rule comes from. Rules from Pub 28 cite its section; the rest come from
 shapes in real county data (`docs/prior-art.md`) and are not USPS rules.
 

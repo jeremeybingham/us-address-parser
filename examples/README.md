@@ -1,6 +1,6 @@
 # Examples
 
-Runnable examples of the Python package and the `addr` CLI. Every address in
+Runnable examples of the Python package and the `doorplate` CLI. Every address in
 `data/` is invented. This library formats and parses; it does not validate
 that an address exists or can receive mail.
 
@@ -16,7 +16,7 @@ that an address exists or can receive mail.
 ## Run them
 
 From the repository root, with the package built (`maturin develop` in
-`crates/addr-py`) and the extras you need:
+`crates/doorplate-py`) and the extras you need:
 
 ```sh
 pip install pandas polars jupyter
@@ -25,13 +25,13 @@ python examples/pandas_pipeline.py --out /tmp/parsed.csv
 jupyter lab examples/quickstart.ipynb
 ```
 
-The CLI on a file (build it with `cargo build --release -p addr-cli`):
+The CLI on a file (build it with `cargo build --release -p doorplate-cli`):
 
 ```sh
-target/release/addr parse-file examples/data/addresses_oneline.csv --column address -o /tmp/parsed.csv
-target/release/addr parse-file examples/data/addresses_split.csv --column line1 --line2 line2 --city city --state state --zip zip
-target/release/addr parse - < examples/data/addresses_messy.txt
+target/release/doorplate parse-file examples/data/addresses_oneline.csv --column address -o /tmp/parsed.csv
+target/release/doorplate parse-file examples/data/addresses_split.csv --column line1 --line2 line2 --city city --state state --zip zip
+target/release/doorplate parse - < examples/data/addresses_messy.txt
 ```
 
-The tests in `crates/addr-py/tests/test_examples.py` run both scripts and the
+The tests in `crates/doorplate-py/tests/test_examples.py` run both scripts and the
 notebook, so the examples stay current.

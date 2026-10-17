@@ -1,7 +1,7 @@
 """Build the Florida pack's observed ZIP table (data/packs/fl/zips_observed.tsv)
 from the DBPR real estate licensee export.
 
-    cargo build --release -p addr-cli
+    cargo build --release -p doorplate-cli
     uv run --with pyarrow python tools/packs/observe_fl_zips.py \
         local-data/florida/dbpr_20251010_113032.parquet \
         local-data/florida/COSMETOLOGYLICENSE_1.csv ...
@@ -12,7 +12,7 @@ Addresses are counted once across all of them.
 GeoNames gives each ZIP one place, so a municipality that shares a ZIP with
 its neighbour (CORAL GABLES in 33134, WESTON in 33331) raised
 `zip_city_mismatch`. This script parses the export's Florida addresses with
-`addr parse-file`, and lists each (ZIP, place) pair that `zips.tsv` does not
+`doorplate parse-file`, and lists each (ZIP, place) pair that `zips.tsv` does not
 have, when enough distinct addresses use it:
 
 - at least MIN_ADDRESSES distinct street addresses (`k1` keys) that are at
@@ -58,7 +58,7 @@ def fail(msg):
 
 def main(paths):
     if not ADDR.exists():
-        fail(f"{ADDR} not found; run cargo build --release -p addr-cli")
+        fail(f"{ADDR} not found; run cargo build --release -p doorplate-cli")
     base = {}
     with (PACK / "zips.tsv").open(encoding="utf-8") as f:
         for r in csv.DictReader(f, delimiter="\t"):

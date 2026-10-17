@@ -1,5 +1,5 @@
 [package]
-name = "addr-fuzz"
+name = "doorplate-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2021"
@@ -9,7 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-addr-core = { path = "../crates/addr-core" }
+doorplate = { path = "../crates/doorplate" }
 
 # Not part of the main workspace: it needs nightly (libFuzzer).
 [workspace]

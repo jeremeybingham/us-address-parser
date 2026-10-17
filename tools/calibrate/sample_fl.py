@@ -95,7 +95,7 @@ def dbpr_pool(files):
 def addr_bin():
     exe = ROOT / "target" / "release" / "addr"
     subprocess.run(
-        ["cargo", "build", "-q", "--release", "-p", "addr-cli"], cwd=ROOT, check=True
+        ["cargo", "build", "-q", "--release", "-p", "doorplate-cli"], cwd=ROOT, check=True
     )
     return exe
 

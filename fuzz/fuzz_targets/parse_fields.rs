@@ -2,7 +2,7 @@
 //! state and ZIP. Nothing may panic, and the emitters must run.
 #![no_main]
 
-use addr_core::{Fields, KeyOptions, Parser};
+use doorplate::{Fields, KeyOptions, Parser};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|text: &str| {

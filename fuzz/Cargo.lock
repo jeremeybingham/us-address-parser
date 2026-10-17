@@ -3,21 +3,6 @@
 version = 4
 
 [[package]]
-name = "addr-core"
-version = "0.0.1"
-dependencies = [
- "toml",
-]
-
-[[package]]
-name = "addr-fuzz"
-version = "0.0.0"
-dependencies = [
- "addr-core",
- "libfuzzer-sys",
-]
-
-[[package]]
 name = "arbitrary"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -40,6 +25,21 @@ name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
+
+[[package]]
+name = "doorplate"
+version = "0.0.1"
+dependencies = [
+ "toml",
+]
+
+[[package]]
+name = "doorplate-fuzz"
+version = "0.0.0"
+dependencies = [
+ "doorplate",
+ "libfuzzer-sys",
+]
 
 [[package]]
 name = "equivalent"

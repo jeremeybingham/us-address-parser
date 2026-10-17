@@ -1,7 +1,7 @@
 """Score this parser against the Netsyms sample (private data; output stays local).
 
 Each US row of sample.sqlite (tools/netsyms/sample.py) is written back into
-an address string in several styles, parsed with `addr`, and compared field
+an address string in several styles, parsed with `doorplate`, and compared field
 by field with the row's own columns:
 
     line     123 N MAIN ST APT 4 MIAMI FL 33101      one line, no commas
@@ -9,7 +9,7 @@ by field with the row's own columns:
     mixed    123 N Main St Apt 4, Miami, FL 33101    commas, mixed case
     fields   line1 "123 N MAIN ST", line2 "APT 4", city, state, zip
 
-    cargo build --release -p addr-cli
+    cargo build --release -p doorplate-cli
     python3 tools/netsyms/compare.py \
         --sample local-data/netsyms-2026/sample.sqlite \
         --out local-data/netsyms-2026/reports/run1.md
@@ -259,7 +259,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--sample", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--addr", default="target/release/addr")
+    ap.add_argument("--addr", default="target/release/doorplate")
     ap.add_argument("--dump", help="write mismatches (JSON lines) here")
     ap.add_argument("--limit", type=int, help="rows per draw, for a quick run")
     ap.add_argument("--tmp", default="/tmp")

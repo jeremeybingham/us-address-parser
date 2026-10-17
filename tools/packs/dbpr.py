@@ -40,7 +40,7 @@ def florida_rows(path):
 
 def write_parse_input(paths, out):
     """Write the distinct Florida addresses of all `paths` as one CSV for
-    `addr parse-file` (columns line1, line2, city, state, zip). Returns
+    `doorplate parse-file` (columns line1, line2, city, state, zip). Returns
     (rows read, distinct rows written)."""
     seen = set()
     n = 0

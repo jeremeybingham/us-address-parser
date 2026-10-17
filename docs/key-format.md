@@ -178,5 +178,5 @@ formatting improves. Never store it as an identifier; use the key.
 ## Tests
 
 `tests/corpus/keys.jsonl` pins exact key and slug strings (`key`, `key_unit`
-and `slug` fields); unit tests in `crates/addr-core/src/emit/key.rs` and
+and `slug` fields); unit tests in `crates/doorplate/src/emit/key.rs` and
 `slug.rs` cover the rules.

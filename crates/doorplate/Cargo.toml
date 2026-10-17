@@ -1,0 +1,46 @@
+[package]
+name = "doorplate"
+description = "Pure-Rust US address parser and normalizer (USPS Pub 28 / RESO emitters)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[features]
+default = ["places-us", "state-fl"]
+# National place list (data/places/, docs/places.md): places and ZIPs for every
+# state, DC and Puerto Rico, under the curated state packs.
+places-us = []
+# Curated state packs (data/packs/<st>/, docs/packs/): place names, their
+# spellings and ZIPs, used to find and name the city.
+state-fl = []
+# Parallel `Parser::parse_many`.
+rayon = ["dep:rayon"]
+# Golden-corpus loader and runner (`doorplate::corpus`), used by the corpus
+# test and `doorplate corpus test`. Pulls in serde; the default build has no
+# dependencies.
+corpus = ["dep:serde", "dep:serde_json"]
+
+[lints]
+workspace = true
+
+[dependencies]
+rayon = { version = "1.10", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }
+
+[build-dependencies]
+toml = { version = "0.8", default-features = false, features = ["parse"] }
+
+[dev-dependencies]
+# The corpus test needs the `corpus` feature; enabling it through a
+# self-dev-dependency keeps a plain `cargo test` running it.
+doorplate = { path = ".", features = ["corpus"] }
+proptest = "1"
+criterion = { version = "0.5", default-features = false }
+
+[[bench]]
+name = "parse"
+path = "../../benches/parse.rs"
+harness = false

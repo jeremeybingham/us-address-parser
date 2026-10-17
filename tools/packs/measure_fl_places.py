@@ -1,6 +1,6 @@
 """Report the cities in the DBPR licensee export that match no place.
 
-    cargo build --release -p addr-cli
+    cargo build --release -p doorplate-cli
     uv run --with pyarrow python tools/packs/measure_fl_places.py \
         local-data/florida/dbpr_20251010_113032.parquet \
         local-data/florida/COSMETOLOGYLICENSE_1.csv ... [--top 60]
@@ -8,7 +8,7 @@
 Each argument is a DBPR export (`.parquet` or board `.csv`; see `dbpr.py`).
 Addresses are counted once across all of them.
 
-Parses the export's Florida addresses with `addr parse-file` and counts, for
+Parses the export's Florida addresses with `doorplate parse-file` and counts, for
 each city with a city field and no place match, the rows and the distinct
 street addresses (`k1` keys) that write it, with its most common ZIPs. This is
 how the Florida pack's `places_added.tsv` and `variants_added.tsv` were

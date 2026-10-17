@@ -163,7 +163,7 @@ the repository or in `local-data/`.
    shapes: units, fractions, highways, grid numbers (`N165 W2123`),
    Queens-style hyphenated numbers, Puerto Rico urbanizations.
 4. **Harness** in `tools/compare/` beside `compare_usaddress.py`: render each
-   row in several styles, run `addr`, compare component by component, report
+   row in several styles, run `doorplate`, compare component by component, report
    per state, per shape and per `source`, with usaddress as the baseline.
    Review about 200 disagreements by hand: parser bug or label error.
 5. **Feed back** (v2, `k2`): parser bugs become corpus cases; observed

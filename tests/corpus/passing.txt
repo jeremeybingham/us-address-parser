@@ -1,5 +1,5 @@
 # Golden-corpus cases that pass. Regenerate with
-# UPDATE_CORPUS_BASELINE=1 cargo test -p addr-core --test corpus
+# UPDATE_CORPUS_BASELINE=1 cargo test -p doorplate --test corpus
 # or `addr corpus test --update-baseline`
 at-full-001
 at-full-002

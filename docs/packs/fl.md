@@ -77,12 +77,12 @@ auction-tracker's list too.
 `zips_observed.tsv` is built from the DBPR export:
 
 ```sh
-cargo build --release -p addr-cli
+cargo build --release -p doorplate-cli
 uv run --with pyarrow python tools/packs/observe_fl_zips.py \
     local-data/florida/dbpr_20251010_113032.parquet
 ```
 
-It parses the Florida rows with `addr parse-file` and keeps a (ZIP, place)
+It parses the Florida rows with `doorplate parse-file` and keeps a (ZIP, place)
 pair that `zips.tsv` does not have when the city is a pack name or listed
 variant and either at least 10 distinct street addresses use it, or at
 least 3 that are at least 5% of the ZIP's addresses (small and PO Box ZIPs,

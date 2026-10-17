@@ -59,7 +59,7 @@ state.
    - overrule: `python3 tools/calibrate/label.py --start ID` and label it by
      hand.
 5. **Spot-check.** `python3 tools/calibrate/label.py --review` walks the
-   labeled rows; `cargo run -q -p addr-cli -- corpus test --dir
+   labeled rows; `cargo run -q -p doorplate-cli -- corpus test --dir
    local-data/florida-sample --verbose` shows every row that differs from
    the parser (each should be in `NOTES.md`).
 
@@ -99,14 +99,14 @@ Nothing it writes ships. It is the starting point for the backlog entry
 labeled data a score needs first.
 
 ```sh
-cargo build --release -p addr-cli
+cargo build --release -p doorplate-cli
 python3 tools/calibrate/fit.py --sample-addr PRE_FIX/addr \
     --report local-data/reports/confidence-fit.md [--out FITTED.toml]
 ```
 
 The label is "the whole parse is right"; the features are the tagger's
-decisions and the warnings, read from the binary (`addr corpus features`,
-`addr parse --features`), so no rule is re-implemented in Python.
+decisions and the warnings, read from the binary (`doorplate corpus features`,
+`doorplate parse --features`), so no rule is re-implemented in Python.
 
 - **Sample, before the fixes.** Item 36's commit 4 fixed seven rules from the
   sample's errors. `--sample-addr` is an `addr` built from the commit before

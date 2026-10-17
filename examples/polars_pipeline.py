@@ -1,6 +1,6 @@
 """Parse a CSV of addresses with Polars.
 
-    pip install "us-address-parser[polars]"
+    pip install "doorplate[polars]"
     python examples/polars_pipeline.py [--out parsed.csv]
 
 All addresses in examples/data are invented. This library formats and
@@ -11,8 +11,8 @@ from pathlib import Path
 
 import polars as pl
 
-import us_address_parser as uap
-from us_address_parser.polars import parse_column
+import doorplate as uap
+from doorplate.polars import parse_column
 
 DATA = Path(__file__).parent / "data"
 

@@ -3,7 +3,7 @@
 //! `default_state` so the hinted paths are covered too.
 #![no_main]
 
-use addr_core::{KeyOptions, ParseOptions, Parser};
+use doorplate::{KeyOptions, ParseOptions, Parser};
 use libfuzzer_sys::fuzz_target;
 
 const HINTS: [Option<&str>; 4] = [None, Some("FL"), Some("AL"), Some("NY")];
@@ -26,7 +26,7 @@ fuzz_target!(|data: &[u8]| {
     }
 });
 
-fn emit_all(a: &addr_core::ParsedAddress) {
+fn emit_all(a: &doorplate::ParsedAddress) {
     let _ = a.key(KeyOptions::property());
     let _ = a.key(KeyOptions::unit());
     let _ = a.slug();
