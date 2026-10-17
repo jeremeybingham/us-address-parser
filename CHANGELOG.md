@@ -4,6 +4,14 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### The tagger records its uncertain decisions (Milestone 7, item 37)
+
+- Internal only: the tagger now notes which uncertain rules settled a parse
+  (the city by comma, by the suffix split or by the place list; a state with
+  no ZIP; a unit with no designator; a letter joined to the house number;
+  the `default_state` hint). The confidence score (item 38) will be fitted on
+  them. No output or key changes.
+
 ### Release order (decision 41)
 
 - Milestone 7 (calibrated confidence) now runs before the rest of Milestone 8

@@ -35,8 +35,8 @@ the unused `model_version` and `crf` removed (item 53), `country_ignored`
 (item 54), `intersection_detected` (item 55), the Netsyms fixes (item 56) and
 fuzz targets (item 43). What is left of it (the Pub 28 recheck, the rename
 and data packaging, publishing) waits for Milestone 7: item 37 (the tagger
-records its uncertain decisions), the author's hand-labeled Florida sample
-(item 36), then the fitted score (item 38). The custom layer is Milestone 9.
+records its uncertain decisions) is done; next are the author's hand-labeled
+Florida sample (item 36), then the fitted score (item 38). The custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the decisions and the unscheduled backlog.
 
@@ -360,7 +360,7 @@ it says little about unseen data; the blind benchmark is the better measure.
 Each milestone ends with passing tests. Each numbered item is one pull
 request (its commits listed where it has more than one), small enough to
 review on its own and leaving `main` green. Milestones 0 to 6 are done; the
-open items are 36 to 38 (Milestone 7), 44 to 46 (Milestone 8)
+open items are 36 and 38 (Milestone 7; 37 is done), 44 to 46 (Milestone 8)
 and 47 to 51 (Milestone 9). Build order (decision 41): 37, 36, 38, then 44,
 45, 46; Milestone 9 may run beside them. An item marked **(author)** needs the author's data or
 decision before it can start; **(any time)** has no dependency and can go
@@ -499,12 +499,13 @@ Calibrated confidence (decision 12):
     conventions of `tests/corpus/README.md`. It is calibration data and a
     blind test on the data this library targets. The rows never leave
     `local-data/`; only numbers fitted from them ship.
-37. **Record the tagger's uncertain decisions.** The tagger notes which
-    uncertain rules settled a boundary (city by comma, by the no-comma
-    suffix split or by the place list; a state with no ZIP; a bare unit; a
-    house-number letter rule; the hint from `default_state`). Internal
-    (`pub(crate)`), with unit tests; no output or key changes. Can start
-    before item 36.
+37. **Record the tagger's uncertain decisions (done).** `tagger::Decision`
+    in `Tagged::decisions`, each once in the order made: `CityByComma`,
+    `CityBySuffix`, `CityByPlace`, `StateWithoutZip`, `BareUnit` (after the
+    suffix, or a line that is only a number), `NumberLetter` and
+    `DefaultState` (a city or a pack highway spelling found under the hint).
+    Internal (`pub(crate)`, read by item 38), with unit tests in
+    `tagger/mod.rs`; no output or key changes (the corpus is unchanged).
 38. **Fit and ship the score.**
     - Commit 1: `tools/calibrate/` fits each path's accuracy (a fixed table
       or a small logistic model) on the golden corpus, usaddress's test

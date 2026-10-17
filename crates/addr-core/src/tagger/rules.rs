@@ -3,7 +3,7 @@
 
 use std::ops::Range;
 
-use super::{PlaceCtx, Tag, Tagger};
+use super::{Decision, PlaceCtx, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
     is_grid_number, is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value,
@@ -144,6 +144,9 @@ impl Tagger<'_> {
         if let Some(r) = &state {
             self.set(r.clone(), Tag::State);
             ll_start = r.start;
+            if !zip && !bad_zip {
+                self.decide(Decision::StateWithoutZip);
+            }
         }
         self.places = self.place_ctx(state.clone(), zip.then_some(hi - 1));
         if !zip && !bad_zip && state.is_none() {
@@ -152,6 +155,7 @@ impl Tagger<'_> {
             let cs = self.seg_start(hi - 1).max(lo);
             if cs > lo && self.looks_like_city(cs, hi) && !self.starts_unit(cs, hi) {
                 self.set(cs..hi, Tag::City);
+                self.decide(Decision::CityByComma);
                 return (cs, Some(cs..hi));
             }
             // With a `default_state` hint: "281 EVELYN DR DOTHAN", the city
@@ -159,6 +163,7 @@ impl Tagger<'_> {
             if self.places.is_some_and(|c| c.hinted) {
                 if let Some(k) = self.place_city(cs, hi) {
                     self.set(k..hi, Tag::City);
+                    self.decide(Decision::CityByPlace);
                     return (k, Some(k..hi));
                 }
             }
@@ -191,7 +196,7 @@ impl Tagger<'_> {
             if !first_seg
                 || (self.looks_like_city(cs, ll_start) && !self.known_street(cs, ll_start))
             {
-                Some(cs..ll_start)
+                Some((cs, Decision::CityByComma))
             } else {
                 // "626 E KILBOURN AVE MILWAUKEE, WI 53202": the street and
                 // the city share the first segment. A segment ending in a
@@ -203,9 +208,7 @@ impl Tagger<'_> {
                 if street_end {
                     None
                 } else {
-                    self.place_city(cs, ll_start)
-                        .or_else(|| self.city_after_street(cs, ll_start))
-                        .map(|c| c..ll_start)
+                    self.city_in_line(cs, ll_start)
                 }
             }
         } else {
@@ -213,23 +216,32 @@ impl Tagger<'_> {
             if toks[cs].seg != toks[lo].seg {
                 // "..., # 234 SANTA FE NM": a unit starting the city's
                 // segment belongs to the street.
-                Some(self.after_unit(cs, ll_start)..ll_start)
+                Some((self.after_unit(cs, ll_start), Decision::CityByComma))
             } else {
-                // One line with no commas: the city follows the street. A
-                // place the state pack knows wins over the suffix rule
-                // (`MAIN ST WEST PALM BEACH`).
-                self.place_city(lo, ll_start)
-                    .or_else(|| self.city_after_street(lo, ll_start))
-                    .map(|c| c..ll_start)
+                // One line with no commas: the city follows the street.
+                self.city_in_line(lo, ll_start)
             }
         };
         match city {
-            Some(c) if !c.is_empty() => {
-                self.set(c.clone(), Tag::City);
-                (c.start, Some(c))
+            Some((c, how)) if c < ll_start => {
+                self.set(c..ll_start, Tag::City);
+                self.decide(how);
+                (c, Some(c..ll_start))
             }
             _ => (ll_start, None),
         }
+    }
+
+    /// Where the city starts in a run with no commas, and the rule that
+    /// found it. A place the state pack knows wins over the suffix rule
+    /// (`MAIN ST WEST PALM BEACH`).
+    fn city_in_line(&self, lo: usize, hi: usize) -> Option<(usize, Decision)> {
+        self.place_city(lo, hi)
+            .map(|c| (c, Decision::CityByPlace))
+            .or_else(|| {
+                self.city_after_street(lo, hi)
+                    .map(|c| (c, Decision::CityBySuffix))
+            })
     }
 
     /// The place context for the last line: the state tagged there, else the
@@ -1106,6 +1118,7 @@ impl Tagger<'_> {
             } else if i + 1 < hi && self.number_letter(i) {
                 // "428 B SOUTH MAIN ST": the letter belongs to the number.
                 self.set(i..i + 1, Tag::StreetNumber);
+                self.decide(Decision::NumberLetter);
                 i += 1;
             }
         }
@@ -1120,6 +1133,17 @@ impl Tagger<'_> {
             self.set(h.state.clone(), Tag::HighwayState);
             self.set(h.prefix.clone(), Tag::HighwayPrefix);
             self.set(h.route..h.route + 1, Tag::HighwayRoute);
+            // `SR 60` under a Florida hint: a spelling only the hinted
+            // state's pack has.
+            let hinted = self.places.is_some_and(|c| c.hinted) && !h.prefix.is_empty();
+            if hinted
+                && self
+                    .lex
+                    .highway(&join(&self.toks[h.prefix.clone()]))
+                    .is_none()
+            {
+                self.decide(Decision::DefaultState);
+            }
             // Words after the route are the street's only on the route's
             // line or comma segment; the rest is left unparsed.
             let seg = self.toks[h.route].seg;
@@ -1472,6 +1496,7 @@ impl Tagger<'_> {
                 && (last + 1 == self.toks.len() || self.toks[last + 1].seg != self.toks[last].seg);
             if found.is_empty() && j == hi && alone && all_digits(t) {
                 found.push((last..last, last..j));
+                self.decide(Decision::BareUnit);
                 j = last;
                 continue;
             }
@@ -1523,6 +1548,7 @@ impl Tagger<'_> {
                     && self.suffix_before(name_lo, last - 1)
                 {
                     found.push((last - 1..last - 1, last - 1..j));
+                    self.decide(Decision::BareUnit);
                     j = last - 1;
                     continue;
                 }
@@ -1530,6 +1556,7 @@ impl Tagger<'_> {
                 let dir = lex.directional(t).is_some();
                 if is_unit_value(t) && !dir && self.suffix_before(name_lo, last) {
                     found.push((last..last, last..j));
+                    self.decide(Decision::BareUnit);
                     j = last;
                     continue;
                 }

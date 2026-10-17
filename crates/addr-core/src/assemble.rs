@@ -43,7 +43,7 @@ pub(crate) fn assemble(
     hint: Option<&'static str>,
     source: &SourceText<'_>,
 ) {
-    let Tagged { tags, warnings } = tagged;
+    let Tagged { tags, warnings, .. } = tagged;
     for w in warnings {
         addr.diagnostics.warn(w);
     }
