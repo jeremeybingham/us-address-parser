@@ -55,7 +55,7 @@ plan items are in `docs/design.md`).
 | Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer, deferred past the first release (decision 45) |
 | Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed`. A trailing country is ignored with `country_ignored` and an intersection raises `intersection_detected` (planned) | Milestone 8, items 54 and 55; the rest stays unmodeled (design section 13) |
 | Display casing, long form | Keeps input case | Uppercase only | Open decisions (Milestone 9, item 51) |
-| Batch and dataframes | Loop yourself | `parse_many` (parallel; GIL released in Python, 6x a loop); tested pandas and Polars recipes | Optional extras (decision 26, Milestone 9) |
+| Batch and dataframes | Loop yourself | `parse_many` (parallel; GIL released in Python, 6x a loop); `pandas.parse_column` and `polars.parse_column` helpers (optional extras) | Done (decision 26, item 50) |
 | Accuracy | Whole address on the blind benchmark: 88.2% | 96.1% (higher with no city, 99.0% vs 18.0%; the national place list closed the suffix-less gap) | Done (Milestone 5) |
 
 **Customization without retraining.** usaddress adapts by labeling data and

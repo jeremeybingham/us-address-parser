@@ -688,12 +688,16 @@ changes the shipped data or the `k1` key format.
     spelling, a state-scoped reading), the checks to run (`addr layer
     check`, the corpus with the layer), and a ready prompt for an LLM.
     After items 47 to 49.
-50. **Dataframe helpers (optional extras):** `us_address_parser.pandas.parse_column`
-    and `us_address_parser.polars.parse_column` (plus a Polars expression
-    namespace if it proves cheap) returning component columns, key, slug and
-    (`confidence` is `None`, decision 43, so it is left out); implemented over
-    `parse_many`; imported lazily; tests skip
-    when the library is absent; extras `[pandas]` and `[polars]`. Decision 26.
+50. **Dataframe helpers (done; optional extras):** `us_address_parser.pandas.parse_column`
+    and `us_address_parser.polars.parse_column` return component columns, key,
+    slug, address type and warnings (`confidence` is `None`, decision 43, so
+    it is left out); implemented over `parse_many` through one shared column
+    reader (`_columns.py`); the library is imported when the function is
+    called; tests skip when it is absent; extras `[pandas]` and `[polars]`.
+    Decision 26. The Polars expression namespace was not built (it would parse
+    row by row or copy the column twice; the function over a Series is as
+    cheap); reopen only if asked. Output is all strings (`string` dtype in
+    pandas, `String` in Polars), null for a row with no address text.
 51. **Optional emitters, if wanted** (the display-form and long-form open
     decisions in section 13): a mixed-case display form and a long-form
     (unabbreviated) form, one pull request each. Not in the first release

@@ -15,8 +15,12 @@ classifiers = [
     "Programming Language :: Rust",
     "Typing :: Typed",
 ]
-# No runtime dependencies.
+# No runtime dependencies; the dataframe helpers need their own library.
 dependencies = []
+
+[project.optional-dependencies]
+pandas = ["pandas>=2"]
+polars = ["polars>=1"]
 
 [project.urls]
 Repository = "https://github.com/jeremeybingham/us-address-parser"
