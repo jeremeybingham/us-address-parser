@@ -130,7 +130,18 @@ pub(crate) fn is_slash_pair(t: &str) -> bool {
 pub(crate) fn is_unit_value(t: &str) -> bool {
     let ok_chars = t.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-');
     let single_letter = t.len() == 1 && t.bytes().all(|c| c.is_ascii_alphabetic());
-    ok_chars && !t.starts_with('-') && (has_digit(t) || single_letter)
+    // A range of letters (`A-D`, `APT A-H` for a building's units).
+    let letter_range = t.len() == 3
+        && t.as_bytes()[1] == b'-'
+        && t.as_bytes()[0].is_ascii_alphabetic()
+        && t.as_bytes()[2].is_ascii_alphabetic();
+    ok_chars && !t.starts_with('-') && (has_digit(t) || single_letter || letter_range)
+}
+
+/// A word that is a unit value after a `#`: letters only, as in `# REAR`,
+/// `# PRIMARY`, `# GAR`. Without the `#` a word is not a unit value.
+pub(crate) fn is_unit_word(t: &str) -> bool {
+    (2..=12).contains(&t.len()) && t.bytes().all(|c| c.is_ascii_alphabetic())
 }
 
 /// A highway route: starts with a digit (`20`, `60E`, `1150EE`).

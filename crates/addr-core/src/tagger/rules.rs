@@ -6,8 +6,8 @@ use std::ops::Range;
 use super::{PlaceCtx, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
-    is_grid_number, is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value, join,
-    longest_at, longest_ending, zip_parts, NumberShape,
+    is_grid_number, is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value,
+    is_unit_word, join, longest_at, longest_ending, zip_parts, NumberShape,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{StateKind, Warning};
@@ -459,7 +459,10 @@ impl Tagger<'_> {
             }
             let matches = tail.iter().enumerate().all(|(n, t)| {
                 if n + 1 == k {
+                    // A cut-off word is not a directional: `RD NE` before
+                    // `NEW SALISBURY` is the street's postdirectional.
                     words[n].starts_with(t.text.as_str())
+                        && (t.text == words[n] || self.lex.directional(&t.text).is_none())
                 } else {
                     t.text == words[n]
                 }
@@ -1149,6 +1152,8 @@ impl Tagger<'_> {
         is_letter(t)
             && self.lex.directional(t).is_none()
             && self.lex.directional(self.text(k + 1)).is_some()
+            // "U S ROUTE 40" is the US highway, not number 20192U.
+            && !(t == "U" && self.text(k + 1) == "S")
     }
 
     /// Whether the tokens in `r` are the penthouse designator.
@@ -1382,8 +1387,11 @@ impl Tagger<'_> {
                 j = last;
                 continue;
             }
-            // "# 309", "UNIT 203", "LOT H28".
-            if is_unit_value(t) && last > floor {
+            // "# 309", "UNIT 203", "LOT H28", and a word after '#': "# REAR".
+            if (is_unit_value(t)
+                || (last > floor && self.toks[last - 1].is_hash() && is_unit_word(t)))
+                && last > floor
+            {
                 let start = if self.split_value(floor, last) {
                     last - 1
                 } else {

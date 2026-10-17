@@ -35,7 +35,8 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
   Florida, `places-us.jsonl`), `ds-` (`default_state`, `default-state.jsonl`),
   `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
   `co-` (trailing country, `country.jsonl`),
-  `is-` (intersections, `intersections.jsonl`);
+  `is-` (intersections, `intersections.jsonl`),
+  `ns-` (shapes found in the Netsyms data, `netsyms.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
@@ -250,6 +251,15 @@ Ids `co-001` to `co-015`: a trailing `USA`, `US`, `UNITED STATES` or
 `UNITED STATES OF AMERICA` (decision 36, item 54) on one line, on its own
 line, in line 2, in the city field and in the state field, each with
 `country_ignored`; and `US` as a highway prefix, which is not a country.
+
+### `netsyms.jsonl`
+
+Ids `ns-001` to `ns-016`: parser fixes found by comparing the parser with the
+Netsyms Address Database (`docs/future-sources.md`). The addresses are
+invented (the data is private and stays in `local-data/`): words that merely
+begin with a suffix spelling and end in a place name (`CREEKWOOD`,
+`PICO RIVERA`, `AVENIDA DE LA LUNA`, `STRAND`), a word after `#`, values after
+a designator (`APT I4`, `# 2WD`), a letter range (`APT A-D`), `U S ROUTE` and a postdirectional `NE` before a city that starts with NE.
 
 ### `intersections.jsonl`
 
