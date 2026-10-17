@@ -1,6 +1,6 @@
 """`tag` and `parse_tokens` against usaddress itself, when it is installed
 (`pip install usaddress`). The rates are the ones recorded in
-docs/usaddress-comparison.md; the point is to notice a regression, not to
+docs/usaddress-compat.md; the point is to notice a regression, not to
 require identical output."""
 import pathlib
 import xml.etree.ElementTree as ET

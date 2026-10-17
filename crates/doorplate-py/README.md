@@ -35,7 +35,7 @@ uap.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
   `state`. A value that is not a US state, DC or territory raises
   `ValueError`.
 - `confidence` is reserved and always `None` in this release (a calibrated
-  score is deferred; `docs/design.md` decision 43).
+  score is not computed).
 
 ## Install
 

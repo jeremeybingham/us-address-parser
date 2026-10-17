@@ -1,4 +1,4 @@
-# National place list (docs/places.md; docs/design.md section 11, layer 2).
+# National place list (docs/places.md; layer 2 of the lexicon).
 #
 # places.tsv  state, name, county, kind (municipality | place | subdivision),
 #             sources (census | geonames), variants (`;`-separated)

@@ -11,13 +11,9 @@ identifiers (a canonical match key and a URL-safe slug).
 > and abi3 wheels for Linux, macOS and Windows built on every pull request. On
 > a blind benchmark of 30,622 one-line addresses it gets 96.4% of whole
 > addresses right (coarse) against usaddress's 88.2%
-> ([`docs/usaddress-comparison.md`](docs/usaddress-comparison.md)). **Nothing is
-> published yet**: next is release hardening (packaging, the Pub 28
-> recheck). A custom layer is deferred past the first release. `confidence` is reserved and always `None`
-> in the first release (a calibrated score is deferred, `docs/design.md`
-> decision 43).
-> [`docs/design.md`](docs/design.md) section 10 has the plan in build order;
-> section 13 has the decisions.
+> ([`docs/benchmarks.md`](docs/benchmarks.md)). **Nothing is published yet.**
+> `confidence` is reserved and always `None`. [`docs/how-it-works.md`](docs/how-it-works.md)
+> explains the design.
 
 ## This is not an address validator
 
@@ -45,8 +41,7 @@ is out of scope.
 
 Validation or deliverability, geocoding, fuzzy matching, address correction,
 and international addresses. The shipped lexicons are fixed at compile time;
-an add-only custom layer is designed but deferred past the first release
-(`docs/design.md` decision 45).
+a user-extensible layer of aliases and places is not part of this release.
 
 ## Coming from usaddress
 
@@ -58,7 +53,7 @@ The labels are usaddress's, so a pipeline built on them keeps working:
 | `usaddress.tag(s)`: `(dict, type)` | `a.tag()` and `a.tag().usaddress_type()`; `doorplate parse --tag` | `tag(s)` |
 | `RepeatedLabelError` | not raised: the runs are joined and `tag().repeated_labels()` lists the labels | `parse(s).repeated_labels()` |
 | `Street Address`, `PO Box`, `Ambiguous` | `a.address_type()` is finer (`Street`, `PoBox`, `RuralRoute`, `Military`, `GeneralDelivery`, `Dual`, `Unknown`); `usaddress_type()` gives the three by usaddress's own rule | `parse(s).address_type()`; `tag(s)` returns the three |
-| Retrain to fix a misparse | no model to retrain; a custom layer of aliases and places is designed but deferred past the first release, so report the input to get the shipped tables fixed | the same |
+| Retrain to fix a misparse | no model to retrain; report the input so the shipped tables or rules are fixed | the same |
 
 What differs:
 
@@ -78,8 +73,8 @@ What differs:
   warnings.
 
 On the joined dicts of usaddress's own test files the two agree on 99.3% of
-8,103 addresses (`docs/usaddress-comparison.md`). The feature-by-feature
-comparison is in [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md).
+8,103 addresses. The label mapping and the feature-by-feature comparison are in
+[`docs/usaddress-compat.md`](docs/usaddress-compat.md).
 
 ## Place data (national list and state packs)
 
@@ -173,22 +168,23 @@ examples/           notebook, Polars and pandas pipelines, invented sample data
 tests/corpus/       labeled golden corpus (JSONL)
 tests/external/     usaddress's labeled test files (MIT)
 tools/              corpus, comparison, place-list and pack scripts
-docs/               design and format specs
+docs/               how it works, format specs and reference
 .github/workflows/  ci.yml (Rust and Python tests) and wheels.yml (abi3 wheels)
 ```
 
 Names (nothing is published yet; the name is reserved on the registries
-before publishing, design.md decision 46): the Python package and the Rust
+before publishing): the Python package and the Rust
 core crate are `doorplate`, the CLI crate is `doorplate-cli`, and the CLI
 binary is `doorplate`, with `addr` as an alias.
 
 ## Documentation
 
-- [`docs/design.md`](docs/design.md): goals, decisions, milestones, open items
+- [`docs/how-it-works.md`](docs/how-it-works.md): the pipeline, the design choices, the layout
 - [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md): sources for every table and rule
 - [`docs/key-format.md`](docs/key-format.md): the `k1` key and the slug
 - [`docs/reso-mapping.md`](docs/reso-mapping.md): RESO field mapping
-- [`docs/usaddress-comparison.md`](docs/usaddress-comparison.md): accuracy against usaddress
+- [`docs/usaddress-compat.md`](docs/usaddress-compat.md): usaddress-shaped output, labels, migration
+- [`docs/benchmarks.md`](docs/benchmarks.md): accuracy, speed and size
 - [`docs/packs/fl.md`](docs/packs/fl.md): the Florida pack, its sources and licenses
 - [`docs/places.md`](docs/places.md): the national place list, its sources and licenses
 - [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md): the Python package

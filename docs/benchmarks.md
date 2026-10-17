@@ -29,7 +29,7 @@ doorplate 0.0.1 built with `--release`.
 ## Accuracy
 
 Scores use usaddress's labels, folded into the coarse set unless marked fine
-(`docs/usaddress-comparison.md`, "Scoring rules"). A whole address counts as
+(`docs/usaddress-compat.md`, "Scoring rules"). A whole address counts as
 right only when every token is. `benchmarks/accuracy.py` prints these tables.
 
 ### Geocode benchmark (30,622 addresses, one line, no commas)
@@ -47,14 +47,10 @@ aggregate numbers are published.
 | Tokens (fine) | 95.9% | 94.7% |
 | Whole address (fine) | 82.3% | 77.3% |
 
-Neither library was trained on it. doorplate's rules and place list were
-written after reading this benchmark's error classes
-(`docs/usaddress-comparison.md`, before and after), so read 96.4% as an
-estimate for data of this shape (one line, US street addresses, a city and
-state), not as a held-out result for any address you may have. Breakdowns by
-shape (a city on the line or not, a street suffix or not) are in
-`docs/usaddress-comparison.md`; they were measured before the national place
-list and have not been rerun.
+Neither library was trained on it. doorplate's rules and place list were written
+after reading this benchmark's error classes, so read 96.4% as an estimate for data
+of this shape (one line, US street addresses, a city and state), not as a held-out
+result for any address you may have.
 
 ### usaddress's own test files
 

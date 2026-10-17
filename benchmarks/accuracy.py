@@ -47,7 +47,7 @@ def main():
     need_cli()
     print(f"# Accuracy\n\nMachine: {machine()}\n")
     print("Scores are for addresses written one to a line unless noted. \"Coarse\" folds street parts")
-    print("into the street name (docs/usaddress-comparison.md, \"Scoring rules\"); \"fine\" keeps them apart.\n")
+    print("into the street name (docs/usaddress-compat.md, \"Scoring rules\"); \"fine\" keeps them apart.\n")
 
     cases, ok, total, pct = corpus_report(ROOT / "tests" / "corpus")
     print("## Golden corpus (tests/corpus)\n")
