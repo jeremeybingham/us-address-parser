@@ -537,12 +537,20 @@ Calibrated confidence (decision 12):
     Internal (`pub(crate)`, read by item 38), with unit tests in
     `tagger/mod.rs`; no output or key changes (the corpus is unchanged).
 38. **Fit and ship the score.**
-    - Commit 1: `tools/calibrate/` fits each path's accuracy (a fixed table
-      or a small logistic model) on the golden corpus, usaddress's test
-      files and the Florida sample. The sample was used to fix seven rules
-      (item 36, commit 4), so it is no longer fully blind: fit and report
-      with that in mind (score its fixed rows on the parser before the fixes,
-      or hold part of it out), and keep the geocode benchmark for checking.
+    - Commit 1 (done): `tools/calibrate/fit.py` fits a small logistic model
+      on the golden corpus, usaddress's test files and the Florida sample
+      (9,633 examples, 52 wrong parses). The sample was used to fix seven
+      rules (item 36, commit 4), so it is scored with a parser built before
+      those fixes; the geocode benchmark is kept for checking. The
+      tagger's decisions reach `Diagnostics` (internal) and the tools read
+      them from `addr corpus features` and `addr parse --features`. Findings:
+      the unconstrained fit was unstable (50-odd failures, 20 features), so
+      every coefficient is constrained to at most zero and the Florida sample
+      carries half the weight; only `unparsed_remainder`, `bare_unit`,
+      `missing_street_number` and a few rare features are kept. An exact-path
+      table did no better on held-out data and was dropped. The Florida
+      sample alone, cross-validated, is calibrated within its (wide)
+      intervals; the report is `local-data/reports/confidence-fit.md`.
     - Commit 2: the fitted table in `data/` with its source, compiled by
       `build.rs`, and `Diagnostics::confidence` filled from it.
     - Commit 3: `docs/confidence.md`, the calibration report, checked on

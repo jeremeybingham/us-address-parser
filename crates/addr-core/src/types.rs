@@ -9,6 +9,7 @@ use std::fmt;
 
 use crate::input::Fields;
 use crate::lexicon::HighwayPrefix;
+use crate::tagger::Decision;
 use crate::VERSION;
 
 /// Compass directional (N, S, E, W, NE, NW, SE, SW), used as a street
@@ -624,12 +625,22 @@ pub struct Diagnostics {
     /// decision 12).
     pub confidence: Option<f32>,
     pub library_version: &'static str,
+    /// The uncertain rules that settled a boundary (item 37), the input of
+    /// the confidence score.
+    pub(crate) decisions: Vec<Decision>,
 }
 
 impl Diagnostics {
     /// Whether `w` was reported.
     pub fn has(&self, w: &Warning) -> bool {
         self.warnings.contains(w)
+    }
+
+    /// Codes of the uncertain decisions the tagger made, in order. Read by
+    /// `tools/calibrate/`; not part of the stable API.
+    #[doc(hidden)]
+    pub fn decision_codes(&self) -> Vec<&'static str> {
+        self.decisions.iter().map(|d| d.code()).collect()
     }
 
     /// Record a warning once; repeats are ignored.
@@ -647,6 +658,7 @@ impl Default for Diagnostics {
             unparsed: None,
             confidence: None,
             library_version: VERSION,
+            decisions: Vec::new(),
         }
     }
 }

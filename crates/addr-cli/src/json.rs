@@ -122,6 +122,19 @@ pub fn usaddress_record(input: &str, tags: &[UsaddressTag]) -> Value {
     json!({ "input": input, "tags": tags })
 }
 
+/// The record printed by `addr parse --features`: the inputs of the
+/// confidence score. `None` is an input with no usable text.
+pub fn features_record(input: &str, a: Option<&ParsedAddress>) -> Value {
+    let (decisions, warnings): (Vec<&str>, Vec<&str>) = match a {
+        Some(a) => (
+            a.diagnostics.decision_codes(),
+            a.diagnostics.warnings.iter().map(|w| w.code()).collect(),
+        ),
+        None => (Vec::new(), Vec::new()),
+    };
+    json!({ "input": input, "decisions": decisions, "warnings": warnings })
+}
+
 /// The record printed by `addr parse --tag`: the parse joined by usaddress
 /// label (`tag()`), the address type, and usaddress's own type name.
 /// `None` is an input with no usable text.

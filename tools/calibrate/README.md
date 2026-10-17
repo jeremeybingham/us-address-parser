@@ -10,6 +10,7 @@ under that folder is committed.
 | `sample_fl.py` | Draws the sample (seeded) and writes draft records pre-filled with the current parse; `--status` counts what is left |
 | `label.py` | Labels rows one at a time in the terminal (the author's tool) |
 | `triage.py` | Sorts unlabeled rows into clear and review, accepts or applies labels in bulk (collaborative mode, below) |
+| `fit.py` | Fits the confidence score (item 38) on the corpus, usaddress's test files and the Florida sample; `--report` writes the calibration report, `--out` the fitted model as TOML |
 
 Each record's `note` says who labeled it: no marker for the author (via
 `label.py`), `by=assistant` for a draft the assistant checked and accepted,
@@ -88,3 +89,32 @@ computed rules as `label.py`.
   and let the author decide.
 - Never copy rows out of `local-data/`, and never repeat a person's name in
   chat or in committed files (an attention line may hold one).
+
+## Fitting the score (`fit.py`)
+
+```sh
+cargo build --release -p addr-cli
+python3 tools/calibrate/fit.py --sample-addr PRE_FIX/addr \
+    --report local-data/reports/confidence-fit.md [--out FITTED.toml]
+```
+
+The label is "the whole parse is right"; the features are the tagger's
+decisions and the warnings, read from the binary (`addr corpus features`,
+`addr parse --features`), so no rule is re-implemented in Python.
+
+- **Sample, before the fixes.** Item 36's commit 4 fixed seven rules from the
+  sample's errors. `--sample-addr` is an `addr` built from the commit before
+  those fixes (`git worktree add ../pre 51d8d5c`, apply the export patch of
+  item 38 commit 1, `cargo build --release`), so the sample is scored as the
+  parser was when it was labeled. Without it the sample looks better than
+  it was.
+- **Sampling.** The sample over-draws flagged rows. That does not bias a
+  fit conditional on the warnings, because the warnings are the features.
+- **Weights.** The Florida sample carries half the weight
+  (`--florida-share`); the synthetic gold files would otherwise decide the
+  baseline.
+- **Constraint.** A warning or decision never raises confidence. The
+  unconstrained fit gave `missing_state` a large positive coefficient only
+  because the synthetic files lack states and are rarely wrong.
+- **The geocode benchmark is not read here.** It checks the result (item 38,
+  commit 3).
