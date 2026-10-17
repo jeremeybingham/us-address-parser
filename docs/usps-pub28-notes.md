@@ -29,6 +29,22 @@ clients without a browser User-Agent to a "page not found" page). Before
 release, re-check every table against the live pages (`docs/design.md`,
 item 44, Milestone 8).
 
+**Re-checked 2026-10-17 (item 44).** Every table in the list below was
+compared with the live pages by `tools/pub28/verify.py` (it parses Appendix
+C1, C2 and B and diffs them against `data/suffixes.toml`, `units.toml`,
+`states.toml` and `directionals.toml`; `--emitter` also runs every Appendix F
+example through the parser and the USPS emitter): **0 differences** in 202
+suffix rows and their spellings, 24 designators and their range flags, 62
+state and military codes, 8 directionals. The rule sections cited here and in
+the emitter section (211 to 215, 221 to 224, 225 to 239, 241 to 246, 251 to
+255, 261, 262, 281 to 285, 341, 343, 35, 354, 356, Appendices A1, D1, D2, D4
+and F) were read again and say what this file says. The 238.1 and 239 examples
+are images and were not re-read. The check fetched the pages with a browser
+User-Agent. Two Appendix F examples failed and are fixed (see "Added
+2026-10-17" below); a third, `SR MM`, is left to state packs on purpose. One
+typo on the USPS side: the C1 page source has a literal `\u2009BYU` where
+BAYOU's abbreviation should be `BYU`; the tool strips it.
+
 Chapter 2 page map (all under `https://pe.usps.com/text/pub28/`): 225
 Military Addresses `28c2_010.htm`; 233 Directionals `28c2_014.htm`; 237
 Highways `28c2_018.htm`; 24 Rural Route `28c2_021.htm` to `28c2_026.htm`
@@ -212,6 +228,14 @@ source column says what does back each one:
 | After a whole unit (designator or `#`, then a value), an exact copy of the city is dropped even when it starts with a suffix word (`UNIT 412 INLET BEACH` before `INLET BEACH`). As a last resort, a whole comma segment that repeats the city's last words is a cut-off copy (`RD,CLOUD` before `ST CLOUD`); a copy across the comma (`RD WESLEY` / `CHAPEL`) is still dropped whole first. | Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36); corpus `rg-132` to `rg-134`. |
 | A period after an abbreviation of two letters or more, with a letter right after it, separates words (`ST.CLOUD` is `ST CLOUD`, `CIR.APART`, `BLVD.N`), unless the pieces join into a known word (`BLV.D` stays `BLVD`); initials stay joined (`P.O.`, `U.S.A.`). A box word joined to its number by punctuation is split like a designator (`BOX.2351`). | Not a USPS rule (Pub 28 drops periods); Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36); corpus `rg-133`, `rg-135`, `rg-136`. |
 
+Added 2026-10-17 from the Pub 28 re-check (item 44; corpus `p28-twosuf-001`
+to `006`, `p28-highway-038` to `040`):
+
+| Rule | Source |
+|---|---|
+| Two suffix words in a row: the second is the suffix, and the first is part of the street name, written out in full (`HARBOR VW DR` is `HARBOR VIEW DR`, `GULL PT RD` is `GULL POINT RD`, `BISCAYNE BLVD WAY` is `BISCAYNE BOULEVARD WAY`). Only a Pub 28 standard abbreviation is spelled out; a spelling C1 lists but is not the abbreviation, or an observed one (`PK`), stays as written. After a number, `ST` and `RD` are the ordinal's ending and stay (`63 RD TER`, `21 ST AVE`). The name and the key change with it. | Section 234.2; Appendix F (`HIGHWAY 3 BYP ROAD` is `HIGHWAY 3 BYPASS RD`). |
+| A highway route after a prefix keeps up to two letters run into its number (`ROUTE 1150EE`, `COUNTY ROAD 60EE`); before, the letters were split off as a street name. Elsewhere a longer word run into a house number is still split (`101BRADDOCK`). | Appendix F (`ROUTE 1150EE`, `COUNTY HIGHWAY 60E`). |
+
 ## Emitter rules
 
 ### USPS emitter (`emit/usps.rs`, `ParsedAddress::to_usps`)
@@ -291,9 +315,11 @@ October 2026. What each check found:
    corpus military and general delivery cases now check `usps`.
 8. **Key punctuation rule.** Traced: `docs/key-format.md` rule 1 now cites
    sections 222 and 354.
-9. **Release re-check (open).** Re-check every lexicon table and the
-   emitter rules above against the live Pub 28 pages before release
-   (`docs/design.md`, item 44, Milestone 8).
+9. **Release re-check (done 2026-10-17).** Every lexicon table and the
+   emitter rules above were re-checked against the live Pub 28 pages
+   (`docs/design.md`, item 44); see "Re-checked 2026-10-17" under
+   "Verification status". Two bugs found and fixed (section 234.2 and letter
+   routes).
 
 Special forms (sourced):
 

@@ -4,6 +4,21 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Pub 28 re-check (item 44)
+
+- `tools/pub28/verify.py` compares `data/suffixes.toml`, `units.toml`,
+  `states.toml` and `directionals.toml` with Appendix C1, C2 and B (0
+  differences), and with `--emitter` runs every Appendix F example through
+  the parser and the USPS emitter.
+- Section 234.2: when two consecutive words are on the suffix table, the
+  first is part of the name and is written out (`HARBOR VW DR` is
+  `HARBOR VIEW DR`, `HIGHWAY 3 BYP ROAD` is `HIGHWAY 3 BYPASS RD`). After a
+  number, `ST` and `RD` stay (`63 RD TER`). The name and key change: 958 of
+  440,288 distinct Florida licensee addresses (`docs/key-format.md`).
+- A highway route may end in two letters (`ROUTE 1150EE`).
+- Corpus `p28-twosuf-001` to `006`, `p28-highway-038` to `040`; 437 cases,
+  all passing; the geocode benchmark is unchanged at 96.4%.
+
 ### The name is `doorplate` (items 58 and 45, decision 46)
 
 - Crates `doorplate` and `doorplate-cli`, Python package and import

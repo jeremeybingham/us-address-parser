@@ -604,8 +604,15 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     `docs/future-sources.md`. The geocode benchmark moved from 96.1% to 96.4%.
 43. **Fuzz targets (done)** (cargo-fuzz) for the tokenizer and assembler, reached through `Parser::parse` and `Parser::parse_fields` plus every emitter. `fuzz/` is outside the workspace (nightly only). Run: `cargo +nightly fuzz run parse` from `fuzz/`.
 44. **Re-check every lexicon table and the USPS emitter rules against the
-    live Pub 28 pages** (`docs/usps-pub28-notes.md`, "Verification
-    status"). Last before release, so the check covers the final tables.
+    live Pub 28 pages (done 2026-10-17)** (`docs/usps-pub28-notes.md`,
+    "Verification status"). Last before release, so the check covers the final
+    tables. `tools/pub28/verify.py` diffs the C1, C2 and B tables against
+    `data/` (0 differences) and, with `--emitter`, runs every Appendix F
+    example through the parser. Two bugs found and fixed: the first of two
+    suffix words is spelled out (section 234.2) and a highway route keeps up
+    to two letters (`ROUTE 1150EE`); 958 of 440,288 Florida licensee keys
+    changed (`docs/key-format.md`), the geocode benchmark is unchanged at
+    96.4%.
 57. **Benchmarks for the release** (decision 42): measure and write up, in
     `docs/benchmarks.md` (which replaces `docs/usaddress-comparison.md` in
     item 61): accuracy on the blind geocode benchmark, the golden corpus and
