@@ -85,7 +85,7 @@ impl Tagger<'_> {
                 if let Some((_, w)) =
                     longest_ending(toks, seg_start, end, |s| self.state_ok(s, true))
                 {
-                    state = Some(end - w..end);
+                    state = Some(self.state_span(end - w, end));
                 } else if let Some((_, w)) =
                     longest_at(toks, seg_start, end, |s| self.state_ok(s, false))
                 {
@@ -115,9 +115,27 @@ impl Tagger<'_> {
             // "8517 CEDAR BARK CIR KY": after an abbreviated suffix it is
             // the state.
             let after_suffix = r.start > lo && self.abbreviated_suffix(r.start - 1);
+            // "69 HERITAGE WOODS WALLINGFORD CT 06492": a ZIP that belongs to
+            // the state, with a place of that state right before it, makes it
+            // the state ("12 SIMON CT 06492" has no place before CT).
+            let zip_agrees = zip
+                && self.lex.state(&text).is_some_and(|s| {
+                    let code = s.value.code();
+                    zip_parts(&toks[hi - 1].text)
+                        .and_then(|(z5, _)| self.lex.zip_places(z5))
+                        .is_some_and(|z| z.main().state() == code)
+                        && (1..=MAX_PLACE_WORDS).any(|w| {
+                            r.start > lo + w
+                                && self
+                                    .lex
+                                    .place(code, &join(&toks[r.start - w..r.start]))
+                                    .is_some()
+                        })
+                });
             if one_line
                 && self.lex.suffix(&text).is_some()
                 && !after_suffix
+                && !zip_agrees
                 && self.city_after_street(lo, r.start).is_none()
             {
                 state = None;
@@ -284,6 +302,20 @@ impl Tagger<'_> {
 
     /// A state spelling. `loose` also accepts traditional abbreviations
     /// (FLA), which are only safe right before a ZIP.
+    /// The state tokens in `s..e`, without a leading WASHINGTON when the rest
+    /// is the District (`WASHINGTON DC 20009` is the city and DC; the whole
+    /// phrase is also a spelling of the state itself).
+    fn state_span(&self, s: usize, e: usize) -> Range<usize> {
+        if e > s + 1
+            && self.text(s) == "WASHINGTON"
+            && self.lex.state(&join(&self.toks[s + 1..e])).is_some()
+        {
+            s + 1..e
+        } else {
+            s..e
+        }
+    }
+
     fn state_ok(&self, s: &str, loose: bool) -> Option<()> {
         let l = self.lex.state(s)?;
         (loose || l.kind != MatchKind::Variant).then_some(())

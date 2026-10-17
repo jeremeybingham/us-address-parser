@@ -1,20 +1,90 @@
 # Future test and data sources
 
-Status: researched 2026-10-17, **deferred** (design.md decision 39). Nothing
-here was downloaded into `local-data/` or run through the parser. This is the
-record of what was looked at, what each source could do for the library, and
-the plan to pick it up when the parser is next allowed to change what an input
-produces (the v2, `k2` key version; decision 34).
+Status: researched 2026-10-17. **The Netsyms full file was run before the
+first release** (design.md decision 40, reversing decision 39 for this source):
+results below. NAD direct and OpenAddresses stay **deferred** to v2 (the `k2`
+key version; decision 34). This is the record of what was looked at, what each
+source could do for the library, what the Netsyms run found, and the plan for
+the rest.
 
-## Why deferred
+## Results of the Netsyms run (2026-10-17)
 
-- The accuracy measured so far is good for a first release (below), and the
-  key format is a public contract from the first release. A parser change
-  that alters a key after release needs `k2`, so further rule work waits for
-  that version instead of landing as small key breaks.
-- The sources that matter are large. The most convenient one (Netsyms) is
-  about 7 GB to download and 40 GB extracted; the author does not have the
-  disk for it now.
+The full file (2026-05 edition, 176.5M rows: 146.6M US, 90.5M of them from NAD
+and 56.1M from OpenAddresses, across 956 US sources) was extracted to
+`local-data/netsyms-2026/` (SHA256 of the archive checked against the
+published value). `tools/netsyms/sample.py` drew a 1.6M-row working sample (a
+uniform draw of 1 in 500, about 300 rows from every state and source, and
+oversamples of units, odd house numbers and highways); `profile.py` profiled
+the full file; `compare.py` wrote each US row back as an address in four
+styles, parsed it, and compared number, street, unit, city, state and ZIP with
+the source's own columns. No row appears in the repository.
+
+**Profile.** House numbers are plain digits in 98.4% of US rows (a `-`, a
+letter, a fraction or a second word in the rest). A unit is present in 14.8%
+of US rows, from under 1% (Rhode Island, Vermont) to 36.1% (Massachusetts)
+and 66.8% (DC) by state, usually as `APT n`, `STE n` or `# n`. 91.4% of US
+rows carry a ZIP+4. Streets run 2 to 3 words in 94.6% of rows.
+Some sources are malformed: literal `<NULL>` text inside values, house numbers
+with spaces or parentheses, unit columns holding two bare numbers. About 2% of
+rows are such source quirks and are scored apart.
+
+**Accuracy** on the uniform draw (217,906 US rows, 213,551 without source
+quirks), whole address matching the source on all six fields, before and after
+the fixes below:
+
+| Style | Before | After |
+|---|---|---|
+| `123 MAIN ST APT 4, MIAMI, FL 33101` | 99.52% | 99.86% |
+| pre-split fields | 99.54% | 99.81% |
+| one line, no commas | 99.20% | 99.81% |
+
+Over every row of the uniform draw, quirks included: 97.77% to 98.14%
+(commas), 97.81% to 98.12% (fields), 97.45% to 98.09% (one line). The
+blind geocode benchmark moved from 96.1% to 96.4% whole-address (token
+accuracy 99.2% to 99.3%). Rows with units (clean units): 98.2% to 99.9%.
+
+**What was found and fixed** (docs/usps-pub28-notes.md, `ns-001` to `ns-023`;
+the key changes are logged in docs/key-format.md):
+
+1. A word that began with a suffix spelling and ended in a place name was
+   split: `PICO RIVERA` into `RIV ERA`, `CREEKWOOD`, `DALEWOOD`, `MEADOWPARK`,
+   `AVENIDA DE LA LUNA`, `STRAND`. The glued-city split now needs a real
+   anchor (it was written for Florida data; the national place list made
+   nearly every word a candidate).
+2. A word after `#` (`# PRIMARY`, `# REAR`) and a letter range (`APT A-D`) are
+   units.
+3. A value after `#` or a designator is not split (`# 2WD`, `APT I4`).
+4. `U S ROUTE 23` kept its house number whole.
+5. A postdirectional was silently dropped before a city starting with NE (`RD
+   NE, NEW SALISBURY`): it looked like a cut-off copy of the city.
+6. On one line with no commas, `CT`, `LA` and `WY` were read as suffixes
+   instead of states, losing the city and state (Connecticut, Louisiana and
+   Wyoming addresses). A ZIP of that state plus a place before the code now
+   settles it; `12 SIMON CT 32505` stays a suffix.
+7. `WASHINGTON DC` before a ZIP lost its city (the phrase is also a spelling
+   of the state).
+
+**Known and left alone.** Names that end in a number read as a street plus a
+unit (`ZEHNER ROAD 10`: a bare number after a street is a unit by design);
+`COUNTY ROUTE` and `US ROUTE` are street names, not highways; `ST JOHN, VI`
+and `EAST BOSTON` (no territory places in the list, a neighborhood that is not
+a place); `J E MCDONALD FARM RD` where `J` reads as a number suffix (the two
+readings are about equally common in the data); Puerto Rico street names such
+as `15 SO`. None is a regression.
+
+**Not yet used.** The observed `(state, ZIP, city)` counts could fill gaps in
+the place list the way the DBPR export did for Florida, and per-state road
+conventions could rank the state packs worth building (plan steps 5 below).
+
+## Why the rest is deferred
+
+- The key format is a public contract from the first release. A parser change
+  that alters a key after release needs `k2`, so rule work driven by NAD
+  direct and OpenAddresses waits for that version instead of landing as small
+  key breaks. (The Netsyms run, which includes both sources' rows, was done
+  before release; decision 40.)
+- NAD direct and raw OpenAddresses add split labels and messier local formats
+  that Netsyms normalizes away, which is worth having but not needed for v1.
 - Before the first release a parser fix may still change a key if it is a
   real bug (`CLAUDE.md`), logged in `docs/key-format.md`. This document does
   not stop that; it only means no further source-driven work is scheduled.
@@ -23,15 +93,17 @@ produces (the v2, `k2` key version; decision 34).
 
 | Measure | Result | Covers |
 |---|---|---|
-| Blind geocode benchmark, whole address (coarse) | 96.1% (usaddress 88.2%) | 30,622 street addresses, one line, no commas, uppercase, no units, one per state and ZIP pair |
+| Blind geocode benchmark, whole address (coarse) | 96.4% (usaddress 88.2%; 96.1% before the Netsyms fixes) | 30,622 street addresses, one line, no commas, uppercase, no units, one per state and ZIP pair |
 | usaddress's own test files | 99.2% (usaddress 100.0%, its regression tests) | Its labeled shapes |
 | `tag()` against `usaddress.tag()` | joined dicts identical on 99.3% of 8,103 addresses; types 99.8% | Auction, DBPR and corpus inputs |
-| Golden corpus | 381 cases, all passing | Hand-labeled shapes, mostly Florida and Pub 28 |
+| Netsyms sample, whole address on all six fields | 99.8% (commas, fields, one line; rows without source quirks) | 217,906 US rows from 956 sources, rendered in four styles; excludes malformed source rows (2%) |
+| Golden corpus | 404 cases, all passing | Hand-labeled shapes, mostly Florida and Pub 28; `ns-` cases use invented addresses |
 | Fuzzing | about 900k runs, no panic | `parse` and `parse_fields` with every emitter |
 
-Not measured, so not claimed: mixed-case and multi-line input from other
-states, units outside Florida, PO Boxes and routes outside the corpus, and
-confidence (still `None`; item 36 and Milestone 7). The place list finds
+Not measured, so not claimed: real (not rendered) mixed-case and multi-line
+input from other states, PO Boxes and routes outside the corpus, and
+confidence (still `None`; item 36 and Milestone 7). The Netsyms rows are
+street addresses rendered from the source's fields, not messy human input. The place list finds
 87.4% of the benchmark's cities (`docs/places.md`). The library formats and
 parses; it does not check that an address exists or is deliverable.
 

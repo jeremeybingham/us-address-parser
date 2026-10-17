@@ -254,12 +254,12 @@ line, in line 2, in the city field and in the state field, each with
 
 ### `netsyms.jsonl`
 
-Ids `ns-001` to `ns-016`: parser fixes found by comparing the parser with the
+Ids `ns-001` to `ns-023`: parser fixes found by comparing the parser with the
 Netsyms Address Database (`docs/future-sources.md`). The addresses are
 invented (the data is private and stays in `local-data/`): words that merely
 begin with a suffix spelling and end in a place name (`CREEKWOOD`,
 `PICO RIVERA`, `AVENIDA DE LA LUNA`, `STRAND`), a word after `#`, values after
-a designator (`APT I4`, `# 2WD`), a letter range (`APT A-D`), `U S ROUTE` and a postdirectional `NE` before a city that starts with NE.
+a designator (`APT I4`, `# 2WD`), a letter range (`APT A-D`), `U S ROUTE`, a postdirectional `NE` before a city that starts with NE, a state code that is also a suffix spelling (`CT`, `LA`, `WY`) settled by its ZIP, and `WASHINGTON DC`.
 
 ### `intersections.jsonl`
 
