@@ -1,7 +1,7 @@
 # USPS Pub 28 notes
 
 Sources for the Pub 28 tables and rules this library implements. Every USPS
-rule in code must trace to an entry here (see `CLAUDE.md`).
+rule in code must trace to an entry here (see `CONTRIBUTING.md`).
 
 Publication: USPS Publication 28, *Postal Addressing Standards*,
 <https://pe.usps.com/text/pub28/welcome.htm>. Table edition targeted: the

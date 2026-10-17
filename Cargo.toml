@@ -3,17 +3,19 @@ resolver = "2"
 members = ["crates/doorplate", "crates/doorplate-cli", "crates/doorplate-py"]
 
 [workspace.package]
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
+authors = ["Jeremey Bingham <jeremeybingham@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/jeremeybingham/doorplate"
+homepage = "https://github.com/jeremeybingham/doorplate"
 rust-version = "1.80"
 
 # One place for the core crate's version, so the dependents that are published
 # (doorplate-cli) name it as crates.io requires. Keep it equal to
 # `workspace.package.version`.
 [workspace.dependencies]
-doorplate = { path = "crates/doorplate", version = "0.0.1" }
+doorplate = { path = "crates/doorplate", version = "0.1.0" }
 
 [workspace.lints.clippy]
 unwrap_used = "warn"

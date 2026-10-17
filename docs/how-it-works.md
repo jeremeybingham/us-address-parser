@@ -156,9 +156,9 @@ the street components, state and ZIP5 and leaves out the city, which is the nois
 field. Addresses missing a state or ZIP get the weaker `k1n:` prefix and a warning.
 Unit inclusion is an option (off by default, property level).
 
-The key format is versioned (`k1:`). From the first release, any change to what an
-input produces needs a new version prefix (`k2:`) and an update to
-`docs/key-format.md`; `k1` is never edited in place. The slug is built from the
+The key format is versioned (`k1:`). Any change to what an input produces needs a
+new version prefix (`k2:`) and an update to `docs/key-format.md`; `k1` is never
+edited in place. The slug is built from the
 USPS output, is for display, and is not unique or versioned.
 
 ## Lexicon layers

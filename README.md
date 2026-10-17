@@ -276,6 +276,8 @@ and small invented sample files.
 
 ## Development
 
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for reporting a misparse and fixing one.
+
 ```sh
 cargo fmt --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings

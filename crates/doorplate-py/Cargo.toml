@@ -3,6 +3,7 @@ name = "doorplate-py"
 description = "Python bindings for doorplate (PyO3, built with maturin)"
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
 license.workspace = true
 repository.workspace = true
 # PyO3 needs a newer compiler than the library (workspace rust-version).
