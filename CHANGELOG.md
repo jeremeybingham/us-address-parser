@@ -4,6 +4,19 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Release preparation planned (decision 42)
+
+- New plan items before the first release: benchmarks (57), choosing a new
+  name to replace decision 33's (58), the text cleaning (61) and a fresh
+  repository with no history (62), with publishing (46) from the new one.
+  Milestone 9 gains examples (59) and a customization guide (60), and the
+  custom layer's scope widens to every table the tagger reads.
+- `docs/repository_cleaning.md` collects every deferred text change in one
+  checklist: build-process wording, naming the private data sources,
+  attributions, a user-focused README with diagrams, a neutral tone toward
+  usaddress, old names, and the fresh-repository steps. `CLAUDE.md` points
+  new cleanup items there.
+
 ### Blind Florida sample drawn (Milestone 7, item 36)
 
 - `tools/calibrate/sample_fl.py` draws the sample for calibrated confidence
