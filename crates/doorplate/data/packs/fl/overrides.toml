@@ -16,7 +16,7 @@
 
 [[suffix]]
 # The base table has CR as an observed CREEK spelling (older C1
-# transcriptions). In the DBPR licensee data (docs/packs/fl.md), 333 Florida
+# transcriptions). In Florida public-record address data (docs/packs/fl.md), 333 Florida
 # street lines end a name with CR. For 277 of them the same street name in the
 # same ZIP is also written out as CIRCLE or CIR; for none as CREEK or CRK; the
 # other 56 have no other spelling. CR before a route number stays COUNTY ROAD
@@ -28,7 +28,7 @@ suffix = "CIRCLE"
 # Pub 28 Appendix F writes SR 220 as STATE ROAD 220 and SR MM as STATE ROUTE
 # MM, so SR is state-dependent and is left out of the base table
 # (data/special.toml). In Florida the state's roads are State Roads. In the
-# DBPR licensee data (docs/packs/fl.md), 139 of 445,252 Florida street lines
+# Florida public-record address data (docs/packs/fl.md), 139 of 445,252 street lines
 # have SR before a route number (`22200 SR 60`, `177 N SR 51`); none writes
 # STATE ROUTE. Appendix F spells SR as STATE ROAD, so the spelling is a
 # listed variant and raises no non-standard warning.

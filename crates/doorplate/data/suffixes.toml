@@ -78,7 +78,7 @@ forms = ["BOT", "BOTTM", "BOTTOM", "BTM"]
 name = "BOULEVARD"
 abbr = "BLVD"
 forms = ["BLVD", "BOUL", "BOULEVARD", "BOULV"]
-# observed: DBPR licensee data, Florida ("960 OAKES BLV", "15464 FIDDLESTICKS BL")
+# observed: Florida address data ("960 OAKES BLV", "15464 FIDDLESTICKS BL")
 observed = ["BL", "BLV"]
 
 [[suffix]]
@@ -287,7 +287,7 @@ forms = ["DIV", "DIVIDE", "DV", "DVD"]
 name = "DRIVE"
 abbr = "DR"
 forms = ["DR", "DRIV", "DRIVE", "DRV"]
-# observed: DBPR licensee data, Florida ("9839 EVERGLADES DRT"; the same
+# observed: Florida address data ("9839 EVERGLADES DRT"; the same
 # street in the same ZIP is written DR or DRIVE on 7 other lines)
 observed = ["DRT"]
 
@@ -570,7 +570,7 @@ abbr = "LN"
 forms = ["LANE", "LN"]
 # observed: older transcriptions of C1 (usaddress-scourgify, street-address gem);
 # not in the current Appendix C1
-# DBPR licensee data, Florida: LNE ("2038 TAMARRON LNE", 3 lines)
+# Florida address data: LNE ("2038 TAMARRON LNE", 3 lines)
 observed = ["LA", "LANES", "LNE"]
 
 [[suffix]]
@@ -607,7 +607,7 @@ forms = ["LDG", "LDGE", "LODG", "LODGE"]
 name = "LOOP"
 abbr = "LOOP"
 forms = ["LOOP", "LOOPS"]
-# observed: auction-tracker golden CSVs (Escambia: `MILLEE LP`)
+# observed: Florida county listings (Escambia: `MILLEE LP`)
 observed = ["LP"]
 
 [[suffix]]
@@ -953,7 +953,7 @@ forms = ["SMT", "SUMIT", "SUMITT", "SUMMIT"]
 name = "TERRACE"
 abbr = "TER"
 forms = ["TER", "TERR", "TERRACE"]
-# observed: DBPR licensee data, Miami-Dade grid streets ("10095 NW 127 TE")
+# observed: Florida address data, Miami-Dade grid streets ("10095 NW 127 TE")
 observed = ["TE"]
 
 [[suffix]]
@@ -965,7 +965,7 @@ forms = ["THROUGHWAY", "TRWY"]
 name = "TRACE"
 abbr = "TRCE"
 forms = ["TRACE", "TRACES", "TRCE"]
-# observed: auction-tracker (Florida clerk/tax-deed listings), STREET_TYPES
+# observed: Florida county property listings
 observed = ["TRC"]
 
 [[suffix]]

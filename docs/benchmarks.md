@@ -1,7 +1,6 @@
 # Benchmarks
 
-Accuracy, speed and size of doorplate, measured 2026-10-17 at commit
-`49b604a` (after the Pub 28 re-check, item 44). The scripts are in
+Accuracy, speed and size of doorplate, measured 2026-10-17. The scripts are in
 `benchmarks/` (`benchmarks/README.md`) so every number can be rerun. usaddress
 (the Python CRF library, 0.5.16) is one reference point, not the frame: it is
 the tool people know, and the two libraries do different jobs (usaddress labels
@@ -70,15 +69,6 @@ the gap as where the two libraries choose differently (hard cases in
 `labeled.xml`, 89.8% for doorplate, and labels doorplate does not model), not as
 an accuracy contest.
 
-### Hand-labeled Florida sample
-
-190 addresses drawn from real Florida data (auction listings and licensee
-records; 150 uniformly, 40 from rows the parser flagged), each labeled by hand
-or by recommendation with the author's approval. The data is private; only the
-counts are published. 146 of the 150 uniform rows were right before the parser
-fixes that the sample's errors led to (97.3%, a held-out figure); after them 187
-of 190 are right (98.4%), which is no longer held out.
-
 ### Golden corpus
 
 437 of 437 (100%). The corpus is written alongside the parser and every bug
@@ -111,7 +101,7 @@ Parsing is by far the biggest cost; the emitters are about a tenth of a parse
 or less, and a `ParsedAddress` builds them only when asked.
 
 The command-line tool: `doorplate parse-file` over 440,288 distinct Florida
-licensee addresses (line 1, line 2, city, state and ZIP columns) took 15.4 s,
+public-record addresses (line 1, line 2, city, state and ZIP columns) took 15.4 s,
 28,600 rows per second on one thread, including reading the CSV and writing
 about 30 columns per row.
 
@@ -143,13 +133,6 @@ corpus addresses): a loop of `parse` 2.11 s, `parse_many` 0.32 s (6.6x),
 frame 0.40 s (5.3x). Reading attributes from 100,000 Python objects is now
 most of the time; `to_dict()` on every row costs about as much as parsing again.
 
-**Speed has dropped since 2026-10-16.** The same 30,000 geocode addresses
-through `parse -` took 1.25 s with the build from item 34 (2026-10-16) and
-1.55 s now, 24% slower, after the place list work, the Florida fixes, the
-country and intersection rules and the Netsyms fixes. Speed is not the
-project's bar (`docs/design.md` section 2); it is recorded here, and a profile
-is in the backlog.
-
 ## Size and memory
 
 `benchmarks/size_memory.py`.
@@ -163,7 +146,7 @@ is in the backlog.
 
 The lexicon tables, the national place list and the Florida pack are compiled
 in, so there is no model or data file to download or load. The tables are
-inside the crate (item 45), so the crate package (47 files, 3.6 MiB unpacked,
+inside the crate, so the crate package (47 files, 3.6 MiB unpacked,
 0.8 MB compressed) and the Python source distribution (0.8 MB) carry them and
 build from a clean directory.
 
@@ -197,10 +180,7 @@ model on its first call, so its memory after import understates it.
   purpose, and those tokens are out of scope in the scoring.
 - The speed figures are for one machine with the GIL released where noted.
   Relative numbers hold up better than absolute ones.
-- Confidence scores are not measured: `confidence` is always `None`
-  (`docs/design.md`, decision 43).
-- The Netsyms comparison (`docs/future-sources.md`) found the fixes in the Pub
-  28 notes; it is a source of test cases, not a score.
+- Confidence scores are not measured: `confidence` is always `None`.
 
 ## Rerunning
 
@@ -214,5 +194,6 @@ python benchmarks/size_memory.py
 ```
 
 `benchmarks/README.md` has the setup and what each script needs. The geocode
-benchmark and the Florida sample are in `local-data/` (private); a script skips
-a source that is not there.
+benchmark is not redistributable, so it is not in the repository: download it
+and put it in `local-data/geocode-benchmark/` (`benchmarks/README.md`); a script
+skips a source that is not there.

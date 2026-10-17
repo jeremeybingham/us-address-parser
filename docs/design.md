@@ -601,7 +601,7 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
 56. **Netsyms comparison (done)** (decision 40): `tools/netsyms/` (sample,
     profile, compare), eight parser fixes found by scoring 217,906 uniform US
     rows (99.8% whole-address on rows without source quirks, up from 99.2% to
-    99.5%), corpus `ns-001` to `ns-023` (invented addresses), results in
+    99.5%), corpus `nat-001` to `nat-023` (invented addresses), results in
     `docs/future-sources.md`. The geocode benchmark moved from 96.1% to 96.4%.
 43. **Fuzz targets (done)** (cargo-fuzz) for the tokenizer and assembler, reached through `Parser::parse` and `Parser::parse_fields` plus every emitter. `fuzz/` is outside the workspace (nightly only). Run: `cargo +nightly fuzz run parse` from `fuzz/`.
 44. **Re-check every lexicon table and the USPS emitter rules against the
@@ -1147,7 +1147,7 @@ Made by the author while reviewing the plan after Milestone 6.
     956 US sources) before the first release, accepting parser changes now:
     until release a fix may change a key (`CLAUDE.md`), logged in
     `docs/key-format.md`. Done: `tools/netsyms/` (`sample.py`, `profile.py`,
-    `compare.py`), eight parser fixes with corpus `ns-001` to `ns-023`
+    `compare.py`), eight parser fixes with corpus `nat-001` to `nat-023`
     (invented addresses; the data stays in `local-data/`), and the results in
     `docs/future-sources.md`. NAD direct and OpenAddresses stay deferred to v2
     (`k2`). Decision 39's other points stand: private data is never committed,

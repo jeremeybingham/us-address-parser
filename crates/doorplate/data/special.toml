@@ -10,8 +10,7 @@
 #   28x (Post Office Box); section 237 and Appendix F (highway street names).
 #     https://pe.usps.com/text/pub28/
 #   Placeholder phrases are NOT a USPS rule: they are stand-in text seen in
-#   county assessor and clerk data, collected in auction-tracker
-#   (packages/radar/src/radar/parse/addresses.py, PLACEHOLDER_RE).
+#   Florida county property data.
 # See docs/usps-pub28-notes.md for the section references and verification
 # status of each table.
 #
@@ -71,13 +70,13 @@ forms = ["GENERAL DELIVERY", "GEN DELIVERY", "GENERAL DEL", "GEN DEL"]
 # Pub 28 section 214, Attention Line: placed above the recipient line, with
 # ATTN before the name (https://pe.usps.com/text/pub28/28c2_004.htm). C/O
 # (care of) lines are handled the same way; that is not a Pub 28 term, but
-# DBPR license data uses both in the address lines.
+# Florida address data uses both in the address lines.
 standard = "ATTN"
 forms = ["ATTN", "ATTENTION", "C/O", "CARE OF"]
 
 # Highway prefixes: a prefix followed by a route number is the street name
 # ("COUNTY ROAD 23", "HWY 2301"). The number after it is the road's, not a
-# house number or unit (auction-tracker: "8932 HWY 2301"). Route numbers may
+# house number or unit ("8932 HWY 2301" in county data). Route numbers may
 # carry letters (60E, 1080A, 1150EE) or be letters only (STATE ROUTE MM).
 #
 # Standards are from Pub 28 section 237 and Appendix F ("Address
@@ -235,8 +234,8 @@ phrases = [
 [placeholder]
 # Whole-line stand-ins meaning "no usable street address". Matched against the
 # normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",
-# "00 UNASSIGNED LOCATION RE"). Source: auction-tracker PLACEHOLDER_RE and its
-# tests (Florida county data, but the phrases are generic assessor wording).
+# "00 UNASSIGNED LOCATION RE"). Seen in Florida county data; the phrases are
+# generic assessor wording.
 phrases = [
   "UNKNOWN",
   "PROPERTY ADDRESS UNKNOWN",
@@ -253,13 +252,13 @@ phrases = [
   "PROPERTY LOCATION IS NOT AVAIL",
   "NO ADDRESS",
   "NO ADDRESS ON TAX ROLL",
-  # DBPR license data writes "**Private Address**" for a withheld address.
+  # Florida address data writes "**Private Address**" for a withheld address.
   "PRIVATE ADDRESS",
 ]
 
 [building]
 # Words that end a building name (EAST TOWER, ANNEX BUILDING, MEDICAL PLAZA).
 # Not a USPS rule: Pub 28 has no building line. Taken from usaddress's
-# BuildingName labels and DBPR license data. The tagger takes a name ending in
+# BuildingName labels and Florida address data. The tagger takes a name ending in
 # one of these only after the street or its unit (see docs/usps-pub28-notes.md).
 words = ["ANNEX", "BUILDING", "CENTER", "CENTRE", "COMPLEX", "HALL", "PAVILION", "PLAZA", "TOWER", "TOWERS", "WING"]

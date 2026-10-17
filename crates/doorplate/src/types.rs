@@ -633,8 +633,8 @@ impl Diagnostics {
         self.warnings.contains(w)
     }
 
-    /// Codes of the uncertain decisions the tagger made, in order. Read by
-    /// `tools/calibrate/`; not part of the stable API.
+    /// Codes of the uncertain decisions the tagger made, in order. For tests;
+    /// not part of the stable API.
     #[cfg(feature = "corpus")]
     #[doc(hidden)]
     pub fn decision_codes(&self) -> Vec<&'static str> {

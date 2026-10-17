@@ -49,7 +49,7 @@ Django "address quality" page counts rows by status with no re-parse.
 
 ### Lessons carried into the parser (Milestone 2)
 
-All of these are implemented, with corpus cases in `auction-tracker.jsonl`
+All of these are implemented, with corpus cases in `county-data.jsonl`
 and rules in `docs/usps-pub28-notes.md` ("Parser rules"):
 
 - **Trailing bare units** after a street type: `4 PORTOFINO DR 706`,
@@ -109,9 +109,9 @@ LUCIE COUNTY`) gets no place rather than the ZIP's, and SR/CR stay open.
 
 `tests/test_addresses.py` has 33 labeled street lines,
 16 placeholders and a dozen full cases; all are in
-`auction-tracker.jsonl` except the ones that need a place list. The raw
+`county-data.jsonl` except the ones that need a place list. The raw
 address lines in the golden CSVs under `tests/golden/v2/` (305 rows from 8
-counties) seeded `auction-tracker-golden.jsonl`; those CSVs hold the old
+counties) seeded `county-data-golden.jsonl`; those CSVs hold the old
 parser's output, so the labels were written by hand.
 
 Finding from that pass: `WINGATE ST 32507` parses as a street plus ZIP, but
