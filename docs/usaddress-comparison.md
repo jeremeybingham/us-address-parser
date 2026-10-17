@@ -52,7 +52,7 @@ plan items are in `docs/design.md`).
 | Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug | Done |
 | Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; `confidence` reserved, always `None` (deferred, decision 43) | Backlog |
 | Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit | Done |
-| Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer (decision 22, Milestone 9) |
+| Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer, deferred past the first release (decision 45) |
 | Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed`. A trailing country is ignored with `country_ignored` and an intersection raises `intersection_detected` (planned) | Milestone 8, items 54 and 55; the rest stays unmodeled (design section 13) |
 | Display casing, long form | Keeps input case | Uppercase only | Open decisions (Milestone 9, item 51) |
 | Batch and dataframes | Loop yourself | `parse_many` (parallel; GIL released in Python, 6x a loop); tested pandas and Polars recipes | Optional extras (decision 26, Milestone 9) |
@@ -60,8 +60,10 @@ plan items are in `docs/design.md`).
 
 **Customization without retraining.** usaddress adapts by labeling data and
 retraining offline. This parser does not build a CRF (design.md decision 32):
-the custom layer is the plan for adapting it, a few lines of aliases or
-places, no retraining, and the change is visible in review.
+the custom layer (designed, deferred past the first release, decision 45) is
+the plan for adapting it: a few lines of aliases or places, no retraining,
+and the change is visible in review. Until it exists, a misparse is fixed in
+the shipped tables.
 
 ## Label mapping
 

@@ -109,13 +109,14 @@ three source comments.
       interface; the output fields; the key and slug in one paragraph each;
       accuracy and speed in a few numbers with a link (section 4); what it
       does not do (it formats and parses; it does not validate
-      deliverability); customization (link to the custom-layer guide, item
-      60); examples (item 59); license and attribution.
+      deliverability); customization (the custom layer is deferred, decision
+      45: say so, no guide link); examples (item 59); license and attribution.
 - [ ] Diagrams (ASCII or Markdown/Mermaid), in the README or a
       `docs/how-it-works.md`: the pipeline (clean, tokenize, classify, tag,
       assemble, place, emit); how the last line is read right to left and
       the delivery line from both ends; the lexicon layers (base tables,
-      national places, state packs, custom layer) behind `Lexicons`; one
+      national places, state packs; the deferred custom layer as a
+      dotted box) behind `Lexicons`; one
       address traced through to its key, USPS and RESO forms.
 - [ ] `crates/addr-py/README.md`: the same treatment for the Python package
       (PyPI shows it).

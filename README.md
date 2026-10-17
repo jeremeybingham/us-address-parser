@@ -13,7 +13,7 @@ identifiers (a canonical match key and a URL-safe slug).
 > addresses right (coarse) against usaddress's 88.2%
 > ([`docs/usaddress-comparison.md`](docs/usaddress-comparison.md)). **Nothing is
 > published yet**: next is release hardening (packaging, the Pub 28
-> recheck), then a custom layer. `confidence` is reserved and always `None`
+> recheck). A custom layer is deferred past the first release. `confidence` is reserved and always `None`
 > in the first release (a calibrated score is deferred, `docs/design.md`
 > decision 43).
 > [`docs/design.md`](docs/design.md) section 10 has the plan in build order;
@@ -45,7 +45,8 @@ is out of scope.
 
 Validation or deliverability, geocoding, fuzzy matching, address correction,
 and international addresses. The shipped lexicons are fixed at compile time;
-customization will be an add-only custom layer (planned, Milestone 9).
+an add-only custom layer is designed but deferred past the first release
+(`docs/design.md` decision 45).
 
 ## Coming from usaddress
 
@@ -57,7 +58,7 @@ The labels are usaddress's, so a pipeline built on them keeps working:
 | `usaddress.tag(s)`: `(dict, type)` | `a.tag()` and `a.tag().usaddress_type()`; `addr parse --tag` | `tag(s)` |
 | `RepeatedLabelError` | not raised: the runs are joined and `tag().repeated_labels()` lists the labels | `parse(s).repeated_labels()` |
 | `Street Address`, `PO Box`, `Ambiguous` | `a.address_type()` is finer (`Street`, `PoBox`, `RuralRoute`, `Military`, `GeneralDelivery`, `Dual`, `Unknown`); `usaddress_type()` gives the three by usaddress's own rule | `parse(s).address_type()`; `tag(s)` returns the three |
-| Retrain to fix a misparse | no model to retrain; a custom layer of aliases and places is planned (Milestone 9) | the same |
+| Retrain to fix a misparse | no model to retrain; a custom layer of aliases and places is designed but deferred past the first release, so report the input to get the shipped tables fixed | the same |
 
 What differs:
 
