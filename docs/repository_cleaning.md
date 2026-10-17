@@ -12,7 +12,7 @@ the plan or the backlog (`CLAUDE.md`).
 
 ## When
 
-After the code for the first release is final: Milestone 7, items 44, 57,
+After the code for the first release is final: items 44, 57,
 58 and 45, and whichever Milestone 9 items ship in the first release
 (section 13, open decisions). Code changes after the cleaning pass mean
 re-checking the sections below for the files they touch.
@@ -171,3 +171,35 @@ The rename itself is item 45, with the name chosen in item 58. After it:
 - [ ] Archive the old repository (private) rather than delete it, so the
       development history stays available to the author.
 - [ ] Publish from the new repository (item 46); `k1` freezes there.
+
+## 8. Confidence is deferred (decision 43)
+
+The first release ships `confidence = None`. Text and code that promise or
+imply a score, to settle in the cleaning pass:
+
+- [x] README status block (facts corrected 2026-10-17; tone stays for the pass): no "then calibrated confidence"; say `confidence`
+      is reserved and always `None` (`README.md`, `crates/addr-py/README.md`,
+      the `confidence` docstrings in `types.rs` and `addr-py/src/lib.rs`, the
+      `.pyi` stub has no docstring to change, `docs/usaddress-comparison.md`
+      feature table).
+- [x] `docs/future-sources.md`: "confidence (still `None`; item 36 and
+      Milestone 7)" and the optional NAD calibration step point to the
+      backlog entry "Calibrated confidence" instead of item 38.
+- [ ] `CHANGELOG.md`: item 37's "will be fitted on them (item 38)" line stays
+      historical; the release notes say `confidence` is reserved.
+- [ ] `tools/calibrate/`: decide what the fresh repository keeps. The
+      labeling tools (`sample_fl.py`, `label.py`, `triage.py`) work on the
+      private Florida sample and name its sources; `fit.py` is generic.
+      Recommend keeping `fit.py` and its README section as the starting
+      point for the deferred work, and moving the sample tools out or
+      renaming them (section 3).
+- [ ] The tagger's decision export (`Diagnostics` internal field,
+      `decision_codes`, `addr corpus features`, `addr parse --features`,
+      `Corpus::features`) is groundwork for the later fit. It is hidden from
+      the docs and behind the `corpus` feature; keep it unless the pass
+      finds it confusing.
+- [ ] `docs/benchmarks.md` (item 57) has no calibration section; if it is
+      wanted later it comes with the backlog entry.
+- [x] The Python test `test_absent_components_are_none_and_confidence_is_reserved` (renamed)
+      keeps asserting `None`.
+

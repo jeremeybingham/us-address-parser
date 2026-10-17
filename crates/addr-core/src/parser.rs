@@ -437,6 +437,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "corpus")]
     #[test]
     fn decisions_reach_the_diagnostics() {
         let p = Parser::new();

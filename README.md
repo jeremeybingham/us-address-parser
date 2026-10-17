@@ -13,7 +13,9 @@ identifiers (a canonical match key and a URL-safe slug).
 > addresses right (coarse) against usaddress's 88.2%
 > ([`docs/usaddress-comparison.md`](docs/usaddress-comparison.md)). **Nothing is
 > published yet**: next is release hardening (packaging, the Pub 28
-> recheck), then calibrated confidence and a custom layer.
+> recheck), then a custom layer. `confidence` is reserved and always `None`
+> in the first release (a calibrated score is deferred, `docs/design.md`
+> decision 43).
 > [`docs/design.md`](docs/design.md) section 10 has the plan in build order;
 > section 13 has the decisions.
 

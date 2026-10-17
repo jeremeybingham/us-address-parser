@@ -1,7 +1,9 @@
 # tools/calibrate
 
-Tools for the hand-labeled Florida sample that calibrated confidence is
-fitted on (`docs/design.md` Milestone 7, items 36 and 38). The sample and
+Tools for the hand-labeled Florida sample (`docs/design.md` Milestone 7,
+item 36) and an exploratory fit of a confidence score (item 38, **deferred
+past the first release**, decision 43: the data supports only a coarse
+score, so `confidence` stays `None`). The sample and
 everything derived from it stay in `local-data/florida-sample/`; nothing
 under that folder is committed.
 
@@ -10,7 +12,7 @@ under that folder is committed.
 | `sample_fl.py` | Draws the sample (seeded) and writes draft records pre-filled with the current parse; `--status` counts what is left |
 | `label.py` | Labels rows one at a time in the terminal (the author's tool) |
 | `triage.py` | Sorts unlabeled rows into clear and review, accepts or applies labels in bulk (collaborative mode, below) |
-| `fit.py` | Fits the confidence score (item 38) on the corpus, usaddress's test files and the Florida sample; `--report` writes the calibration report, `--out` the fitted model as TOML |
+| `fit.py` | Exploratory, not shipped: fits a confidence score on the corpus, usaddress's test files and the Florida sample; `--report` writes the calibration report, `--out` the fitted model as TOML |
 
 Each record's `note` says who labeled it: no marker for the author (via
 `label.py`), `by=assistant` for a draft the assistant checked and accepted,
@@ -90,7 +92,11 @@ computed rules as `label.py`.
 - Never copy rows out of `local-data/`, and never repeat a person's name in
   chat or in committed files (an attention line may hold one).
 
-## Fitting the score (`fit.py`)
+## Fitting the score (`fit.py`, exploratory)
+
+Nothing it writes ships. It is the starting point for the backlog entry
+"Calibrated confidence" in `docs/design.md` section 13, which lists the
+labeled data a score needs first.
 
 ```sh
 cargo build --release -p addr-cli

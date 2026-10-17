@@ -4,6 +4,17 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Confidence score deferred (item 38, decision 43)
+
+- `Diagnostics::confidence` stays `None` in the first release: the labeled
+  data supports only a coarse score. The field is kept (reserved) so that
+  adding the score later changes no signature.
+- `tools/calibrate/fit.py` fits a sign-constrained logistic model on the
+  corpus, usaddress's test files and the Florida sample (exploratory; nothing
+  it writes ships). `addr corpus features` and `addr parse --features` print
+  the tagger's decisions and the warnings per case for it. No parse or output
+  changes.
+
 ### Parser fixes from the Florida sample (item 36)
 
 - A highway route may start with a letter after a highway prefix

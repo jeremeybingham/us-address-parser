@@ -620,13 +620,13 @@ impl fmt::Display for Warning {
 pub struct Diagnostics {
     pub warnings: Vec<Warning>,
     pub unparsed: Option<String>,
-    /// Planned: the calibrated probability (0.0 to 1.0) that the whole parse
-    /// is right. `None` until calibrated (`docs/design.md` section 13,
-    /// decision 12).
+    /// Reserved: a calibrated probability (0.0 to 1.0) that the whole parse
+    /// is right. Always `None` in this release; the score is deferred
+    /// (`docs/design.md` section 13, decisions 12 and 43).
     pub confidence: Option<f32>,
     pub library_version: &'static str,
-    /// The uncertain rules that settled a boundary (item 37), the input of
-    /// the confidence score.
+    /// The uncertain rules that settled a boundary (item 37), the input of a
+    /// future confidence score.
     pub(crate) decisions: Vec<Decision>,
 }
 
@@ -638,6 +638,7 @@ impl Diagnostics {
 
     /// Codes of the uncertain decisions the tagger made, in order. Read by
     /// `tools/calibrate/`; not part of the stable API.
+    #[cfg(feature = "corpus")]
     #[doc(hidden)]
     pub fn decision_codes(&self) -> Vec<&'static str> {
         self.decisions.iter().map(|d| d.code()).collect()

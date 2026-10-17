@@ -102,7 +102,7 @@ conventions could rank the state packs worth building (plan steps 5 below).
 
 Not measured, so not claimed: real (not rendered) mixed-case and multi-line
 input from other states, PO Boxes and routes outside the corpus, and
-confidence (still `None`; item 36 and Milestone 7). The Netsyms rows are
+confidence (always `None` in the first release; decision 43). The Netsyms rows are
 street addresses rendered from the source's fields, not messy human input. The place list finds
 87.4% of the benchmark's cities (`docs/places.md`). The library formats and
 parses; it does not check that an address exists or is deliverable.
@@ -171,9 +171,10 @@ the repository or in `local-data/`.
    did for Florida; per-state road conventions (`SR`, `CR`, `FM`) say which
    state packs are worth building; rows for one point in different renderings
    check key stability.
-6. **Optional:** a NAD sample as one more calibration source for the
-   confidence score (item 38), with the hand-labeled Florida sample as the
-   check and the geocode benchmark check-only.
+6. **Optional:** a NAD sample as one more source for the deferred confidence
+   score (backlog entry "Calibrated confidence", decision 43), with the
+   hand-labeled Florida sample as the check and the geocode benchmark
+   check-only.
 
 Revisit earlier if real use shows a persistent class of misparses, or when
 the author has the disk and wants the v2 work to start.
