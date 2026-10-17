@@ -332,7 +332,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
   signature.
 - Deferred (decision 45): `Parser(custom_layer=path_or_text)`. Not in the first release.
 - No pandas or Polars dependency. The README has tested recipes for both
-  (Polars first; 0.34 s against 0.45 s to build a 7-column frame from 100,000
+  (Polars first; 0.40 s against 0.49 s to build a 7-column frame from 100,000
   addresses). Optional helpers come later (Milestone 9, item 50; decision 26)
   as pure-Python extras that call `parse_many`. Multi-field input has no batch
   call (loop over `parse_fields`, or join the columns).
@@ -613,7 +613,7 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     to two letters (`ROUTE 1150EE`); 958 of 440,288 Florida licensee keys
     changed (`docs/key-format.md`), the geocode benchmark is unchanged at
     96.4%.
-57. **Benchmarks for the release** (decision 42): measure and write up, in
+57. **Benchmarks for the release (done 2026-10-17)** (decision 42): measure and write up, in
     `docs/benchmarks.md` (which replaces `docs/usaddress-comparison.md` in
     item 61): accuracy on the blind geocode benchmark, the golden corpus and
     the hand-labeled sample; speed in Rust (one by one, `parse_many` with
@@ -621,7 +621,9 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     same inputs and machine); memory, binary and wheel size. Confidence is not
     measured: it is `None` (decision 43). Scripts in `benchmarks/` so the numbers can be
     rerun; machine and versions recorded. usaddress is one reference point,
-    not the frame.
+    not the frame. Done: `benchmarks/` (accuracy, Python and Rust speed, size
+    and memory) and `docs/benchmarks.md`; the run found the parser 24% slower
+    than on 2026-10-16 (backlog "Parser speed").
 58. **Choose the name (done: `doorplate`, decision 46)** **(author)** (decision 42, replacing the names of
     decision 33): one name for the Rust crates, the Python package, the
     import, the CLI and the repository, free on crates.io, PyPI and GitHub
@@ -877,11 +879,13 @@ extensible; no state-specific rule in the tagger.
 - **Fuzzing** (item 43) ran for minutes per target before the first release, not
   hours; run longer before publishing (item 46). Proptest also covers the
   never-panic rule.
-- **Python boundary overhead** for single-address calls (about 15 us each);
-  `parse_many` is 6x faster on a batch, and the README says so.
+- **Python boundary overhead** is small next to the parse: a call from Python
+  takes about what the Rust parse does (21 us against 22 us on the corpus,
+  `docs/benchmarks.md`); `parse_many` is 6.6x faster on a batch, and the README
+  says so.
 - **Packaging.** An sdist and a crate lack `data/` until item 45; the
-  crates.io name `doorplate` is taken (decision 33). Both are known
-  and scheduled.
+  name must be reserved on crates.io and PyPI before publishing (decision 46).
+  Both are known and scheduled.
 - **Migration friction from usaddress.** Users expect `tag()`, the label names
   and an `address_type`, and a way to adapt the parser to odd data. The first
   three are done (Milestone 6); the last is the custom layer (deferred,
@@ -1315,6 +1319,14 @@ decided (decisions 36 to 38). These remain:
 
 Known work with no place in section 10 yet. Move an item into section 10
 when it is scheduled.
+
+- **Parser speed.** Item 57 found `parse` 24% slower than on 2026-10-16 (the
+  item 34 build): 30,000 geocode addresses through `parse -` took 1.25 s then
+  and 1.55 s now (`docs/benchmarks.md`). One address is 10 to 23 us in Rust.
+  Nothing needs it, but a profile (`cargo bench -p doorplate --bench parse`,
+  then `perf` or a flamegraph) may find a cheap win, such as lexicon lookups
+  that build a key string per call. Bisect between `319d730` and now to see
+  which change cost it.
 
 - **Custom layer** (items 47 to 49 and 60, deferred by decision 45). Build it
   when someone has a real layer to test: a local community the place list

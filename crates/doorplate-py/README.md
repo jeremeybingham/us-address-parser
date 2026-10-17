@@ -139,7 +139,7 @@ For every field with pandas, use `to_dict()` and
 `pd.json_normalize([a.to_dict() if a else {} for a in parsed])`.
 
 Calling `to_dict()` on every row costs about as much as parsing again (the
-loop with `to_dict` ran at 55,000 per second), and reading attributes from
+loop with `to_dict` ran at 24,000 per second), and reading attributes from
 100,000 Python objects is now most of the time, so pick columns when you can.
 Pre-split columns (`line1`, `city`, ...) have no batch call yet: loop over
 `parse_fields`, or join the columns with commas and use `parse_many`.

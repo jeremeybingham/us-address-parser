@@ -178,10 +178,10 @@ docs/               design and format specs
 .github/workflows/  ci.yml (Rust and Python tests) and wheels.yml (abi3 wheels)
 ```
 
-Published names (nothing is published yet): the Python package is
-`doorplate` on PyPI; the Rust crates will be `doorplate` and
-`doorplate-cli` (`doorplate` is taken on crates.io; design.md decision
-33); the CLI binary is `doorplate`, with `addr` as an alias.
+Names (nothing is published yet; the name is reserved on the registries
+before publishing, design.md decision 46): the Python package and the Rust
+core crate are `doorplate`, the CLI crate is `doorplate-cli`, and the CLI
+binary is `doorplate`, with `addr` as an alias.
 
 ## Documentation
 
