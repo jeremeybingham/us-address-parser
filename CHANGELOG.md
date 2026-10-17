@@ -13,6 +13,11 @@ Nothing is released yet. Entries are newest first.
   skipping inputs already in the corpus. It writes corpus-format records
   pre-filled with the current parse for the author to correct; `--status`
   counts what is left. The rows stay in `local-data/`.
+- `tools/calibrate/label.py` labels the sample row by row in the terminal:
+  the draft is hidden until asked for, suffixes, directionals, unit types and
+  states are picked from the standard forms, the warnings that follow from
+  the fields are computed, every saved row passes the corpus runner's
+  checks, and rows that differ from the parser get a line in `NOTES.md`.
 
 ### The tagger records its uncertain decisions (Milestone 7, item 37)
 

@@ -145,15 +145,22 @@ def structured(comp):
     return c
 
 
-def draft(exe, record, src, stratum):
+def parser_answer(exe, record):
+    """The parser's current parse of `record` as corpus `expect` and
+    `warnings` (also used by `label.py` to show what changed)."""
     d = parse(exe, record)
     expect = structured(d["components"])
     if d["unparsed"]:
         expect["unparsed"] = d["unparsed"]
+    return expect, d["warnings"]
+
+
+def draft(exe, record, src, stratum):
+    expect, warnings = parser_answer(exe, record)
     record["expect"] = expect
-    record["warnings"] = d["warnings"]
+    record["warnings"] = warnings
     record["note"] = f"src={src}; stratum={stratum}; TODO"
-    flagged = bool(d["unparsed"]) or any(w not in PLAIN for w in d["warnings"])
+    flagged = "unparsed" in expect or any(w not in PLAIN for w in warnings)
     return record, flagged
 
 
