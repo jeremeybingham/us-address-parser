@@ -13,7 +13,7 @@ This product includes data from third parties under their own terms:
 - US Census Bureau Gazetteer files and 2020 reference lists (public domain),
   used for place names, county subdivisions and counties in crates/doorplate/data/packs/ and
   crates/doorplate/data/places/.
-- Florida Department of Business and Professional Regulation licensee
-  addresses (public record), used for observed city and ZIP pairs and street
-  spellings in crates/doorplate/data/packs/fl/ (see docs/packs/fl.md).
+- Florida public-record address data, used for observed city and ZIP pairs
+  and street spellings in crates/doorplate/data/packs/fl/ (see
+  docs/packs/fl.md). Public record; no attribution is required.
 - usaddress test data (MIT, datamade), vendored in tests/external/usaddress/.
