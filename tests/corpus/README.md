@@ -5,7 +5,7 @@ Labeled addresses with their expected parse, one JSON record per line in
 run by `crates/doorplate/tests/corpus.rs` and by `doorplate corpus test`:
 
 ```sh
-addr corpus test [--verbose] [--update-baseline]            # same runner, from the CLI
+doorplate corpus test [--verbose] [--update-baseline]       # same runner, from the CLI
 cargo test -p doorplate --test corpus -- --nocapture   # accuracy report
 CORPUS_VERBOSE=1 cargo test -p doorplate --test corpus -- --nocapture   # plus field diffs
 UPDATE_CORPUS_BASELINE=1 cargo test -p doorplate --test corpus   # record passing cases
@@ -22,21 +22,22 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
 ## Record format
 
 ```json
-{"id": "at-street-005", "input": "4158 INVERRARY DR #309",
+{"id": "cty-street-005", "input": "4158 INVERRARY DR #309",
  "expect": {"street_number": "4158", "street_name": "INVERRARY", "street_suffix": "DR", "unit_number": "309"},
  "warnings": ["missing_city", "missing_state", "missing_zip"],
  "note": "# designator: unit_type stays empty"}
 ```
 
-- `id`: unique across all files. Prefixed with the source: `at-`
-  (auction-tracker tests), `atg-` (auction-tracker golden CSVs), `p28-`
+- `id`: unique across all files. Prefixed with the source: `cty-`
+  (shapes seen in Florida county address listings, `county-data.jsonl`),
+  `cty-golden-` (the same, from raw listing lines, `county-data-golden.jsonl`), `p28-`
   (Pub 28 examples), `rg-` (regressions), `key-`, `reso-` (emitter cases),
   `fl-` (Florida pack, `fl-pack.jsonl`), `pl-` (national place list outside
   Florida, `places-us.jsonl`), `ds-` (`default_state`, `default-state.jsonl`),
   `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
   `co-` (trailing country, `country.jsonl`),
   `is-` (intersections, `intersections.jsonl`),
-  `ns-` (shapes found in the Netsyms data, `netsyms.jsonl`);
+  `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
@@ -107,7 +108,7 @@ Emitter expectations are optional record keys, checked only when present
   fields; `StreetNumberNumeric` is written as its decimal text. Write expected
   values from `docs/reso-mapping.md`, not by copying the emitter's output.
 
-Most cases in `auction-tracker.jsonl`, `auction-tracker-golden.jsonl`,
+Most cases in `county-data.jsonl`, `county-data-golden.jsonl`,
 `pub28.jsonl` and `regressions.jsonl` carry `key`, `key_unit`, `slug` and
 `usps` expectations, and the ones with a state and ZIP also `reso`. They were
 generated from each case's hand-labeled `expect` by
@@ -160,44 +161,23 @@ not standard forms from the lexicon tables.
 The tagger follows these conventions; its rules and their sources are in
 `docs/usps-pub28-notes.md` ("Parser rules").
 
-## Sources
+## Files
 
-### `auction-tracker.jsonl`
+Ids are never a public contract; a case can be renamed or merged.
 
-Hand-labeled from the author's auction-tracker repository,
-`packages/radar/tests/test_addresses.py` (reviewed 2026-10-14; see
-`docs/prior-art.md`). Inputs are Florida county auction listings. The
-expected values restate that file's assertions in this library's schema:
-auction-tracker keeps the predirectional, name and suffix in one
-`street_name` string and has no unit type, so those are split here by hand.
-Where that file's labels depend on its Florida place list, the case is left
-out (see below).
+### `county-data.jsonl`
 
-### `auction-tracker-golden.jsonl`
+Ids `cty-street-`, `cty-full-`, `cty-placeholder-` and `cty-highway-`.
+Address shapes seen in Florida county property listings, hand-labeled in this
+library's schema: house number letters, units with and without designators,
+highways, placeholders such as `UNKNOWN` and `NO SITUS`. Cases that need a
+place list are in `fl-pack.jsonl` instead.
 
-Ids start with `atg-`. Hand-labeled from the raw `address_line1` /
-`address_line2` columns of auction-tracker's
-`packages/radar/tests/golden/v2/*.csv` (Brevard, Charlotte, Citrus, Escambia,
-Hernando, Lee, Miami-Dade, Orange; reviewed 2026-10-15). Only the input
-shapes were taken, one case per distinct shape; the CSVs' parsed columns
-were not used as expected values. Ids `atg-006` and `atg-028` are unused, and `atg-029` was added later
-(cases dropped after review: an ambiguous street-plus-ZIP round trip, and
-empty input, which is an error by design decision 6 rather than a parse).
+### `county-data-golden.jsonl`
 
-Not taken from auction-tracker:
-
-- `tests/golden/v2/*.csv`. These are auction-tracker's own parser output,
-  not hand-checked labels, so using them as expected values would copy its
-  mistakes. They can be used as unlabeled inputs, or labeled after review.
-- Cases that need a place list, deferred to the Florida state pack
-  (`docs/design.md` section 11): a city run into the street
-  (`13551 WILSON STREETDADE CITY`), a cut-off city completed from the county's
-  places (`26322 BRAHMA DRIVEWESLEY CHA`, `7709 SEASHORE DRIVEPORT RICH`), and
-  a city taken from the ZIP (`TAL`, `SAINT LUCIE COUNTY`).
-
-The highway routes `8932 HWY 2301` and `3911 HIGHWAY 97` were held back
-until `ParsedAddress` had a highway field; they are `at-highway-001` and
-`at-highway-002`.
+Ids `cty-golden-001` and up. One case per distinct shape in raw address lines
+from eight Florida county listings. Only the inputs were taken; the expected
+values were labeled by hand, not copied from any parser's output.
 
 ### `pub28.jsonl`
 
@@ -212,9 +192,9 @@ present where Pub 28's example has one.
 
 ### `regressions.jsonl`
 
-Cases for parsing bugs found while building the tagger (`CLAUDE.md`: every
-parsing bug fixed gets a case), and the multi-field shapes from
-`docs/prior-art.md`. Ids start with `rg-`; each note says what went wrong.
+Cases for parsing bugs found over time, from Florida address data and from
+other tests (`CLAUDE.md`: every parsing bug fixed gets a case). Ids start with
+`rg-`; each note says what went wrong.
 
 ### `keys.jsonl`, `reso.jsonl`
 
@@ -227,17 +207,17 @@ field values (`reso-`), written from `docs/key-format.md` and
 Ids `fl-001` to `fl-033`. The Florida pack and the national place list on
 Florida input: a city on one line with no commas, a city run into the street,
 cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, the
-observed ZIP places, `CR` as CIRCLE, `SR` as STATE ROAD, and the communities and
-spellings added from the DBPR exports (`docs/packs/fl.md`). `fl-013` and
-`fl-019` are Georgia and Colorado inputs that show a state with no curated
-pack. They need the default features (`state-fl`, `places-us`).
+observed ZIP places, `CR` as CIRCLE, `SR` as STATE ROAD, and communities and
+spellings added to the pack (`docs/packs/fl.md`). `fl-013` and `fl-019` are
+Georgia and Colorado inputs that show a state with no curated pack. They need
+the default features (`state-fl`, `places-us`).
 
 ### `places-us.jsonl`
 
 Ids `pl-001` to `pl-008`. The same place behaviors in states with no curated
 pack (`ST LOUIS`, `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`, a
 cut-off city, the place from the ZIP), and `zip_city_mismatch` not raised
-there (design.md decision 30).
+there.
 
 ### `default-state.jsonl`
 
@@ -248,26 +228,28 @@ hinted state, and the input's own state or a known ZIP winning over the hint.
 ### `country.jsonl`
 
 Ids `co-001` to `co-015`: a trailing `USA`, `US`, `UNITED STATES` or
-`UNITED STATES OF AMERICA` (decision 36, item 54) on one line, on its own
-line, in line 2, in the city field and in the state field, each with
-`country_ignored`; and `US` as a highway prefix, which is not a country.
+`UNITED STATES OF AMERICA` on one line, on its own line, in line 2, in the
+city field and in the state field, each with `country_ignored`; and `US` as a
+highway prefix, which is not a country.
 
-### `netsyms.jsonl`
+### `national-data.jsonl`
 
-Ids `ns-001` to `ns-023`: parser fixes found by comparing the parser with the
-Netsyms Address Database (`docs/future-sources.md`). The addresses are
-invented (the data is private and stays in `local-data/`): words that merely
-begin with a suffix spelling and end in a place name (`CREEKWOOD`,
-`PICO RIVERA`, `AVENIDA DE LA LUNA`, `STRAND`), a word after `#`, values after
-a designator (`APT I4`, `# 2WD`), a letter range (`APT A-D`), `U S ROUTE`, a postdirectional `NE` before a city that starts with NE, a state code that is also a suffix spelling (`CT`, `LA`, `WY`) settled by its ZIP, and `WASHINGTON DC`.
+Ids `nat-001` to `nat-023`: parser fixes found by comparing the parser with a
+national address database. The addresses are invented (the database is not
+redistributable and is not in the repository): words that merely begin with a
+suffix spelling and end in a place name (`CREEKWOOD`, `PICO RIVERA`,
+`AVENIDA DE LA LUNA`, `STRAND`), a word after `#`, values after a designator
+(`APT I4`, `# 2WD`), a letter range (`APT A-D`), `U S ROUTE`, a postdirectional
+`NE` before a city that starts with NE, a state code that is also a suffix
+spelling (`CT`, `LA`, `WY`) settled by its ZIP, and `WASHINGTON DC`.
 
 ### `intersections.jsonl`
 
-Ids `is-001` to `is-013` (decision 37, item 55): two streets joined by `&`,
-`AND`, `@` or `AT`, with the first street as components, the second in
-`unparsed`, `intersection_detected`, and `none` for key and slug; plus the
-look-alikes that are one street (`LAND AND SEA RD`, `BEACH AT SEA DR`,
-`STATE AND MAIN ST`, `AT&T WAY`), which must not warn.
+Ids `is-001` to `is-013`: two streets joined by `&`, `AND`, `@` or `AT`, with
+the first street as components, the second in `unparsed`,
+`intersection_detected`, and `none` for key and slug; plus the look-alikes that
+are one street (`LAND AND SEA RD`, `BEACH AT SEA DR`, `STATE AND MAIN ST`,
+`AT&T WAY`), which must not warn.
 
 ### `tag.jsonl`
 
