@@ -18,3 +18,4 @@ Rust-core US address parser with a PyO3 Python wrapper. Read docs/design.md firs
 - Python: in `crates/addr-py`, `maturin develop`, then `pytest crates/addr-py/tests`.
 - Parse-rule changes also need a row in docs/usps-pub28-notes.md (its source, even when the source is data rather than USPS). Re-run `python3 tools/corpus/emit_expect.py --check tests/corpus/*.jsonl` after changing a rule the corpus emitters follow.
 - Private data (DBPR exports, the geocode benchmark) stays in `local-data/`; never commit it or print licensee names.
+- Text-only cleanup for the release (build-process wording, naming the private data sources, README tone, old names) is deferred: add it to `docs/repository_cleaning.md`, do not apply it piecemeal.

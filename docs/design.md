@@ -16,6 +16,7 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 | `docs/prior-art.md` | Lessons from the author's Florida address code |
 | `tests/corpus/README.md` | Golden-corpus record format and labeling conventions |
 | `crates/addr-py/README.md` | The Python package: API, batch and dataframe recipes, usaddress mapping |
+| `docs/repository_cleaning.md` | Text changes deferred to the fresh repository before the first release (decision 42) |
 | `CHANGELOG.md` | What changed, newest first (everything is "Unreleased" until item 46) |
 
 **Status (2026-10-16):** Milestones 0 to 6 are done. The Rust library and
@@ -37,6 +38,10 @@ fuzz targets (item 43). What is left of it (the Pub 28 recheck, the rename
 and data packaging, publishing) waits for Milestone 7: item 37 (the tagger
 records its uncertain decisions) is done; next are the author's hand-labeled
 Florida sample (item 36), then the fitted score (item 38). The custom layer is Milestone 9.
+Before release (decision 42): benchmarks (item 57), a new name (item 58),
+examples (item 59), a customization guide (item 60), the text cleaning in
+`docs/repository_cleaning.md` (item 61), and a fresh repository with no
+history (item 62), from which the first release is published.
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the decisions and the unscheduled backlog.
 
@@ -126,7 +131,7 @@ they cause friction.
 | 7 | Lexicon extensibility | Shipped lexicons and state packs are fixed at compile time. Users customize through an add-only runtime **custom layer** in the state-pack format (section 11; decision 22), planned for Milestone 9. |
 | 8 | Data sources | USPS Pub 28 and the RESO Data Dictionary; provenance of each table documented. |
 | 9 | Python surface *(default)* | Done: typed objects plus `to_dict()`, and a usaddress-shaped `tag()` with `address_type` (decision 23). No pandas/Polars dependency in the wheel; tested recipes in the README, and optional dataframe helpers come later as extras (decision 26). |
-| 10 | Distribution *(default)* | abi3 wheels (built on every pull request for Linux, macOS and Windows); library and key-format versions tracked independently. Names: PyPI `us-address-parser`; crates.io `us-addr-core` and `us-addr-cli` (decision 33). |
+| 10 | Distribution *(default)* | abi3 wheels (built on every pull request for Linux, macOS and Windows); library and key-format versions tracked independently. Names: to be chosen (item 58, decision 42); decision 33's PyPI `us-address-parser` and crates.io `us-addr-core`, `us-addr-cli` are dropped. |
 | 11 | Compatibility | Own schema; optional usaddress-compatible output, both done: per-token labels (`to_usaddress_tags()`) and joined components with an address type (`tag()`; decision 23). |
 | 12 | License | MIT OR Apache-2.0 (confirmed 2026-10-15). |
 | 13 | Component spans | Byte ranges into the **original** input, not the cleaned text. `clean.rs` keeps a map from cleaned to original offsets. For multi-field input a span also names its field. |
@@ -296,7 +301,7 @@ does include the city.
 
 ## 7. Python wrapper (`addr-py`, done)
 
-Package `us_address_parser` (PyPI `us-address-parser`; decision 33), the
+Package `us_address_parser` (a working name; the published name is chosen in item 58, decision 42), the
 extension module `us_address_parser._core`: PyO3 0.30 with maturin, **abi3
 wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 `crates/addr-py/README.md`.
@@ -360,9 +365,11 @@ it says little about unseen data; the blind benchmark is the better measure.
 Each milestone ends with passing tests. Each numbered item is one pull
 request (its commits listed where it has more than one), small enough to
 review on its own and leaving `main` green. Milestones 0 to 6 are done; the
-open items are 36 and 38 (Milestone 7; 37 is done), 44 to 46 (Milestone 8)
-and 47 to 51 (Milestone 9). Build order (decision 41): 37, 36, 38, then 44,
-45, 46; Milestone 9 may run beside them. An item marked **(author)** needs the author's data or
+open items are 36 and 38 (Milestone 7; 37 is done), 44 to 46, 57, 58, 61
+and 62 (Milestone 8), and 47 to 51, 59 and 60 (Milestone 9). Build order
+(decisions 41 and 42): 37, 36, 38, then 44, 57, 58, 45, 61, 62, 46.
+Milestone 9 may run beside them; the items chosen for the first release
+(section 13, open decisions) land before 61. An item marked **(author)** needs the author's data or
 decision before it can start; **(any time)** has no dependency and can go
 in wherever it fits.
 
@@ -541,6 +548,9 @@ the Pub 28 recheck cover the final rules. Items 44 to 46 wait for Milestone 7
 (decision 41): the Pub 28 recheck must cover any rule the Florida sample
 changes, and packaging must carry item 38's fitted table. The rename and
 packaging checks of item 45 may be tried early, but are redone after item 38.
+Items 57, 58, 61 and 62 (decision 42) prepare the release: measured
+benchmarks, a name, the text cleaning and a fresh repository. Release order:
+44, 57, 58, 45, 61, 62, 46.
 
 53. **Remove the unused surface (done)** (decision 35): `Diagnostics::model_version`
     (Rust, Python property, stub) and the empty `crf` cargo feature. No parse
@@ -564,21 +574,48 @@ packaging checks of item 45 may be tried early, but are redone after item 38.
 44. **Re-check every lexicon table and the USPS emitter rules against the
     live Pub 28 pages** (`docs/usps-pub28-notes.md`, "Verification
     status"). Last before release, so the check covers the final tables.
-45. **Rename and package for publishing** (decision 33):
-    - Rust crates `addr-core` and `addr-cli` become `us-addr-core` and
-      `us-addr-cli` (free on crates.io); the Python package is
-      `us-address-parser` (free on PyPI), import `us_address_parser`; the CLI
-      binary stays `addr`. `us-address-parser` is **not** available on
-      crates.io (it is the same name as the existing `us_address_parser`
-      crate).
+57. **Benchmarks for the release** (decision 42): measure and write up, in
+    `docs/benchmarks.md` (which replaces `docs/usaddress-comparison.md` in
+    item 61): accuracy on the blind geocode benchmark, the golden corpus and
+    the hand-labeled sample; speed in Rust (one by one, `parse_many` with
+    `rayon`) and in Python (`parse`, `parse_many`, against usaddress on the
+    same inputs and machine); memory, binary and wheel size; confidence
+    calibration (item 38). Scripts in `benchmarks/` so the numbers can be
+    rerun; machine and versions recorded. usaddress is one reference point,
+    not the frame.
+58. **Choose the name** **(author)** (decision 42, replacing the names of
+    decision 33): one name for the Rust crates, the Python package, the
+    import, the CLI and the repository, free on crates.io, PyPI and GitHub
+    and not easily confused with an existing crate or package (the current
+    `us-address-parser` collides with the `us_address_parser` crate). Research
+    the candidates (registries, search, trademarks in the address-data
+    space) in `docs/naming.md`, with a short list for the author; the author
+    picks. Output: the names and a rename map (every crate, package, module,
+    binary, path, URL, doc and example) that item 45 applies.
+45. **Rename and package for publishing** (names from item 58):
+    - Apply item 58's rename map in one pass: crates, the Python package and
+      import, the CLI binary if renamed, paths, CI, docs and examples; then
+      `git grep` for every old name (decision 33's names are replaced).
     - Put the data inside the packages: copy `data/` into the `us-addr-core`
       crate (`build.rs` already looks for a crate-local `data/` first) so
       `cargo package` succeeds and `maturin sdist` carries the tables;
       keep one source of truth (a script or a check that the copies match).
     - Check the names again just before publishing.
-46. **Publishing:** crates.io and PyPI workflows (the wheels already build);
-    turn the CHANGELOG's "Unreleased" into the first release; from then on a
-    change to what an input produces needs `k2` (decision 34).
+61. **Text cleaning** (decision 42): apply `docs/repository_cleaning.md` in
+    full: build-process language out of the docs and comments (`design.md`
+    becomes a historical outline), the private data sources described
+    generically with every required attribution kept, the README rewritten
+    for users with diagrams of how the parser works, a neutral tone toward
+    usaddress around item 57's benchmarks, no old names. Text only; one
+    pull request per section of that document.
+62. **Fresh repository** (decision 42): copy the cleaned tree into a new
+    repository under the new name as one initial commit, with no history,
+    after the private-data scan in `docs/repository_cleaning.md` section 6;
+    CI and publishing set up there; the old repository archived.
+46. **Publishing**, from the fresh repository: crates.io and PyPI workflows
+    (the wheels already build); the CHANGELOG's single first-release entry;
+    from then on a change to what an input produces needs `k2` (decision
+    34).
 
 ### Milestone 9: customization and extras (after Milestone 6; may run beside 7 and 8)
 
@@ -592,6 +629,11 @@ changes the shipped data or the `k1` key format.
     suffix, unit, directional and city spellings. Validation errors name the
     file, line and rule; add-only conflicts are errors. Applied through the
     `Lexicons` interface, so the tagger gains no layer-specific logic.
+    Scope (decision 42): as broad as data can reach. Before building, list
+    every table and word list the tagger reads through `Lexicons` (unit
+    words, placeholders, building words, highway prefixes, special words,
+    state-scoped readings) and make each one extendable by a layer unless
+    there is a reason not to, recorded in section 11.
 48. **Layer provenance in output:** `Diagnostics::custom_layer` (name,
     version, content fingerprint) records which layer produced a parse; no
     per-parse warning is added. Documented in `docs/key-format.md`: the key
@@ -600,6 +642,21 @@ changes the shipped data or the `k1` key format.
 49. **CLI and Python access:** `addr --custom-layer PATH`, `addr layer check
     PATH`, `Parser(custom_layer=...)` and a test suite that runs the golden
     corpus with a sample layer (`tests/corpus/layers/`).
+59. **Examples** (decision 42): an `examples/` directory with invented
+    addresses only: sample CSV and text input files (one line, split fields,
+    messy real-world shapes), a Jupyter notebook (`parse`, `parse_many`,
+    `parse_fields`, keys and slugs, confidence, the CLI on a file), and
+    Polars and pandas pipelines (over item 50's helpers once they exist).
+    Run in CI (the notebook executed with `nbconvert` or `nbmake`) so it
+    stays current. Lands before item 61, which links to it.
+60. **Customization guide** (decision 42): one place, `custom/` at the
+    repository root (or `docs/customizing.md` with `custom/template/`),
+    that a new developer, or a capable LLM given the guide, can follow to
+    build a layer without reading the code: what each file changes, a
+    commented template layer, worked examples (a local community, a street
+    spelling, a state-scoped reading), the checks to run (`addr layer
+    check`, the corpus with the layer), and a ready prompt for an LLM.
+    After items 47 to 49.
 50. **Dataframe helpers (optional extras):** `us_address_parser.pandas.parse_column`
     and `us_address_parser.polars.parse_column` (plus a Polars expression
     namespace if it proves cheap) returning component columns, key, slug and
@@ -741,6 +798,13 @@ are the open decisions in section 13.
 no trained model to retrain (decision 32). It works with the rule tagger and
 feeds the rule stage and the place lookups.
 
+**Scope and guide (decision 42).** The layer should reach every table and
+word list the tagger reads through `Lexicons`, not only the five files above;
+item 47 starts by listing them and records here any it leaves out and why.
+Building a layer must be approachable for a developer new to the code, or for
+a capable LLM working from instructions: one central guide with a commented
+template, worked examples and the checks to run (item 60).
+
 **Design-now constraints:** keep all lexicon access behind the `Lexicons`
 interface; keep the key independent of city (section 6); keep diagnostics
 extensible; no state-specific rule in the tagger.
@@ -785,7 +849,7 @@ extensible; no state-specific rule in the tagger.
 ### Decisions recorded 2026-10-15
 
 1. **Florida parsing code: pending.** The author will provide it later, as a reference (not ported). It seeds the corpus when it arrives.
-2. **Names: `us-address-parser` (PyPI only; see decision 33).** The Python package is `us-address-parser` (import `us_address_parser`); the CLI binary stays `addr`. The crates.io names changed in decision 33 because `us-address-parser` is taken there. The rename applies at Milestone 8 (item 45); until then the crates keep the `addr-core`, `addr-cli` and `addr-py` names.
+2. **Names: `us-address-parser` (PyPI only; see decision 33).** The Python package is `us-address-parser` (import `us_address_parser`); the CLI binary stays `addr`. The crates.io names changed in decision 33 because `us-address-parser` is taken there. The rename applies at Milestone 8 (item 45); until then the crates keep the `addr-core`, `addr-cli` and `addr-py` names. **Replaced by decision 42:** all of these names are dropped for one name chosen in item 58.
 3. **Licensing: confirmed.** MIT OR Apache-2.0.
 4. **Key definition: signed off.** `k1` (section 6) is the public format; from the first release any change to what an input produces needs a new version prefix (decision 34 sets when it freezes). **Minimum Python version: 3.10** (abi3 wheels).
 5. **RESO mapping: reviewed.** All choices accepted as implemented; see "Decisions" in `docs/reso-mapping.md`.
@@ -982,6 +1046,8 @@ Made by the author while reviewing the plan after Milestone 6.
     `us_address_parser`; the CLI binary stays `addr`. This replaces the Rust
     part of decision 2. Item 45 does the rename and checks again before
     publishing.
+    **Replaced by decision 42 (2026-10-17):** the names are dropped to avoid
+    any confusion with the `us_address_parser` crate; item 58 chooses one name.
 34. **`k1` freezes at the first release, not before.** Until the first
     release a parser fix may change the key an input produces (`SR 51`
     becoming `STATE ROAD 51` in Florida is one); each change is logged, dated,
@@ -1052,10 +1118,40 @@ Made by the author while reviewing the plan after Milestone 6.
     45's rename and packaging checks may be tried early and redone after
     item 38.
 
+### Decisions recorded 2026-10-17 (before release)
+
+42. **Release preparation and a fresh start.** Made by the author:
+    - **Benchmarks before release** (item 57): accuracy, speed and size
+      measured and documented, with usaddress as one reference point. The
+      docs keep the benchmarks and feature parity but stop framing the
+      library as a competitor to usaddress (`docs/repository_cleaning.md`
+      section 4).
+    - **A new name** (item 58): decision 33's names are dropped because
+      `us-address-parser` is too close to the existing `us_address_parser`
+      crate; one name is researched and chosen for all packages, then
+      applied by item 45.
+    - **Examples and a customization guide** (items 59 and 60), and a custom
+      layer as broad as data can reach (item 47).
+    - **Text cleaning before release** (item 61): build-process language out
+      of the docs (a historical outline stays in this file), the private
+      Florida data sources not named (they are public record, but the
+      released text describes them generically), required attributions kept,
+      a user-focused README with diagrams. All deferred text work lives in
+      `docs/repository_cleaning.md`.
+    - **A fresh repository** (item 62): the cleaned, renamed tree goes into a
+      new repository with no history, and the first release is published
+      from there.
+
 ### Open decisions (for the author)
 
 Intersections, the trailing country and the city that is no known place were
-decided (decisions 36 to 38). Two remain, neither blocking:
+decided (decisions 36 to 38). These remain:
+
+- **The name** (item 58): from the short list in `docs/naming.md`.
+- **Which Milestone 9 items ship in the first release.** Recommend items 59
+  and 60 (examples, guide) and therefore 47 to 49 (the layer they describe)
+  and 50 (dataframe helpers, used by the examples); 51 only if decided
+  below. Whatever ships lands before item 61.
 
 - **Recipient and name lines, landmarks, `CornerOf`, `NotAddress`:** stay
   unmodeled. Recommend documenting them (decision 25, done in the README) and
