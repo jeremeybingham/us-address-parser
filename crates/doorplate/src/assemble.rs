@@ -309,6 +309,35 @@ pub(crate) fn assemble(
             addr.street_suffix = Some(l.value);
         }
     }
+    // Section 234.2 (two suffixes): when two consecutive words are on the
+    // suffix table, the second is the suffix and the first is part of the
+    // name, spelled out (`HARBOR VW DR` is `HARBOR VIEW DR`; Appendix F:
+    // `HIGHWAY 3 BYP ROAD` is `HIGHWAY 3 BYPASS RD`).
+    if addr.street_suffix.is_some() {
+        if let Some(name) = &mut addr.street_name {
+            let (head, last) = name
+                .rsplit_once(' ')
+                .map_or(("", name.as_str()), |(h, l)| (h, l));
+            // `63 RD TER`: after a number, ST and RD are the ordinal's ending.
+            let ordinal_ending = matches!(last, "ST" | "RD")
+                && head
+                    .rsplit(' ')
+                    .next()
+                    .is_some_and(|w| !w.is_empty() && w.bytes().all(|c| c.is_ascii_digit()));
+            let full = lex
+                .suffix(last)
+                .filter(|l| l.kind == MatchKind::Standard && l.value.name() != last)
+                .filter(|_| !ordinal_ending)
+                .map(|l| l.value.name());
+            if let Some(full) = full {
+                *name = if head.is_empty() {
+                    full.to_string()
+                } else {
+                    format!("{head} {full}")
+                };
+            }
+        }
+    }
     // A floor is a number (Appendix C2: FL takes a range): `5TH FLOOR` is
     // FL 5.
     for (t, n) in [

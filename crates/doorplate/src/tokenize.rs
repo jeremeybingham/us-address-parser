@@ -293,8 +293,14 @@ impl Piece<'_> {
             .out
             .last()
             .is_some_and(|p| p.seg == self.seg && (p.is_hash() || lex.unit(&p.text).is_some()));
+        // A route right after a highway prefix may end in letters
+        // (Appendix F: `ROUTE 1150EE`).
+        let after_prefix = self
+            .out
+            .last()
+            .is_some_and(|p| p.seg == self.seg && lex.highway(&p.text).is_some());
         if t.bytes().all(|c| c.is_ascii_alphanumeric()) {
-            let cut = glue_split(t, next_numeric, unit_value, lex).or_else(|| {
+            let cut = glue_split(t, next_numeric, unit_value, after_prefix, lex).or_else(|| {
                 glue_place(
                     t,
                     self.before(),
@@ -395,7 +401,13 @@ fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
 }
 
 /// Where to split a glued alphanumeric token, if anywhere.
-fn glue_split(t: &str, next_numeric: bool, after_unit: bool, lex: &Lexicons) -> Option<usize> {
+fn glue_split(
+    t: &str,
+    next_numeric: bool,
+    after_unit: bool,
+    after_prefix: bool,
+    lex: &Lexicons,
+) -> Option<usize> {
     let digits_lead = t.bytes().take_while(u8::is_ascii_digit).count();
     let alpha_lead = t.bytes().take_while(u8::is_ascii_alphabetic).count();
     let n = t.len();
@@ -406,7 +418,9 @@ fn glue_split(t: &str, next_numeric: bool, after_unit: bool, lex: &Lexicons) -> 
     if digits_lead > 0 && digits_lead < n {
         let rest = &t[digits_lead..];
         // 101BRADDOCK; not 12A, 42ND, 1ST.
+        // A route after a highway prefix keeps up to two letters (`1150EE`).
         if rest.len() >= 2
+            && !(after_prefix && rest.len() <= 2)
             && rest.bytes().all(|c| c.is_ascii_alphabetic())
             && !ORDINAL_SUFFIXES.contains(&rest)
             && !is_ordinal(t)

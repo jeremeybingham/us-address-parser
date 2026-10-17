@@ -1,6 +1,6 @@
 # Golden-corpus cases that pass. Regenerate with
 # UPDATE_CORPUS_BASELINE=1 cargo test -p doorplate --test corpus
-# or `addr corpus test --update-baseline`
+# or `doorplate corpus test --update-baseline`
 at-full-001
 at-full-002
 at-full-003
@@ -237,6 +237,9 @@ p28-highway-034
 p28-highway-035
 p28-highway-036
 p28-highway-037
+p28-highway-038
+p28-highway-039
+p28-highway-040
 p28-military-001
 p28-military-002
 p28-military-003
@@ -258,6 +261,12 @@ p28-rr-002
 p28-rr-003
 p28-rr-004
 p28-rr-005
+p28-twosuf-001
+p28-twosuf-002
+p28-twosuf-003
+p28-twosuf-004
+p28-twosuf-005
+p28-twosuf-006
 p28-unit-001
 p28-unit-002
 p28-unit-003
