@@ -151,6 +151,8 @@ rows of 2026-10-16 (dual addresses, floors, the parser fixes `rg-082` to
 
 | 2026-10-17 | Spaced two-letter directionals (`N W`, `S E`) are joined; a second house number (`1309 1329 E VINE ST`) and box words before a numbered street (`P O BOX 8491 N W 17TH ST`) no longer go into the street name or make a box | Street segments of those inputs (about 0.45% of Florida licensee addresses) |
 
+| 2026-10-17 | Pub 28 re-check (item 44): the first of two suffix words is part of the name and is written out (`GULL PT RD` is `GULL POINT`, `4TH AVE DR` is `4TH AVENUE`; section 234.2), and a highway route keeps up to two letters (`ROUTE 1150EE`) | Name segment of 958 of 440,288 distinct Florida licensee addresses (0.22%); the highway-route letters are rare |
+
 The slug and `place` are not part of the key and change with these too.
 
 ## Slug
