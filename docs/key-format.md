@@ -2,9 +2,13 @@
 
 This page specifies the **key** (below) and the **slug** (last section).
 
-The key is a **public contract**. Stored keys must keep meaning the same
-thing, so any change to what an input produces needs a new version prefix
-(`k2:`) and an update here. Never edit `k1` in place.
+The key is a **public contract from the first release on**. Stored keys must
+keep meaning the same thing, so after release any change to what an input
+produces needs a new version prefix (`k2:`) and an update here. Never edit
+`k1` in place. **Until the first release (nothing is published yet) a parser
+fix may change the key an input produces**; each such change is logged, dated,
+in "Changes before the first release" below (design.md decision 34). The
+format itself (segments, form letters, `k1n`) has not changed.
 
 A key says two inputs name the same place as far as this library can tell. It
 does not say the address exists or is deliverable (see README).
@@ -105,6 +109,27 @@ USPS rule.
 `key()` returns `None` when there is nothing to key on: no street, PO Box,
 route, military line or general delivery, or a placeholder such as `NO SITUS`
 (`Placeholder` warning).
+
+## Changes before the first release
+
+What an input produces has changed whenever a parse was wrong or a rule was
+added. The format did not change. Counts are keys changed on the Florida DBPR
+addresses where measured. Inline notes above cover 2026-10-15 and the first
+rows of 2026-10-16 (dual addresses, floors, the parser fixes `rg-082` to
+`rg-097`, `CR`).
+
+| Date | Change | Keys affected |
+|---|---|---|
+| 2026-10-16 | National place list read in every state (item 25): a city on a line with no commas is no longer part of the street name (`123 MAIN ST ST LOUIS MO`), so the name and suffix segments change for those inputs | Street segments of one-line addresses whose city the old parser left in the street |
+| 2026-10-16 | Florida `SR` before a route number is a highway (item 26): `SR 51` becomes `STATE ROAD 51` in the name segment; `CTY HWY 214` becomes `COUNTY HIGHWAY 214` | 139 Florida DBPR addresses use `SR` |
+| 2026-10-16 | `DRT` and `LNE` are suffixes `DR` and `LN` (item 27) | Streets that ended in them |
+| 2026-10-16 | A penthouse after a designator is one unit value (`APT PH 5213` is unit `PH5213`; item 27) | Unit-level keys only |
+| 2026-10-16 | A cut-off copy of the address ahead of the whole one is dropped (`624 E Coloni 624 E COLONIAL DR`) | About 1,785 of 613,719 addresses in three DBPR files |
+| 2026-10-16 | A designator joined to its value is split (`APT.1285`, `STE.200`, `APT:201`, `APT3D`) and `BAY`, `STUDIO`, `BOOTH` with a value are units; `SUITE NO. 102` drops the `NO` | Unit-level keys only |
+| 2026-10-16 | A name or building on line 1 with the street on line 2 is the attention line, so the street comes from line 2 | 629 addresses in the same files |
+| 2026-10-16 | `default_state` (only when the option is set): a city found in the hinted state leaves the street name; the state-dependent readings (`CR`, `SR`) apply. The key still has no state | Only parsers given the option |
+
+The slug and `place` are not part of the key and change with these too.
 
 ## Slug
 

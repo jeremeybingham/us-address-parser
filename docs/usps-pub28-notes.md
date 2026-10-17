@@ -177,6 +177,23 @@ Added 2026-10-16 from the DBPR licensee data (Florida; corpus cases
 | A street cut across lines: when line 1's street part has no suffix and the next line or comma segment is a suffix, with at most a number before it and a directional after it, the two are one street (`8725 NW` / `18 TER`, `6556 CHESTNUT` / `CIR`, `750 NE` / `64 ST APT B202`). A line 2 of name words stays unparsed (`... OAK COURT` / `MAGNOLIA TERRACE`). | Prior art (DBPR data). |
 | A dash between the street and its unit is dropped (`3RD AVENUE - SUITE 1500`, `192ND STREET - #502`). | Section 354 (punctuation removal); prior art (DBPR data). |
 
+Added 2026-10-16 from the place list, the Florida pack and three more DBPR
+licensee files (corpus `fl-020` to `fl-033`, `rg-098` to `rg-120`, `ds-001`
+to `ds-007`). Most are data-quality rules with no USPS text behind them; the
+source column says what does back each one:
+
+| Rule | Source |
+|---|---|
+| A state pack may add a highway prefix spelling the base table lacks, read in that state only: `SR` is STATE ROAD in Florida (`22200 SR 60`), `CTY HWY` is COUNTY HIGHWAY (observed). Elsewhere `SR` stays a street name. | Appendix F maps `SR` to both STATE ROAD and STATE ROUTE, which is why it is state-dependent; Florida choice from DBPR evidence (139 lines, none STATE ROUTE); `docs/packs/fl.md`. |
+| `DRT` is `DR`, `LNE` is `LANE`, `SU` is `SUITE` (observed spellings, `non_standard_abbreviation`). | Not in C1 or C2; DBPR licensee data (`docs/packs/fl.md`). |
+| A penthouse right after a designator is that designator's value: `APT PH 5213` is `APT PH5213`, `SUITE PH` is `STE PH`. | Appendix C2 lists PH as a designator that takes no range; joining is decided (design.md decision 31); DBPR (162 lines). |
+| A designator joined to its value by `.`, `:` or `-`, or run into a value that starts with a digit (`APT.1285`, `STE.200`, `APT:201`, `UNIT-4`, `APT3D`), is split. | Section 354 (punctuation is removed); Appendix C2 designators; DBPR (about 1,200 lines). |
+| `BAY`, `STUDIO` and `BOOTH` followed by a value are a unit, written `UNIT` (observed spellings). A bare observed spelling with no value (`GULF TO BAY`) is not a unit. | C2 has no such words; its "blank, unable to determine" row takes `#`, and UNIT is the nearest listed designator; DBPR (127, 99 and 11 lines); decided. |
+| `NO`, `NUM` or `NUMBER` between a designator and its value is dropped (`SUITE NO. 102` is `STE 102`). | Section 241 tells writers not to use NO or NUMBER in a rural route address; extended to unit values; decided; DBPR. |
+| A cut-off copy of the address ahead of the whole one (`624 E COLONI 624 E COLONIAL DR`): the house number comes again after words that match the start of what follows, in one segment; the copy is dropped. | Data-quality rule, no USPS text; DBPR mailing fields (about 1,785 lines). |
+| A name or building on line 1 (or in the first comma segment) with a house-numbered street on the next is the attention line. | Section 214 (an attention line goes above the address); DBPR (629 lines). |
+| `default_state`: when the input names no state and has no known ZIP, a city is looked up in the hinted state and that state's pack readings (`CR`, `SR`) apply. It never fills `state`. | Library behavior, not a USPS rule (design.md decision 24). |
+
 ## Emitter rules
 
 ### USPS emitter (`emit/usps.rs`, `ParsedAddress::to_usps`)

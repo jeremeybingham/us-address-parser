@@ -31,7 +31,9 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
 - `id`: unique across all files. Prefixed with the source: `at-`
   (auction-tracker tests), `atg-` (auction-tracker golden CSVs), `p28-`
   (Pub 28 examples), `rg-` (regressions), `key-`, `reso-` (emitter cases),
-  `fl-` (Florida pack, `fl-pack.jsonl`);
+  `fl-` (Florida pack, `fl-pack.jsonl`), `pl-` (national place list outside
+  Florida, `places-us.jsonl`), `ds-` (`default_state`, `default-state.jsonl`),
+  `tg-` (`tag()` and `address_type()`, `tag.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
@@ -210,3 +212,38 @@ present where Pub 28's example has one.
 Cases for parsing bugs found while building the tagger (`CLAUDE.md`: every
 parsing bug fixed gets a case), and the multi-field shapes from
 `docs/prior-art.md`. Ids start with `rg-`; each note says what went wrong.
+
+### `keys.jsonl`, `reso.jsonl`
+
+Cases that pin the emitters: exact `k1` key and slug strings (`key-`) and RESO
+field values (`reso-`), written from `docs/key-format.md` and
+`docs/reso-mapping.md`.
+
+### `fl-pack.jsonl`
+
+Ids `fl-001` to `fl-033`. The Florida pack and the national place list on
+Florida input: a city on one line with no commas, a city run into the street,
+cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, the
+observed ZIP places, `CR` as CIRCLE, `SR` as STATE ROAD, and the communities and
+spellings added from the DBPR exports (`docs/packs/fl.md`). `fl-013` and
+`fl-019` are Georgia and Colorado inputs that show a state with no curated
+pack. They need the default features (`state-fl`, `places-us`).
+
+### `places-us.jsonl`
+
+Ids `pl-001` to `pl-008`. The same place behaviors in states with no curated
+pack (`ST LOUIS`, `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`, a
+cut-off city, the place from the ZIP), and `zip_city_mismatch` not raised
+there (design.md decision 30).
+
+### `default-state.jsonl`
+
+Ids `ds-001` to `ds-007`. Cases with a `default_state` field: a comma-less
+city found in the hinted state, the state's pack readings, a city not in the
+hinted state, and the input's own state or a known ZIP winning over the hint.
+
+### `tag.jsonl`
+
+Ids `tg-001` to `tg-008`. Cases with `address_type`, `tag` and `tag_repeated`:
+one per address shape (street, PO Box, rural route, military, general delivery,
+dual, unknown) and a repeated label (two units).
