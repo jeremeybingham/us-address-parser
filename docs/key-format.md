@@ -62,6 +62,16 @@ k1:G|<state>|<zip5>
   a unit, and a period after an abbreviation as a word break (`ST.CLOUD`).
   On 961,275 distinct Florida licensee addresses, 1,691 property keys and
   1,865 unit-level keys changed; on 8,293 auction listings, 4 and 4.
+- **Parser fixes of 2026-10-17, second batch** (the last two Florida sample
+  errors, corpus `rg-137` to `rg-144`): a two-letter directional written as
+  two words (`N W 27 AVE`, `MAIN ST S W`) is NW, SW, NE or SE; a second house
+  number before a street (`1309 1329 E VINE ST`, `5505 5505 N MILITARY TRL`)
+  is left unparsed instead of starting the street name; box words typed in
+  front of a numbered street (`P O BOX 8491 N W 17TH ST`) are unparsed and
+  the street is the address. On 961,275 distinct Florida licensee addresses,
+  4,313 property keys and 4,313 unit-level keys changed (a sample of both
+  kinds read as corrections); on 8,293 auction listings, 3 and 3. The blind
+  geocode benchmark is unchanged (96.4%, no address got worse).
 - **Not in the key:** city, ZIP+4, unit type, the attention line, the
   building name, anything in
   `diagnostics`.
@@ -138,6 +148,8 @@ rows of 2026-10-16 (dual addresses, floors, the parser fixes `rg-082` to
 | 2026-10-16 | A trailing country (`USA`, `UNITED STATES`) is dropped before tagging (item 54), so the key is the one the address has without it; before, the country broke the city, state or ZIP segments | Addresses that end in a country name |
 | 2026-10-16 | An intersection (`MAIN ST & 1ST AVE`) has no key and no slug (item 55); before, the `&` and both streets went into the street name | Addresses with two streets joined by `&`, `AND`, `@` or `AT` |
 | 2026-10-17 | Four parser fixes found by the Netsyms comparison (docs/future-sources.md): a word that merely began with a suffix spelling and ended in a place name is no longer split (`CREEKWOOD`, `DALEWOOD`, `AVENIDA DE LA LUNA`, a city such as `PICO RIVERA`); a word after `#` or a letter range after a designator is a unit; a value after `#` or a designator is not split (`# 2WD`, `APT I4`); `U S ROUTE 23` keeps its house number whole; a postdirectional before a city starting with NE is kept; on one line a state code that is also a suffix (`CT`, `LA`, `WY`) confirmed by its ZIP and city is the state; `WASHINGTON DC` is city and state | Street, city, state and unit segments of those inputs (Connecticut, Louisiana, Wyoming and DC addresses written without commas, and units written after `#`) |
+
+| 2026-10-17 | Spaced two-letter directionals (`N W`, `S E`) are joined; a second house number (`1309 1329 E VINE ST`) and box words before a numbered street (`P O BOX 8491 N W 17TH ST`) no longer go into the street name or make a box | Street segments of those inputs (about 0.45% of Florida licensee addresses) |
 
 The slug and `place` are not part of the key and change with these too.
 

@@ -4,6 +4,22 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### The last two Florida sample errors (item 36)
+
+- A two-letter directional written as two words (`N W 27 AVE`,
+  `MAIN ST S W`) is NW, NE, SW or SE.
+- A second house number before a street (`1309 1329 E VINE ST`) is left
+  unparsed with `multiple_addresses`, only when a name and the suffix follow
+  (rural grid streets such as `1575 NORTH AVE` are unchanged).
+- Box words typed before a numbered street (`P O BOX 8491 N W 17TH ST`) are
+  left unparsed and the street is the address; `PO BOX 12 N MAIN ST` stays a
+  box.
+- Corpus `rg-137` to `rg-144`; the Florida sample is 187 of 190 (the other
+  three are bad source data). Keys change where the old parse was wrong
+  (`docs/key-format.md`): 4,313 property keys and 4,313 unit-level keys of
+  961,275 distinct Florida licensee addresses. The blind geocode benchmark is
+  unchanged at 96.4%.
+
 ### Confidence score deferred (item 38, decision 43)
 
 - `Diagnostics::confidence` stays `None` in the first release: the labeled

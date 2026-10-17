@@ -8,6 +8,7 @@ use crate::classify::{
     all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
     is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value, is_slash_pair,
     is_unit_value, is_unit_word, join, longest_at, longest_ending, zip_parts, NumberShape,
+    ORDINAL_SUFFIXES,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{StateKind, Warning};
@@ -690,7 +691,7 @@ impl Tagger<'_> {
             }
         }
         let hi = self.building(lo, hi);
-        if lo >= hi || self.dual(lo, hi) || self.special_line(lo, hi) {
+        if lo >= hi || self.dual(lo, hi) || self.stray_box(lo, hi) || self.special_line(lo, hi) {
             return;
         }
         self.street(lo, hi);
@@ -895,6 +896,39 @@ impl Tagger<'_> {
             return true;
         }
         false
+    }
+
+    /// `P O BOX 8491 N W 17TH STREET`: box words typed in front of a street
+    /// address whose house number they took for the box number. The street
+    /// is the address and the box words are left unparsed. Only a numbered
+    /// street after the number counts (a directional, an ordinal or number
+    /// name, a suffix, all on the box's line); `PO BOX 12 N MAIN ST` stays a
+    /// box, since a named street there is as likely the box's post office.
+    /// Returns whether the line was one.
+    fn stray_box(&mut self, lo: usize, hi: usize) -> bool {
+        let Some(m) = self.box_line(lo, hi, false) else {
+            return false;
+        };
+        let v = m.end - 1;
+        // A plain number, with no `#` between the words and the number.
+        if m.tags.len() != 2 || !all_digits(self.text(v)) {
+            return false;
+        }
+        let end = (m.end..hi)
+            .find(|&k| self.toks[k].seg != self.toks[lo].seg)
+            .unwrap_or(hi);
+        let Some((_, w)) = longest_at(self.toks, m.end, end, |s| self.lex.directional(s)) else {
+            return false;
+        };
+        let name = m.end + w;
+        let numbered =
+            name + 2 == end && (is_ordinal(self.text(name)) || all_digits(self.text(name)));
+        if !numbered || self.lex.suffix(self.text(end - 1)).is_none() {
+            return false;
+        }
+        self.set(lo..v, Tag::Unparsed);
+        self.street_from(v, hi);
+        true
     }
 
     /// A PO Box (`PO BOX 12`, `DRAWER 9`, or with `bare` a plain `BOX 88`)
@@ -1109,6 +1143,30 @@ impl Tagger<'_> {
         Some(start)
     }
 
+    /// A second plain house number at `k`, right after the first
+    /// (`1309 1329 E VINE ST`): both are three or more digits, and a whole
+    /// street follows on the line: an optional directional, at least one
+    /// name word, and the suffix ending the line. Rural grid streets named
+    /// by a number and a direction (`2900 N`, `1575 NORTH AVE`,
+    /// `275 NORTH RD E`) lack that shape and stay in the name, and so does a
+    /// numbered street with a split ordinal (`139 TH AVE`).
+    fn second_house_number(&self, k: usize, hi: usize) -> bool {
+        let long = |t: &str| all_digits(t) && t.len() >= 3;
+        let line_end = (k..hi)
+            .find(|&e| self.toks[e].seg != self.toks[k].seg)
+            .unwrap_or(hi);
+        if k < 1 || k + 2 >= line_end || !long(self.text(k - 1)) || !long(self.text(k)) {
+            return false;
+        }
+        let dir = longest_at(self.toks, k + 1, line_end, |s| self.lex.directional(s))
+            .map_or(0, |(_, w)| w);
+        let name = k + 1 + dir;
+        name + 1 < line_end
+            && self.lex.suffix(self.text(line_end - 1)).is_some()
+            && self.lex.suffix(self.text(name)).is_none()
+            && !ORDINAL_SUFFIXES.contains(&self.text(name))
+    }
+
     fn street_from(&mut self, lo: usize, hi: usize) {
         let mut i = lo;
         let t0 = self.text(i);
@@ -1157,6 +1215,13 @@ impl Tagger<'_> {
                 // "428 B SOUTH MAIN ST": the letter belongs to the number.
                 self.set(i..i + 1, Tag::StreetNumber);
                 self.decide(Decision::NumberLetter);
+                i += 1;
+            }
+            // "1309 1329 E VINE ST": more house numbers. The first is the
+            // address's; the rest are left unparsed.
+            while self.second_house_number(i, hi) {
+                self.set(i..i + 1, Tag::Unparsed);
+                self.warn(Warning::MultipleAddresses);
                 i += 1;
             }
         }

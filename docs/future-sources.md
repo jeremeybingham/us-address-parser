@@ -97,7 +97,7 @@ conventions could rank the state packs worth building (plan steps 5 below).
 | usaddress's own test files | 99.2% (usaddress 100.0%, its regression tests) | Its labeled shapes |
 | `tag()` against `usaddress.tag()` | joined dicts identical on 99.3% of 8,103 addresses; types 99.8% | Auction, DBPR and corpus inputs |
 | Netsyms sample, whole address on all six fields | 99.8% (commas, fields, one line; rows without source quirks) | 217,906 US rows from 956 sources, rendered in four styles; excludes malformed source rows (2%) |
-| Golden corpus | 404 cases, all passing | Hand-labeled shapes, mostly Florida and Pub 28; `ns-` cases use invented addresses |
+| Golden corpus | 428 cases, all passing | Hand-labeled shapes, mostly Florida and Pub 28; `ns-` cases use invented addresses |
 | Fuzzing | about 900k runs, no panic | `parse` and `parse_fields` with every emitter |
 
 Not measured, so not claimed: real (not rendered) mixed-case and multi-line
