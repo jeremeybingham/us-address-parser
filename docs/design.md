@@ -523,8 +523,12 @@ Calibrated confidence (decision 12):
       drafts into clear and review, the assistant accepts the clear rows it
       would label the same way and proposes labels for the rest, and the
       author approves or overrules each. Who labeled a row is in its note.
-    - Then **(author)**: finish the labels (`REVIEW.md` beside the sample)
-      and the parser errors in `NOTES.md`.
+    - Labeled 2026-10-17 (190 rows; who labeled each is in its note). Whole
+      address 178 of 190 (146 of the random 150) before fixes.
+    - Commit 4 (done): seven parser fixes from the sample's errors, corpus
+      `rg-121` to `rg-136`, key changes logged in `docs/key-format.md`; the
+      sample then scores 185 of 190 (149 of 150). Two fixable shapes stay in
+      the backlog; three rows are bad source data.
 37. **Record the tagger's uncertain decisions (done).** `tagger::Decision`
     in `Tagged::decisions`, each once in the order made: `CityByComma`,
     `CityBySuffix`, `CityByPlace`, `StateWithoutZip`, `BareUnit` (after the
@@ -535,7 +539,10 @@ Calibrated confidence (decision 12):
 38. **Fit and ship the score.**
     - Commit 1: `tools/calibrate/` fits each path's accuracy (a fixed table
       or a small logistic model) on the golden corpus, usaddress's test
-      files and the Florida sample.
+      files and the Florida sample. The sample was used to fix seven rules
+      (item 36, commit 4), so it is no longer fully blind: fit and report
+      with that in mind (score its fixed rows on the parser before the fixes,
+      or hold part of it out), and keep the geocode benchmark for checking.
     - Commit 2: the fitted table in `data/` with its source, compiled by
       `build.rs`, and `Diagnostics::confidence` filled from it.
     - Commit 3: `docs/confidence.md`, the calibration report, checked on
@@ -1186,6 +1193,12 @@ when it is scheduled.
   (`3324 N, ANDREWS AVE`, 17 DBPR rows), a PO Box on line 2 beside a street
   with no number, a unit followed by business words (`STE 903 BLU SPA`, left
   unparsed), and `possibly_truncated` firing on complete units.
+- **From the Florida sample** (item 36, `NOTES.md` beside it): two house
+  numbers separated by a space (`1309 1329 E VINE ST`, read as street name
+  `1329 E VINE`; label: first number, the second unparsed with
+  `multiple_addresses`), and stray `P O BOX` words before a street address
+  (`P O BOX 8491 N W 17TH STREET` / `#102`, read as a PO Box with the street
+  unparsed).
 - **Outside-source benchmark and place-list gaps** (v2, decision 39;
   `docs/future-sources.md`): NAD or Netsyms rows rendered in several styles,
   compared per state and per source, feeding corpus cases, place-list gaps and

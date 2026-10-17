@@ -55,6 +55,13 @@ k1:G|<state>|<zip5>
 - **`CR` as CIRCLE in Florida** (2026-10-16, Florida pack `overrides.toml`):
   a Florida street ending in `CR` keys with suffix `CIR`, not `CRK`. On the
   DBPR Florida addresses, 333 keys changed.
+- **Parser fixes of 2026-10-17** (the blind Florida sample, corpus `rg-121`
+  to `rg-136`): letter routes after a highway prefix (`HIGHWAY A1A`), `178ST`
+  split into `178 ST`, `DR E 203` read as postdirectional E and unit 203, an
+  ordinal floor before `#` and a number, `PH FLOOR`, copies of the city after
+  a unit, and a period after an abbreviation as a word break (`ST.CLOUD`).
+  On 961,275 distinct Florida licensee addresses, 1,691 property keys and
+  1,865 unit-level keys changed; on 8,293 auction listings, 4 and 4.
 - **Not in the key:** city, ZIP+4, unit type, the attention line, the
   building name, anything in
   `diagnostics`.

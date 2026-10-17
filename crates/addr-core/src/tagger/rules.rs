@@ -6,8 +6,8 @@ use std::ops::Range;
 use super::{Decision, PlaceCtx, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
-    is_grid_number, is_letter, is_ordinal, is_route_value, is_slash_pair, is_unit_value,
-    is_unit_word, join, longest_at, longest_ending, zip_parts, NumberShape,
+    is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value, is_slash_pair,
+    is_unit_value, is_unit_word, join, longest_at, longest_ending, zip_parts, NumberShape,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{StateKind, Warning};
@@ -486,6 +486,18 @@ impl Tagger<'_> {
                 continue;
             }
             let tail = &self.toks[hi - k..hi];
+            // "UNIT 412 INLET BEACH" before "INLET BEACH": after a whole unit
+            // (designator or '#', then a value) an exact copy of the city
+            // is dropped even when it starts with a suffix word.
+            let s = hi - k;
+            let after_unit = s >= lo + 2
+                && is_unit_value(self.text(s - 1))
+                && (self.toks[s - 2].is_hash() || self.lex.unit(self.text(s - 2)).is_some());
+            if after_unit && k == words.len() && tail.iter().zip(&words).all(|(t, w)| t.text == *w)
+            {
+                self.set(s..hi, Tag::Skip);
+                return s;
+            }
             // "100 MAIN ST" before "ST PETERSBURG": a suffix is the street's.
             if self.lex.suffix(&tail[0].text).is_some() {
                 continue;
@@ -512,6 +524,26 @@ impl Tagger<'_> {
                 }
             });
             if matches {
+                self.set(hi - k..hi, Tag::Skip);
+                return hi - k;
+            }
+        }
+        // `2516 HAMMOCK RD,CLOUD` before `ST CLOUD`: a whole comma segment
+        // that repeats the city's last words (the start cut off). Tried last,
+        // so a copy across the comma (`RD WESLEY, CHAPEL`) is dropped whole.
+        for k in (1..words.len()).rev() {
+            if hi <= lo + k + 1 {
+                continue;
+            }
+            let tail = &self.toks[hi - k..hi];
+            let whole_seg = self.toks[hi - k - 1].seg != tail[0].seg
+                && tail.iter().all(|t| t.seg == tail[0].seg)
+                && !self.toks.get(hi).is_some_and(|t| t.seg == tail[0].seg);
+            let end = &words[words.len() - k..];
+            if whole_seg
+                && tail[0].text.len() >= 3
+                && tail.iter().zip(end).all(|(t, w)| t.text == *w)
+            {
                 self.set(hi - k..hi, Tag::Skip);
                 return hi - k;
             }
@@ -739,6 +771,12 @@ impl Tagger<'_> {
                     b.text == r.text
                 }
             });
+            // `7848 NW 178S 7848 NW 178ST`, where the tokenizer split `178ST`:
+            // the same comparison on the text without word breaks.
+            let glued = |ts: &[crate::tokenize::Token]| {
+                ts.iter().map(|t| t.text.as_str()).collect::<String>()
+            };
+            let copy = copy || glued(&self.toks[k + 1..hi]).starts_with(&glued(body));
             if copy {
                 self.set(lo..k, Tag::Skip);
                 return k;
@@ -1128,7 +1166,9 @@ impl Tagger<'_> {
 
         if let Some(h) = self.highway_at(i, hi) {
             let floor = h.route + 1;
-            let j = self.units(floor, floor, hi, true);
+            // The route anchors the units after it, as a name does (`HWY A1A`
+            // then a line `405` is unit 405).
+            let j = self.units(floor, h.route.saturating_sub(1), hi, true);
             self.set(h.pre.clone(), Tag::PreDir);
             self.set(h.state.clone(), Tag::HighwayState);
             self.set(h.prefix.clone(), Tag::HighwayPrefix);
@@ -1241,8 +1281,9 @@ impl Tagger<'_> {
             // otherwise easy to read as a unit.
             let county = matches!(l.value.standard(), "COUNTY ROAD" | "COUNTY HIGHWAY");
             let letters = |t: &str| t.len() <= 2 && t.bytes().all(|c| c.is_ascii_alphabetic());
-            let ok = route < hi
-                && (is_route_value(self.text(route)) || county && letters(self.text(route)));
+            let r = self.text(route);
+            let ok =
+                route < hi && (is_route_value(r) || is_lettered_route(r) || county && letters(r));
             ok.then_some((p..p + w, route))
         };
         if let Some((prefix, route)) = try_at(i) {
@@ -1455,9 +1496,19 @@ impl Tagger<'_> {
                 };
                 if self.toks[start - 1].is_hash() {
                     self.set(start - 1..start, Tag::Skip);
-                    // "UNIT # 4": the designator before the '#' is this unit's.
+                    // "UNIT # 4": the designator before the '#' is this unit's,
+                    // unless an ordinal after the street's suffix comes first:
+                    // "RD 2ND FLOOR # 260" is floor 2ND and unit 260 (the next
+                    // round takes the floor); "SW 11TH APT # 2" is not.
                     let hash = start - 1;
-                    match longest_ending(self.toks, floor, hash, |s| lex.unit(s)) {
+                    let designator = longest_ending(self.toks, floor, hash, |s| lex.unit(s))
+                        .filter(|&(_, w)| {
+                            let v = hash - w;
+                            !(v > name_lo + 1
+                                && is_ordinal(self.text(v - 1))
+                                && self.suffix_before(name_lo, v - 1))
+                        });
+                    match designator {
                         Some((_, w)) => {
                             found.push((hash - w..hash, start..j));
                             j = hash - w;
@@ -1531,6 +1582,19 @@ impl Tagger<'_> {
                             continue;
                         }
                     }
+                    // "PH FLOOR" is the penthouse floor: one unit, PH, and
+                    // the floor word is dropped.
+                    let ph = j - w - 1..j - w;
+                    if found.is_empty()
+                        && u.value.abbr() == "FL"
+                        && j - w > name_lo + 2
+                        && self.is_penthouse(&ph)
+                    {
+                        self.set(j - w..j, Tag::Skip);
+                        found.push((ph.clone(), ph.end..ph.end));
+                        j = ph.start;
+                        continue;
+                    }
                     if u.value.range_required() {
                         self.warn(Warning::MissingUnitNumber);
                         self.incomplete = Some(last);
@@ -1540,11 +1604,17 @@ impl Tagger<'_> {
                     continue;
                 }
             }
-            // A bare unit after the suffix: "DR 706", "DR B", "DR V 21".
+            // A bare unit after the suffix: "DR 706", "DR B", "DR V 21". A
+            // directional letter right after the suffix on its line is the
+            // postdirectional: "DR E 203" is DR E, unit 203; a line "E 203"
+            // is the unit.
             if bare && found.is_empty() {
                 if last > floor
                     && all_digits(t)
                     && is_letter(self.text(last - 1))
+                    && !(last >= 2
+                        && lex.directional(self.text(last - 1)).is_some()
+                        && self.toks[last - 1].seg == self.toks[last - 2].seg)
                     && self.suffix_before(name_lo, last - 1)
                 {
                     found.push((last - 1..last - 1, last - 1..j));

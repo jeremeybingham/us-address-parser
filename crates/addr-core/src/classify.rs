@@ -150,6 +150,20 @@ pub(crate) fn is_route_value(t: &str) -> bool {
         && t.bytes().all(|c| c.is_ascii_alphanumeric())
 }
 
+/// A highway route that starts with a letter: one letter, digits, and at
+/// most one more letter (`A1A`, Florida's State Road A1A; `M28`). Read only
+/// after a highway prefix, where it cannot be a unit.
+pub(crate) fn is_lettered_route(t: &str) -> bool {
+    let b = t.as_bytes();
+    let digits = b.iter().skip(1).take_while(|c| c.is_ascii_digit()).count();
+    let rest = b.len().saturating_sub(1 + digits);
+    b.first().is_some_and(u8::is_ascii_alphabetic)
+        && digits > 0
+        && rest <= 1
+        && b.last().is_some_and(u8::is_ascii_alphanumeric)
+        && b[1 + digits..].iter().all(u8::is_ascii_alphabetic)
+}
+
 /// A single letter, as in `V 21` or `AVENUE G`.
 pub(crate) fn is_letter(t: &str) -> bool {
     t.len() == 1 && t.bytes().all(|c| c.is_ascii_alphabetic())
@@ -261,6 +275,12 @@ mod tests {
         }
         assert!(!is_unit_value("OFF"));
         assert!(is_route_value("60E") && !is_route_value("MM"));
+        for ok in ["A1A", "M28", "K68"] {
+            assert!(is_lettered_route(ok), "{ok}");
+        }
+        for bad in ["A", "AB1", "A1AB", "1A", "A-1", "PH5"] {
+            assert!(!is_lettered_route(bad), "{bad}");
+        }
     }
 
     #[test]
