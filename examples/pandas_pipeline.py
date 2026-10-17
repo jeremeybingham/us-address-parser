@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
-import doorplate as uap
+import doorplate as dp
 from doorplate.pandas import parse_column
 
 DATA = Path(__file__).parent / "data"
@@ -49,7 +49,7 @@ def main(out: str | None = None) -> pd.DataFrame:
         return v if isinstance(v, str) else None
 
     rows = [
-        uap.parse_fields(
+        dp.parse_fields(
             line1=text(r["line1"]),
             line2=text(r["line2"]),
             city=text(r["city"]),
