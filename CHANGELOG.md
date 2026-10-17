@@ -4,6 +4,38 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Fuzz targets (item 43)
+
+- `fuzz/` (cargo-fuzz, nightly, outside the workspace): `parse` and
+  `parse_fields` run the public parse paths and every emitter. A CI job runs
+  each for a short time.
+
+### Intersections (item 55)
+
+- `MAIN ST & 1ST AVE` (also `AND`, `@`, `AT`) is detected when a name and a
+  street suffix come before the connector and a street suffix after it. The
+  first street is parsed, the second stays in `unparsed`, the new warning
+  `intersection_detected` is raised (`Warning::ALL` grows to 22), and `key()`
+  and `slug()` are `None`. `LAND AND SEA RD`, `BEACH AT SEA DR`,
+  `STATE AND MAIN ST` and `AT&T WAY` are single streets and do not warn.
+- Corpus `is-001` to `is-013`; the USPS round-trip check skips intersections;
+  key-format log entry.
+
+### Trailing country (item 54)
+
+- A trailing `USA`, `US`, `UNITED STATES` or `UNITED STATES OF AMERICA` is
+  dropped before tagging and raises the new warning `country_ignored`
+  (`Warning::ALL` grows to 21). It is cut after a comma, a ZIP or a state, or
+  as a whole field other than the street line; `US` in a highway name or
+  after a street stays. Other countries are not recognized. The names are in
+  `data/special.toml` `[country]` (`Lexicons::is_country`).
+- Corpus `co-001` to `co-015` (`country.jsonl`); key-format log entry.
+
+### Removed unused surface (item 53)
+
+- `Diagnostics::model_version` (and the Python `model_version` property and
+  stub entry) and the empty `crf` cargo feature. No parse or key changes.
+
 ### Documentation review after Milestone 6
 
 - Status, plan and layout brought up to date in `docs/design.md` and the

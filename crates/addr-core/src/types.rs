@@ -540,12 +540,21 @@ pub enum Warning {
     /// `OccupancyType` twice). `usaddress.tag()` raises `RepeatedLabelError`
     /// for this; here the runs are joined and the label is reported.
     RepeatedLabel,
+    /// A trailing "USA", "US" or "UNITED STATES" was dropped from the
+    /// address (`docs/design.md` section 13, decision 36). Other countries
+    /// are not recognized and stay in the parse as ordinary text.
+    CountryIgnored,
+    /// Two streets joined by `&`, `AND`, `@` or `AT` (`MAIN ST & 1ST AVE`):
+    /// a corner, not an address (`docs/design.md` section 13, decision 37).
+    /// The first street is parsed, the second stays in
+    /// [`Diagnostics::unparsed`], and [`ParsedAddress::key`] is `None`.
+    IntersectionDetected,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 20] = [
+    pub const ALL: [Warning; 22] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -566,6 +575,8 @@ impl Warning {
         Warning::ZipCityMismatch,
         Warning::DefaultStateApplied,
         Warning::RepeatedLabel,
+        Warning::CountryIgnored,
+        Warning::IntersectionDetected,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -592,6 +603,8 @@ impl Warning {
             Warning::ZipCityMismatch => "zip_city_mismatch",
             Warning::DefaultStateApplied => "default_state_applied",
             Warning::RepeatedLabel => "repeated_label",
+            Warning::CountryIgnored => "country_ignored",
+            Warning::IntersectionDetected => "intersection_detected",
         }
     }
 }
@@ -611,7 +624,6 @@ pub struct Diagnostics {
     /// decision 12).
     pub confidence: Option<f32>,
     pub library_version: &'static str,
-    pub model_version: Option<&'static str>,
 }
 
 impl Diagnostics {
@@ -635,7 +647,6 @@ impl Default for Diagnostics {
             unparsed: None,
             confidence: None,
             library_version: VERSION,
-            model_version: None,
         }
     }
 }

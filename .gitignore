@@ -12,3 +12,6 @@ dist/
 
 # Local test data: unlicensed or private, never committed (local-data/README.md).
 /local-data/
+/fuzz/target
+/fuzz/artifacts
+/fuzz/corpus

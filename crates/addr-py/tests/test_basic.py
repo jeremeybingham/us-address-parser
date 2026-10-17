@@ -40,7 +40,6 @@ def test_absent_components_are_none_and_confidence_is_uncalibrated():
     assert a.po_box == "12" and a.street_name is None and a.highway is None
     assert a.address_type() == "po_box"
     assert a.confidence is None
-    assert a.model_version is None
     assert a.library_version == uap.__version__
 
 

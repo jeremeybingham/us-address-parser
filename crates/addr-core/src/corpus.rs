@@ -791,6 +791,11 @@ impl Corpus {
             if a.diagnostics.has(&Warning::DualAddress) {
                 continue;
             }
+            // An intersection has no key, and its USPS output is the first
+            // street alone.
+            if a.diagnostics.has(&Warning::IntersectionDetected) {
+                continue;
+            }
             let lines = a.to_usps().lines();
             if lines.is_empty() {
                 continue;

@@ -7,12 +7,12 @@ identifiers (a canonical match key and a URL-safe slug).
 
 > **Status:** the Rust library, the `addr` CLI and the Python package
 > (`us_address_parser`) work: parser, key, USPS, RESO and slug emitters, a
-> 353-case golden corpus, a national place list plus a curated Florida pack,
+> 381-case golden corpus, a national place list plus a curated Florida pack,
 > and abi3 wheels for Linux, macOS and Windows built on every pull request. On
 > a blind benchmark of 30,622 one-line addresses it gets 96.1% of whole
 > addresses right (coarse) against usaddress's 88.2%
 > ([`docs/usaddress-comparison.md`](docs/usaddress-comparison.md)). **Nothing is
-> published yet**: next is release hardening (fuzzing, packaging, the Pub 28
+> published yet**: next is release hardening (packaging, the Pub 28
 > recheck), then calibrated confidence and a custom layer.
 > [`docs/design.md`](docs/design.md) section 10 has the plan in build order;
 > section 13 has the decisions.

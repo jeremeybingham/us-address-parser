@@ -23,8 +23,10 @@ mod classify;
 mod clean;
 #[cfg(feature = "corpus")]
 pub mod corpus;
+mod country;
 mod emit;
 mod input;
+mod intersection;
 pub mod lexicon;
 mod parser;
 mod place;

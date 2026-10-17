@@ -219,6 +219,19 @@ forms = ["FPO"]
 standard = "DPO"
 forms = ["DPO"]
 
+[country]
+# Names of the United States written after the address ("MIAMI, FL 33101,
+# USA"). Dropped from the parse with a `country_ignored` warning (design.md
+# decision 36); other countries are out of scope. Normalized keys, so
+# "U.S.A." is USA. Not a USPS rule: Pub 28 addresses are domestic and carry
+# no country line; the names are plain English names for the country.
+phrases = [
+  "US",
+  "USA",
+  "UNITED STATES",
+  "UNITED STATES OF AMERICA",
+]
+
 [placeholder]
 # Whole-line stand-ins meaning "no usable street address". Matched against the
 # normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",

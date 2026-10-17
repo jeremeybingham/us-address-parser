@@ -31,13 +31,16 @@ impl KeyOptions {
 impl ParsedAddress {
     /// The canonical match key, or `None` when the address has nothing to key
     /// on: no street, PO box, route, military line or general delivery, or a
-    /// placeholder such as "NO SITUS". Format: `docs/key-format.md`.
+    /// placeholder such as "NO SITUS", or an intersection (the first street
+    /// alone would match every address on it). Format: `docs/key-format.md`.
     ///
     /// Two inputs that differ only in spelling (`North`/`N`, `Street`/`ST`,
     /// `Apt 4`/`#4`, case, punctuation) give the same key. The key says
     /// nothing about whether the address exists or is deliverable.
     pub fn key(&self, options: KeyOptions) -> Option<String> {
-        if self.diagnostics.has(&Warning::Placeholder) {
+        if self.diagnostics.has(&Warning::Placeholder)
+            || self.diagnostics.has(&Warning::IntersectionDetected)
+        {
             return None;
         }
 
