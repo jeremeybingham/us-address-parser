@@ -87,7 +87,7 @@ new data.
 
 ## Speed
 
-### Rust (criterion, `benches/parse.rs`)
+### Rust (criterion, `crates/doorplate/benches/parse.rs`)
 
 Median of a measurement run, one thread unless noted.
 
@@ -162,9 +162,10 @@ is in the backlog.
 | `usaddress` and its dependencies, installed | 4.8 MB (the model is 134 KB; the rest is python-crfsuite) |
 
 The lexicon tables, the national place list and the Florida pack are compiled
-in, so there is no model or data file to download or load. A crate package is
-not measured yet: the data still sits outside the crate directory (item 45,
-packaging).
+in, so there is no model or data file to download or load. The tables are
+inside the crate (item 45), so the crate package (47 files, 3.6 MiB unpacked,
+0.8 MB compressed) and the Python source distribution (0.8 MB) carry them and
+build from a clean directory.
 
 Peak resident memory of a fresh Python process parsing 100,000 addresses
 (corpus inputs repeated):

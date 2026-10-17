@@ -48,10 +48,10 @@ DBPR = [
 ]
 AUCTION = ("auction", 50)
 FLAGGED = 40
-# Standard highway prefixes (`data/special.toml` `[[highway]]`).
+# Standard highway prefixes (`crates/doorplate/data/special.toml` `[[highway]]`).
 PREFIXES = {
     h["standard"]
-    for h in tomllib.loads((ROOT / "data" / "special.toml").read_text()).get("highway", [])
+    for h in tomllib.loads((ROOT / "crates" / "doorplate" / "data" / "special.toml").read_text()).get("highway", [])
 }
 # Warnings that say only that a part is absent; any other one flags a row.
 PLAIN = {"missing_city", "missing_state", "missing_zip", "default_state_applied"}

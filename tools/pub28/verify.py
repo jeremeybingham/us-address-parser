@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Compare data/*.toml with the live Pub 28 tables (docs/design.md item 44).
+"""Compare crates/doorplate/data/*.toml with the live Pub 28 tables (docs/design.md item 44).
 
     python3 tools/pub28/verify.py --cache DIR [--fetch] [--emitter]
 
 Reads Appendix C1 (suffixes), C2 (units), B (states, directionals, military
-"states") from DIR and compares them with data/suffixes.toml, units.toml,
+"states") from DIR and compares them with crates/doorplate/data/suffixes.toml, units.toml,
 states.toml and directionals.toml. With --fetch it downloads the pages into DIR
 first (a browser User-Agent is needed: pe.usps.com sends other clients a
 "page not found" page). DIR is outside the repository: the pages are USPS
@@ -65,7 +65,7 @@ def fetch(cache):
 
 
 def load(name):
-    return tomllib.loads((ROOT / "data" / name).read_text())
+    return tomllib.loads((ROOT / "crates" / "doorplate" / "data" / name).read_text())
 
 
 problems = []

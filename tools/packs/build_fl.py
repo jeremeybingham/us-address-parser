@@ -1,4 +1,4 @@
-"""Build the Florida pack's place and ZIP tables (data/packs/fl/) from
+"""Build the Florida pack's place and ZIP tables (crates/doorplate/data/packs/fl/) from
 auction-tracker's checked place list.
 
     python3 tools/packs/build_fl.py <auction-tracker>/packages/radar/src/radar/data
@@ -14,7 +14,7 @@ covers (`ALTAMONTE SPGS`) and rejects anything that leads to two places.
 import csv, json, re, sys
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parents[2] / "data" / "packs" / "fl"
+OUT = Path(__file__).resolve().parents[2] / "crates" / "doorplate" / "data" / "packs" / "fl"
 KINDS = {"municipality", "place"}
 SOURCES = {"original", "census", "geonames", "observed"}
 NAME = re.compile(r"^[A-Z0-9]+( [A-Z0-9]+)*$")

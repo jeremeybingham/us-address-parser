@@ -6,9 +6,9 @@
 //! and of any runtime data loading, and turns a malformed or contradictory
 //! table into a build error instead of a parse-time surprise.
 //!
-//! The data lives at the workspace root (`../../data`). Publishing to
-//! crates.io will need the tables inside the package; that is handled in the
-//! release milestone. A `data/` directory inside the crate wins if present.
+//! The data lives in the crate (`crates/doorplate/data/`) so that the
+//! published package, and the source distribution of the Python package that
+//! builds this crate, carry the tables.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -40,15 +40,11 @@ fn main() {
 
 fn data_dir() -> Result<PathBuf> {
     let manifest = PathBuf::from(env::var("CARGO_MANIFEST_DIR").map_err(|e| e.to_string())?);
-    for dir in [manifest.join("data"), manifest.join("../../data")] {
-        if dir.join("suffixes.toml").is_file() {
-            return Ok(dir);
-        }
+    let dir = manifest.join("data");
+    if dir.join("suffixes.toml").is_file() {
+        return Ok(dir);
     }
-    Err(format!(
-        "no data/ directory found near {}",
-        manifest.display()
-    ))
+    Err(format!("no data/ directory in {}", manifest.display()))
 }
 
 fn run() -> Result<()> {

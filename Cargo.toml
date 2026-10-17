@@ -9,6 +9,12 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/jeremeybingham/doorplate"
 rust-version = "1.80"
 
+# One place for the core crate's version, so the dependents that are published
+# (doorplate-cli) name it as crates.io requires. Keep it equal to
+# `workspace.package.version`.
+[workspace.dependencies]
+doorplate = { path = "crates/doorplate", version = "0.0.1" }
+
 [workspace.lints.clippy]
 unwrap_used = "warn"
 expect_used = "warn"

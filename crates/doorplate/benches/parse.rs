@@ -27,8 +27,13 @@ const SHAPES: [(&str, &str); 6] = [
     ("military", "PSC 1650 BOX 10, APO AE 09001"),
 ];
 
+/// The corpus inputs, or none when this is not the repository checkout (the
+/// published package has no `tests/corpus`).
 fn corpus_inputs() -> Vec<String> {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/corpus");
+    if !dir.is_dir() {
+        return Vec::new();
+    }
     corpus::load(&dir)
         .unwrap_or_else(|e| panic!("malformed corpus:\n  {}", e.join("\n  ")))
         .inputs()
@@ -56,6 +61,9 @@ fn parse_single(c: &mut Criterion) {
 fn parse_corpus(c: &mut Criterion) {
     let parser = Parser::new();
     let inputs = corpus_inputs();
+    if inputs.is_empty() {
+        return;
+    }
     let refs: Vec<&str> = inputs.iter().map(String::as_str).collect();
     let mut g = c.benchmark_group("parse_corpus");
     g.throughput(Throughput::Elements(refs.len() as u64));

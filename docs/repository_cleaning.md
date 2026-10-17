@@ -65,8 +65,8 @@ from. Mentions today (case-insensitive `dbpr`, `auction`, `licensee`,
 `docs/usps-pub28-notes.md` 29, `docs/packs/fl.md` 23, `docs/design.md` 20,
 `CHANGELOG.md` 18, `tools/calibrate/sample_fl.py` 18, `fl-pack.jsonl` 12,
 `tests/corpus/README.md` 11, `docs/prior-art.md` 9,
-`docs/usaddress-comparison.md` 8, `data/*.toml` 17 together,
-`data/packs/fl/` 6, the `tools/packs/` scripts, `NOTICE`, `CLAUDE.md`, and
+`docs/usaddress-comparison.md` 8, `crates/doorplate/data/*.toml` 17 together,
+`crates/doorplate/data/packs/fl/` 6, the `tools/packs/` scripts, `NOTICE`, `CLAUDE.md`, and
 three source comments.
 
 - [ ] Replace the names with a generic description: "Florida public-record
@@ -81,7 +81,7 @@ three source comments.
       not a public contract.
 - [ ] `docs/prior-art.md`: either generalize ("an earlier Florida address
       parser") or fold its lessons into `docs/design.md` and drop it.
-- [ ] `data/packs/fl/pack.toml` sources list and `data/*.toml` comments.
+- [ ] `crates/doorplate/data/packs/fl/pack.toml` sources list and `crates/doorplate/data/*.toml` comments.
 - [ ] `tools/packs/dbpr.py`, `observe_fl_zips.py`, `measure_fl_places.py`,
       `tools/calibrate/sample_fl.py` and `label.py`: rename to generic names
       or leave them out of the new repository (they need the private files);

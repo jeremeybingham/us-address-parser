@@ -93,7 +93,7 @@ city. `city` always keeps what the input said. Florida is the first pack
 (cargo feature `state-fl`, on by default); see
 [`docs/packs/fl.md`](docs/packs/fl.md) for its sources and licenses.
 
-Under the packs sits a national list (`data/places/`, cargo feature
+Under the packs sits a national list (`crates/doorplate/data/places/`, cargo feature
 `places-us`, on by default): 50,375 places and 41,154 ZIPs for the 50 states,
 DC and Puerto Rico, built from the Census Gazetteer and GeoNames postal codes.
 The parser uses it in every state, with a curated pack (Florida) on top; the
@@ -163,13 +163,12 @@ cargo run -p doorplate-cli -- corpus test
 ## Layout
 
 ```
-crates/doorplate/   pure Rust library (no Python dependency)
+crates/doorplate/   pure Rust library (no Python dependency); its data/ holds the
+                    lexicon tables (Pub 28 suffixes, units, states, ...), the
+                    national place list (data/places/) and the state packs
+                    (data/packs/), compiled into static tables by build.rs
 crates/doorplate-cli/    `doorplate` command-line tool (alias `addr`)
 crates/doorplate-py/     PyO3 bindings and the `doorplate` package (pytest, benchmarks)
-data/               lexicon tables (Pub 28 suffixes, units, states, ...) and
-                    national place list (data/places/), state
-                    packs (data/packs/), compiled into static tables by
-                    doorplate's build.rs
 examples/           notebook, Polars and pandas pipelines, invented sample data
 tests/corpus/       labeled golden corpus (JSONL)
 tests/external/     usaddress's labeled test files (MIT)
@@ -216,6 +215,6 @@ Rust test target, and maturin supplies the extension-module build settings.
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at
-your option. The ZIP tables in `data/packs/` and `data/places/` are GeoNames
+your option. The ZIP tables in `crates/doorplate/data/packs/` and `crates/doorplate/data/places/` are GeoNames
 data under CC BY 4.0;
 see [`NOTICE`](NOTICE).

@@ -22,7 +22,7 @@ only checks the result, `check_benchmark.py`):
 
     cargo build --release -p doorplate-cli
     python3 tools/calibrate/fit.py --sample-addr PATH/TO/PRE-FIX/addr \
-        [--out data/confidence.toml] [--report local-data/reports/fit.md]
+        [--out crates/doorplate/data/confidence.toml] [--report local-data/reports/fit.md]
 
 Model: an L2 logistic regression on the decision and warning indicators,
 with every coefficient constrained to be at most zero (a warning or an

@@ -1,4 +1,4 @@
-# Florida pack (`data/packs/fl/`)
+# Florida pack (`crates/doorplate/data/packs/fl/`)
 
 The first curated state pack (`docs/design.md` section 11, Milestone 5). It
 gives the parser Florida's place names, the spellings seen in real data and
@@ -155,7 +155,7 @@ matches it anyway.
 
 - **Rarer misspellings and the penthouse shape** (item 27). These are
   general rules, not Florida ones, so they are in the base tables
-  (`data/suffixes.toml`, `data/units.toml`, each with its evidence) and the
+  (`crates/doorplate/data/suffixes.toml`, `crates/doorplate/data/units.toml`, each with its evidence) and the
   tagger; the evidence is the DBPR export. `DRT` is DR (1 row; the same
   street in the same ZIP is written DR or DRIVE on 7 other lines), `LNE` is
   LANE (3 rows) and `SU` is SUITE (16 rows at 6 distinct addresses, `7925

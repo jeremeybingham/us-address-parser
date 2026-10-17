@@ -89,6 +89,10 @@ fn load(text: &str) -> Vec<GoldAddress> {
 #[test]
 fn usaddress_gold_scores_hold() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/external/usaddress");
+    // The published package does not carry the vendored test files.
+    if !dir.is_dir() {
+        return;
+    }
     let mut files: Vec<_> = fs::read_dir(&dir)
         .unwrap()
         .map(|e| e.unwrap().path())

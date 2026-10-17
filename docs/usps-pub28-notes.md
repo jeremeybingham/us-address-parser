@@ -12,7 +12,7 @@ exists or is deliverable.
 
 ## Lexicon tables (Milestone 1)
 
-`data/*.toml` is compiled into static tables by `crates/doorplate/build.rs`
+`crates/doorplate/data/*.toml` is compiled into static tables by `crates/doorplate/build.rs`
 and read only through `Lexicons` (`crates/doorplate/src/lexicon.rs`).
 `build.rs` rejects malformed tables: a spelling that maps to two entries, a
 duplicate abbreviation or code, a form that is not a normalized key, or an
@@ -31,7 +31,7 @@ item 44, Milestone 8).
 
 **Re-checked 2026-10-17 (item 44).** Every table in the list below was
 compared with the live pages by `tools/pub28/verify.py` (it parses Appendix
-C1, C2 and B and diffs them against `data/suffixes.toml`, `units.toml`,
+C1, C2 and B and diffs them against `crates/doorplate/data/suffixes.toml`, `units.toml`,
 `states.toml` and `directionals.toml`; `--emitter` also runs every Appendix F
 example through the parser and the USPS emitter): **0 differences** in 202
 suffix rows and their spellings, 24 designators and their range flags, 62
@@ -98,7 +98,7 @@ rather than from field data: 20 suffix spellings that usaddress-scourgify and
 the street-address gem list but the current Appendix C1 does not (for example
 CRT for COURT, CR and CK for CREEK, LA for LANE, TR for TRAIL), and HANGAR,
 the dictionary spelling of C2's "Hanger". See the per-entry comments in
-`data/suffixes.toml` and `data/units.toml`.
+`crates/doorplate/data/suffixes.toml` and `crates/doorplate/data/units.toml`.
 
 State `aliases` (FLA, CALIF, ...) are traditional, pre-ZIP abbreviations,
 not Pub 28 forms. They are accepted as input (`MatchKind::Variant`) and never
@@ -119,7 +119,7 @@ emitted.
   elsewhere; RR for Ranch Road in Texas) are left out of the base tables, to
   be added by state packs. A pack can also read a base spelling differently:
   the Florida pack reads the observed CREEK spelling `CR` as CIRCLE
-  (`data/packs/fl/overrides.toml`; evidence in `docs/packs/fl.md`).
+  (`crates/doorplate/data/packs/fl/overrides.toml`; evidence in `docs/packs/fl.md`).
 
 ## Parser rules (Milestone 2)
 
@@ -156,14 +156,14 @@ shapes in real county data (`docs/prior-art.md`) and are not USPS rules.
 | A copy of the city at the end of the street line, possibly cut off, is dropped (`... DR FERNANDINA B`). Never dropped this way: a suffix; a value right after a designator or `#` (`SUITE A` before `ARCHER`); a single cut-off letter (`AVE S` before `ST PETERSBURG`, `SAXONY D` before `DELRAY BEACH`). | Prior art (Nassau; the exceptions from Pinellas, Palm Beach and DBPR data). |
 | Multi-field input: a line 2 that repeats the end of line 1 is a copy and is skipped (`9453 LUTOO LANE` / `LUTOO LANE`). | Prior art (DBPR data). |
 | Placeholders: a whole street line in `[placeholder]`, or a placeholder before ` - ` (dropped, or the whole line when only a code follows). Asterisks around words are trimmed (`**Private Address**`); a line of only punctuation, asterisks included, is a placeholder. | Prior art; not a USPS rule (section 354 lists asterisks for removal). |
-| Trailing country: `USA`, `US`, `UNITED STATES`, `UNITED STATES OF AMERICA` after a comma, a ZIP or a state (or as a whole field other than the street line) is cut before tagging and raises `country_ignored` (decision 36; `data/special.toml` `[country]`). `US` in a highway name or after a street is kept. Other countries are not recognized. | Not a USPS rule: Pub 28 addresses are domestic and have no country line. Seen in real data (`co-001` to `co-015`). |
+| Trailing country: `USA`, `US`, `UNITED STATES`, `UNITED STATES OF AMERICA` after a comma, a ZIP or a state (or as a whole field other than the street line) is cut before tagging and raises `country_ignored` (decision 36; `crates/doorplate/data/special.toml` `[country]`). `US` in a highway name or after a street is kept. Other countries are not recognized. | Not a USPS rule: Pub 28 addresses are domestic and have no country line. Seen in real data (`co-001` to `co-015`). |
 | Intersections: `&`, `@`, `AND` or `AT` in one comma segment, after a name and a street suffix (a directional may follow, and a house number or directional may lead) and before words that run to a street suffix, split the input. The first street is parsed, the connector and second street go to `unparsed`, `intersection_detected` is raised, and `key()` and `slug()` are `None`. A suffix word alone is a name (`BEACH AT SEA DR`); a suffix directly before another is part of the name (`& PARK AVE`). `LAND AND SEA RD`, `STATE AND MAIN ST`, `AT&T WAY` are single streets. | Not a USPS rule: Pub 28 does not address intersections. Decision 37; corpus `is-001` to `is-013`. |
 | A street suffix glued to a city (`STREETDADE CITY FL`) is split only when the city is anchored for real: a state or ZIP in the same segment ends it only if nothing but a ZIP follows and no later segment holds a state or ZIP; the end of the segment ends it only if the next segment starts with a state or ZIP and the city's last word is not a street suffix; a word that completes a place with the words before it (`PICO RIVERA`) is never split. Before this, any word that began with a suffix spelling and ended in a place name was split (`RIVERA` into `RIV ERA`, `CREEKWOOD`, `AVENIDA DE LA REINA`, `STRAND`). | Not a USPS rule. Found by the Netsyms comparison (docs/future-sources.md); corpus `ns-001` to `ns-008`. |
 | A word after `#` is the unit value (`# PRIMARY`, `# REAR`), and a letter range is a unit value (`APT A-D`). | Not a USPS rule; Pub 28 section 213 writes `#` with any secondary number. Seen in real data (corpus `ns-009`, `ns-010`, `ns-014`). |
 | A value right after `#` or a unit designator is not split by the glue rules: `# 2WD` is not house number 2 and a name, `APT I4` is not Interstate 4. | Not a USPS rule. Corpus `ns-011`, `ns-012`. |
 | A single letter after a house number is not a number suffix when it is `U` before `S` (`20192 U S ROUTE 23`). | Not a USPS rule; `U S` is the written form of US. Corpus `ns-013`. |
 | A postdirectional is not a cut-off copy of the city: `1040 HANCOCK CHAPEL RD NE, NEW SALISBURY, IN` keeps NE. | Not a USPS rule. Corpus `ns-015`, `ns-016`. |
-| On one line with no commas, a state code that is also a suffix spelling (CT, LA, WY, KY, MT, PR) is the state, not the suffix, when the ZIP belongs to that state and a place of that state stands right before it (`9 ELM WALLINGFORD CT 06492`); with a ZIP of another state or no such place it stays the suffix (`12 SIMON CT 32505`). `WASHINGTON DC` before a ZIP is the city and DC, though the whole phrase is also a spelling of the state. | Not a USPS rule. The ZIP-to-state and place data are `data/places/` (Census Gazetteer, GeoNames; docs/places.md). Corpus `ns-017` to `ns-023`. |
+| On one line with no commas, a state code that is also a suffix spelling (CT, LA, WY, KY, MT, PR) is the state, not the suffix, when the ZIP belongs to that state and a place of that state stands right before it (`9 ELM WALLINGFORD CT 06492`); with a ZIP of another state or no such place it stays the suffix (`12 SIMON CT 32505`). `WASHINGTON DC` before a ZIP is the city and DC, though the whole phrase is also a spelling of the state. | Not a USPS rule. The ZIP-to-state and place data are `crates/doorplate/data/places/` (Census Gazetteer, GeoNames; docs/places.md). Corpus `ns-017` to `ns-023`. |
 | Truncation: `possibly_truncated` when a line of at least 30 characters ends in something incomplete: a cut-off ZIP, a designator without its number, a cut-off designator (`UNI`; a street suffix such as `ST` or `TRL` is never one, though it starts STE or TRAILER), or a name with no suffix. | Prior art (county sites cut lines at about 30 characters). |
 | The parser does not guess: `409742ND` (4097 42ND or 40974 2ND), slash pairs (`5210/5212`), comma lists of house numbers (`31967,32037,...`, `multiple_addresses`) and anything no rule claims go to `unparsed`. | Prior art. |
 

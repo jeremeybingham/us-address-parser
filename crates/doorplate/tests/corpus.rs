@@ -18,6 +18,11 @@ fn corpus_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/corpus")
 }
 
+/// The published package has no `tests/corpus`; these tests then do nothing.
+fn have_corpus() -> bool {
+    corpus_dir().is_dir()
+}
+
 fn load() -> corpus::Corpus {
     match corpus::load(&corpus_dir()) {
         Ok(c) => c,
@@ -27,6 +32,9 @@ fn load() -> corpus::Corpus {
 
 #[test]
 fn golden_corpus() {
+    if !have_corpus() {
+        return;
+    }
     let dir = corpus_dir();
     let report = load().run(&Parser::new());
     print!("{}", report.summary());
@@ -66,6 +74,9 @@ fn golden_corpus() {
 /// Parsing the USPS output of a parsed address must give the same keys.
 #[test]
 fn usps_output_round_trips_to_the_same_key() {
+    if !have_corpus() {
+        return;
+    }
     let bad = load().usps_round_trip_mismatches(&Parser::new());
     println!("usps round trip: {} mismatch(es)", bad.len());
     assert!(

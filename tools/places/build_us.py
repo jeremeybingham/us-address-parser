@@ -1,4 +1,4 @@
-"""Build the national place list (data/places/) from public data.
+"""Build the national place list (crates/doorplate/data/places/) from public data.
 
     python3 tools/places/build_us.py [--src local-data/places]
 
@@ -31,7 +31,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "data" / "places"
+OUT = ROOT / "crates" / "doorplate" / "data" / "places"
 
 # 50 states, DC and Puerto Rico. Other territories and the military "states"
 # (GeoNames has ZIPs but no Census places for them) are left out of this pass.
@@ -100,7 +100,7 @@ def load_expand():
     directional tables (directionals win for a word that is both)."""
     ex = {}
     for fname, table in (("suffixes.toml", "suffix"), ("directionals.toml", "directional")):
-        t = tomllib.loads((ROOT / "data" / fname).read_text(encoding="utf-8"))
+        t = tomllib.loads((ROOT / "crates" / "doorplate" / "data" / fname).read_text(encoding="utf-8"))
         for r in t[table]:
             for f in r["forms"] + r.get("observed", []):
                 ex[f] = r["name"]
