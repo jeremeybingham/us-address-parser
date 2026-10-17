@@ -4,17 +4,23 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### The name is `doorplate` (items 58 and 45, decision 46)
+
+- Crates `doorplate` and `doorplate-cli`, Python package and import
+  `doorplate`, directories `crates/doorplate*`. The CLI binary is `doorplate`;
+  `addr` is built as an alias. Keys, output and the corpus are unchanged.
+
 ### Examples (item 59)
 
 - `examples/`: a notebook tour (`quickstart.ipynb`), Polars and pandas
   pipelines, and three small invented input files (one-line, split fields,
-  messy text). `crates/addr-py/tests/test_examples.py` runs the scripts and
+  messy text). `crates/doorplate-py/tests/test_examples.py` runs the scripts and
   executes the notebook in CI.
 
 ### Dataframe helpers (item 50)
 
-- `us_address_parser.pandas.parse_column(series, ...)` and
-  `us_address_parser.polars.parse_column(series, ...)` parse a column of
+- `doorplate.pandas.parse_column(series, ...)` and
+  `doorplate.polars.parse_column(series, ...)` parse a column of
   one-line addresses with `parse_many` and return a DataFrame of component
   columns (street parts, unit, city, state, ZIP, address type, key, slug,
   warnings; `columns=`, `prefix=` and `default_state=` choose others). Rows
@@ -46,7 +52,7 @@ Nothing is released yet. Entries are newest first.
   adding the score later changes no signature.
 - `tools/calibrate/fit.py` fits a sign-constrained logistic model on the
   corpus, usaddress's test files and the Florida sample (exploratory; nothing
-  it writes ships). `addr corpus features` and `addr parse --features` print
+  it writes ships). `doorplate corpus features` and `doorplate parse --features` print
   the tagger's decisions and the warnings per case for it. No parse or output
   changes.
 
@@ -219,12 +225,12 @@ Nothing is released yet. Entries are newest first.
 
 ### Python `parse_many`: batch tests, benchmark and the pandas recipe (Milestone 6, item 34)
 
-- `crates/addr-py/tests/test_batch.py`: `parse_many` gives what a loop of
+- `crates/doorplate-py/tests/test_batch.py`: `parse_many` gives what a loop of
   `parse` gives, keeps order, returns `None` for unusable input, takes
   `default_state`, accepts a list or tuple (a string or generator raises
   `TypeError`), and lets another thread run during a big batch (the GIL is
   released). Both pandas recipes are tested.
-- `crates/addr-py/benchmarks/bench_batch.py`: on 100,000 corpus addresses
+- `crates/doorplate-py/benchmarks/bench_batch.py`: on 100,000 corpus addresses
   (14 CPUs) `parse_many` takes 0.25 s against 1.55 s for a loop of `parse`
   (6.3x); `to_dict` per row costs about as much as parsing, so the README
   recipe picks columns, with `json_normalize(to_dict())` for everything.
@@ -232,9 +238,9 @@ Nothing is released yet. Entries are newest first.
 
 ### The Python wrapper (Milestone 6, item 33)
 
-- `crates/addr-py` joins the workspace: the extension module
-  `us_address_parser._core` (PyO3 0.30, abi3 for Python 3.10 and later, built
-  with maturin) and the `us_address_parser` package with type stubs and
+- `crates/doorplate-py` joins the workspace: the extension module
+  `doorplate._core` (PyO3 0.30, abi3 for Python 3.10 and later, built
+  with maturin) and the `doorplate` package with type stubs and
   `py.typed`.
 - `parse`, `parse_fields`, `parse_many` (the GIL is released and the batch
   parses in parallel), `tag` and `parse_tokens` (usaddress's shapes),
@@ -244,7 +250,7 @@ Nothing is released yet. Entries are newest first.
   `repeated_labels()` and `to_dict()`. `ParseError` (a `ValueError`) only for
   input with no address text; a `default_state` that is not a state raises
   `ValueError`.
-- 17 pytest tests (`crates/addr-py/tests`), including `tag` against usaddress
+- 17 pytest tests (`crates/doorplate-py/tests`), including `tag` against usaddress
   when it is installed, and a CI job (Python 3.10 and 3.13). Plain `cargo
   test` and `clippy` need no libpython (the crate has no Rust test target).
 
@@ -262,10 +268,10 @@ Nothing is released yet. Entries are newest first.
   `TaggedAddress::usaddress_type()` gives usaddress's `Street Address`, `PO
   Box` or `Ambiguous` by its rule, so a dual address is a Street Address and
   a rural route a PO Box, as there.
-- `addr parse --tag`; corpus fields `address_type`, `tag`, `tag_repeated`;
+- `doorplate parse --tag`; corpus fields `address_type`, `tag`, `tag_repeated`;
   corpus `tg-001` to `tg-008`.
 - Migration notes (item 32): "Coming from usaddress" in the README has the
-  call mapping and the differences; `crates/addr-py/README.md` has the
+  call mapping and the differences; `crates/doorplate-py/README.md` has the
   planned Python names.
 - `tools/compare/compare_usaddress.py ... tag` compares the joined dicts and
   types with `usaddress.tag()` on the vendored test files: identical on 99.3%
@@ -275,7 +281,7 @@ Nothing is released yet. Entries are newest first.
 
 - `ParseOptions { default_state }` and `Parser::with_options` (fails with
   `OptionsError::UnknownDefaultState` for anything that is not a US state,
-  DC or territory), `addr parse` and `parse-file --default-state ST`, and a
+  DC or territory), `doorplate parse` and `parse-file --default-state ST`, and a
   `default_state` field on corpus cases.
 - When the input names no state and has no known ZIP, a city is looked up in
   the hinted state (`281 EVELYN DR DOTHAN` with `AL` finds DOTHAN, which the
@@ -432,12 +438,12 @@ other benchmarks moved (blind geocode 96.1%, usaddress files 99.2%).
   (Pub 28 section 215). The slug is not a contract, so the key is unchanged.
   Corpus `rg-040` to `rg-044`; `docs/key-format.md`.
 
-### `addr parse-file`: every component has a column
+### `doorplate parse-file`: every component has a column
 
 - New columns `addr_second_unit_type`, `addr_second_unit_number` (after
   `addr_unit_number`), `addr_general_delivery` and
   `addr_military_post_office`. A second unit (`STE 201 PMB 308`) used to be
-  left out of the CSV. A test checks that every component `addr parse`
+  left out of the CSV. A test checks that every component `doorplate parse`
   prints has a column.
 
 ### Florida pack: observed ZIP places and `CR` as CIRCLE
@@ -537,13 +543,13 @@ benchmark, whole-address accuracy (coarse) rose from 76.1% to 85.4%
 ### usaddress comparison (design decision 11; first planned for Milestone 8)
 
 - `ParsedAddress::to_usaddress_tags()` (`UsaddressTag`): each input token with
-  its usaddress label, from the component spans. `addr parse --usaddress`
+  its usaddress label, from the component spans. `doorplate parse --usaddress`
   prints them as JSON.
 - `tests/external/usaddress/`: usaddress's labeled test files (MIT, pinned
   commit) and `in_training.txt` (`tools/compare/training_overlap.py`).
 - `tools/compare/compare_usaddress.py`: runs both parsers and scores them by
   the same rules, on labeled files (`gold`) or raw CSV and text (`raw`).
-- `crates/addr-core/tests/usaddress_gold.rs`: fails if this parser's coarse
+- `crates/doorplate/tests/usaddress_gold.rs`: fails if this parser's coarse
   score on those files drops below the recorded floor.
 - Results and the backlog: `docs/usaddress-comparison.md`.
 
@@ -582,12 +588,12 @@ Corpus cases `rg-017` to `rg-039` (auction listings, DBPR license files):
 
 ### Milestone 4: corpus, CLI and benchmarks
 
-- `addr` CLI: `addr parse` prints one JSON record (components, warnings, key,
+- `addr` CLI: `doorplate parse` prints one JSON record (components, warnings, key,
   slug, USPS and RESO output), with `--pretty`, `--usps`, field options, or
-  one address per stdin line. `addr parse-file IN.csv --column NAME
-  [-o OUT.csv]` appends `addr_`-prefixed columns. `addr corpus test [--dir
+  one address per stdin line. `doorplate parse-file IN.csv --column NAME
+  [-o OUT.csv]` appends `addr_`-prefixed columns. `doorplate corpus test [--dir
   DIR] [--verbose] [--update-baseline]`.
-- Corpus runner moved into `addr_core::corpus` (feature `corpus`, optional
+- Corpus runner moved into `doorplate::corpus` (feature `corpus`, optional
   serde and serde_json; the default build is still dependency-free).
 - `benches/parse.rs`: criterion benchmarks for six address shapes, the whole
   corpus (`parse` and `parse_many`) and the four emitters.

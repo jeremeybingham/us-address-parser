@@ -1,5 +1,7 @@
 # Choosing the name (item 58, decision 42)
 
+**Chosen: `doorplate`** (decision 46). The rest records how.
+
 Checked 2026-10-17. One name for the Rust crates, the Python package and
 import, the CLI and the repository. The current `us-address-parser` collides
 with the existing `us_address_parser` crate (decision 33's names are dropped).
