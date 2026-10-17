@@ -62,9 +62,39 @@ pub(crate) enum Tag {
     Zip,
 }
 
+/// An uncertain rule that settled a boundary (item 37). Warnings report what
+/// went wrong; these record what the tagger had to judge on a parse that may
+/// have none. The confidence score (item 38, decision 12) is fitted on them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Decision {
+    /// The city is a line or comma segment of its own (`..., MIAMI`).
+    CityByComma,
+    /// One line with no commas: the city starts after the street's suffix
+    /// (`12 LAKE SHORE DR CHICAGO`), or is all there is (`TAMPA 33616`).
+    CityBySuffix,
+    /// The city was found in the place list (`MAIN ST WEST PALM BEACH`).
+    CityByPlace,
+    /// A state with no ZIP after it (`..., MIAMI FL`).
+    StateWithoutZip,
+    /// A unit with no designator: after the suffix (`DR 706`, `DR B`) or a
+    /// later line that is only a number.
+    BareUnit,
+    /// A single letter joined to the house number (`428 B SOUTH MAIN ST`).
+    NumberLetter,
+    /// The parser's `default_state` decided a tag (a city or a pack's
+    /// highway spelling).
+    DefaultState,
+}
+
 pub(crate) struct Tagged {
     pub tags: Vec<Tag>,
     pub warnings: Vec<Warning>,
+    /// Each uncertain decision once, in the order first made.
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "read by the confidence score, item 38")
+    )]
+    pub decisions: Vec<Decision>,
 }
 
 /// Lengths used for the truncation check.
@@ -79,6 +109,7 @@ pub(crate) struct Tagger<'a> {
     toks: &'a [Token],
     tags: Vec<Tag>,
     warnings: Vec<Warning>,
+    decisions: Vec<Decision>,
     lex: Lexicons,
     /// A token where the input looks cut off, if any.
     incomplete: Option<usize>,
@@ -113,6 +144,7 @@ impl<'a> Tagger<'a> {
             toks,
             tags: vec![Tag::Untagged; toks.len()],
             warnings: Vec::new(),
+            decisions: Vec::new(),
             lex,
             incomplete: None,
             zero_number: false,
@@ -126,6 +158,12 @@ impl<'a> Tagger<'a> {
     fn warn(&mut self, w: Warning) {
         if !self.warnings.contains(&w) {
             self.warnings.push(w);
+        }
+    }
+
+    fn decide(&mut self, d: Decision) {
+        if !self.decisions.contains(&d) {
+            self.decisions.push(d);
         }
     }
 
@@ -175,6 +213,7 @@ impl<'a> Tagger<'a> {
         }
         if self.hint_used.get() {
             self.warn(Warning::DefaultStateApplied);
+            self.decide(Decision::DefaultState);
         }
         if let Some(k) = self.incomplete {
             let tok = &self.toks[k];
@@ -188,6 +227,7 @@ impl<'a> Tagger<'a> {
         Tagged {
             tags: self.tags,
             warnings: self.warnings,
+            decisions: self.decisions,
         }
     }
 }
@@ -265,4 +305,98 @@ pub(crate) fn tag_fields(
     let end = t.drop_city_copy(line.start, end, city_range);
     t.delivery(line.start, end);
     t.finish()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Decision::*;
+    use super::*;
+    use crate::clean::clean;
+    use crate::tokenize::tokenize;
+
+    fn decisions(input: &str, hint: Option<&'static str>) -> Vec<Decision> {
+        let lex = Lexicons::builtin();
+        let toks = tokenize(&clean(input), None, 0, &lex);
+        let lens = LineLengths {
+            seg: Vec::new(),
+            whole: Some(input.len()),
+        };
+        tag_line(&toks, lex, lens, hint).decisions
+    }
+
+    #[test]
+    fn a_plain_parse_records_only_how_the_city_was_found() {
+        for input in [
+            "123 MAIN ST, MIAMI, FL 33101",
+            "123 MAIN ST APT 4, MIAMI, FL 33101",
+            "PO BOX 5, MIAMI, FL 33101",
+            "123 MAIN ST, MIAMI",
+        ] {
+            assert_eq!(decisions(input, None), vec![CityByComma], "{input}");
+        }
+        assert_eq!(decisions("123 MAIN ST, FL 33101", None), vec![]);
+    }
+
+    #[test]
+    fn a_city_on_one_line_by_suffix_or_place() {
+        assert_eq!(
+            decisions("12 LAKE SHORE DR ZYQXV FL 33101", None),
+            vec![CityBySuffix]
+        );
+        #[cfg(feature = "places-us")]
+        assert_eq!(
+            decisions("123 MAIN ST WEST PALM BEACH FL 33401", None),
+            vec![CityByPlace]
+        );
+    }
+
+    #[test]
+    fn a_state_with_no_zip() {
+        assert_eq!(
+            decisions("123 MAIN ST, ZYQXV FL", None),
+            vec![StateWithoutZip, CityByComma]
+        );
+    }
+
+    #[test]
+    fn bare_units_and_the_number_letter() {
+        assert_eq!(
+            decisions("100 OAK DR 706, MIAMI, FL 33101", None),
+            vec![CityByComma, BareUnit]
+        );
+        assert_eq!(
+            decisions("100 OAK DR V 21, MIAMI, FL 33101", None),
+            vec![CityByComma, BareUnit]
+        );
+        assert_eq!(
+            decisions("2309 1ST AVE NO, 403, MIAMI, FL 33101", None),
+            vec![CityByComma, BareUnit]
+        );
+        assert_eq!(
+            decisions("428 B SOUTH MAIN ST, MIAMI, FL 33101", None),
+            vec![CityByComma, NumberLetter]
+        );
+        // A designator makes the unit certain.
+        assert_eq!(
+            decisions("100 OAK DR APT 706, MIAMI, FL 33101", None),
+            vec![CityByComma]
+        );
+    }
+
+    #[test]
+    #[cfg(all(feature = "places-us", feature = "state-fl"))]
+    fn the_default_state_hint() {
+        assert_eq!(
+            decisions("281 EVELYN DR DOTHAN", Some("AL")),
+            vec![CityByPlace, DefaultState]
+        );
+        assert_eq!(decisions("281 EVELYN DR DOTHAN", None), vec![]);
+        assert_eq!(decisions("22200 SR 60", Some("FL")), vec![DefaultState]);
+        assert_eq!(decisions("22200 SR 60", Some("OH")), vec![]);
+        // The input's own state wins; the hint decides nothing.
+        assert_eq!(
+            decisions("500 OAK ST, ATLANTA, GA 30301", Some("FL")),
+            vec![CityByComma]
+        );
+    }
 }
