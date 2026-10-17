@@ -170,6 +170,7 @@ data/               lexicon tables (Pub 28 suffixes, units, states, ...) and
                     national place list (data/places/), state
                     packs (data/packs/), compiled into static tables by
                     addr-core's build.rs
+examples/           notebook, Polars and pandas pipelines, invented sample data
 tests/corpus/       labeled golden corpus (JSONL)
 tests/external/     usaddress's labeled test files (MIT)
 tools/              corpus, comparison, place-list and pack scripts
@@ -192,6 +193,7 @@ Published names (nothing is published yet): the Python package is
 - [`docs/packs/fl.md`](docs/packs/fl.md): the Florida pack, its sources and licenses
 - [`docs/places.md`](docs/places.md): the national place list, its sources and licenses
 - [`crates/addr-py/README.md`](crates/addr-py/README.md): the Python package
+- [`examples/`](examples/README.md): a notebook tour and dataframe pipelines
 - [`CHANGELOG.md`](CHANGELOG.md): what changed, newest first
 - [`tests/corpus/README.md`](tests/corpus/README.md): the golden corpus format
 

@@ -16,6 +16,7 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 | `docs/prior-art.md` | Lessons from the author's Florida address code |
 | `tests/corpus/README.md` | Golden-corpus record format and labeling conventions |
 | `crates/addr-py/README.md` | The Python package: API, batch and dataframe recipes, usaddress mapping |
+| `examples/` | Notebook tour, Polars and pandas pipelines and invented sample inputs (item 59); run by `crates/addr-py/tests/test_examples.py` |
 | `docs/repository_cleaning.md` | Text changes deferred to the fresh repository before the first release (decision 42) |
 | `CHANGELOG.md` | What changed, newest first (everything is "Unreleased" until item 46) |
 
@@ -673,12 +674,13 @@ changes the shipped data or the `k1` key format.
 49. **Deferred (decision 45).** **CLI and Python access:** `addr --custom-layer PATH`, `addr layer check
     PATH`, `Parser(custom_layer=...)` and a test suite that runs the golden
     corpus with a sample layer (`tests/corpus/layers/`).
-59. **Examples** (decision 42; no layer example, decision 45): an `examples/` directory with invented
+59. **Examples (done)** (decision 42; no layer example, decision 45): an `examples/` directory with invented
     addresses only: sample CSV and text input files (one line, split fields,
     messy real-world shapes), a Jupyter notebook (`parse`, `parse_many`,
     `parse_fields`, keys and slugs, the CLI on a file), and
     Polars and pandas pipelines (over item 50's helpers once they exist).
-    Run in CI (the notebook executed with `nbconvert` or `nbmake`) so it
+    Run in CI (the notebook executed with `nbclient` inside
+    `crates/addr-py/tests/test_examples.py`) so it
     stays current. Lands before item 61, which links to it.
 60. **Deferred with items 47 to 49 (decision 45).** **Customization guide** (decision 42): one place, `custom/` at the
     repository root (or `docs/customizing.md` with `custom/template/`),

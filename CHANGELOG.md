@@ -4,6 +4,13 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Examples (item 59)
+
+- `examples/`: a notebook tour (`quickstart.ipynb`), Polars and pandas
+  pipelines, and three small invented input files (one-line, split fields,
+  messy text). `crates/addr-py/tests/test_examples.py` runs the scripts and
+  executes the notebook in CI.
+
 ### Dataframe helpers (item 50)
 
 - `us_address_parser.pandas.parse_column(series, ...)` and
