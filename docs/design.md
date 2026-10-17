@@ -518,7 +518,13 @@ Calibrated confidence (decision 12):
       from `data/*.toml`, the field-driven warnings computed, each row
       checked by the corpus runner before it is saved, and `NOTES.md`
       written from the differences with the parser.
-    - Then **(author)**: label the 190 records and note the parser errors.
+    - Commit 3 (done): `tools/calibrate/triage.py` and the collaborative
+      mode in `tools/calibrate/README.md`: an independent check sorts the
+      drafts into clear and review, the assistant accepts the clear rows it
+      would label the same way and proposes labels for the rest, and the
+      author approves or overrules each. Who labeled a row is in its note.
+    - Then **(author)**: finish the labels (`REVIEW.md` beside the sample)
+      and the parser errors in `NOTES.md`.
 37. **Record the tagger's uncertain decisions (done).** `tagger::Decision`
     in `Tagged::decisions`, each once in the order made: `CityByComma`,
     `CityBySuffix`, `CityByPlace`, `StateWithoutZip`, `BareUnit` (after the

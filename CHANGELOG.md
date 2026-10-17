@@ -4,6 +4,16 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Collaborative labeling for the Florida sample (item 36)
+
+- `tools/calibrate/triage.py` checks each unlabeled draft without trusting
+  the parser (every input word accounted for, in address order; a known
+  city; no warnings; nothing that needs judgment), accepts checked drafts in
+  bulk (`by=assistant` in the note), and applies approved recommendations
+  (`by=assistant+author`), adding their parser errors to `NOTES.md`.
+- `tools/calibrate/README.md` documents the tools and the collaborative
+  mode, so labeling can stop and restart at any step.
+
 ### Release preparation planned (decision 42)
 
 - New plan items before the first release: benchmarks (57), choosing a new
