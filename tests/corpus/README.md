@@ -34,7 +34,8 @@ Every parsing bug fixed gets a case here (`CLAUDE.md`).
   `fl-` (Florida pack, `fl-pack.jsonl`), `pl-` (national place list outside
   Florida, `places-us.jsonl`), `ds-` (`default_state`, `default-state.jsonl`),
   `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
-  `co-` (trailing country, `country.jsonl`);
+  `co-` (trailing country, `country.jsonl`),
+  `is-` (intersections, `intersections.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
@@ -249,6 +250,14 @@ Ids `co-001` to `co-015`: a trailing `USA`, `US`, `UNITED STATES` or
 `UNITED STATES OF AMERICA` (decision 36, item 54) on one line, on its own
 line, in line 2, in the city field and in the state field, each with
 `country_ignored`; and `US` as a highway prefix, which is not a country.
+
+### `intersections.jsonl`
+
+Ids `is-001` to `is-013` (decision 37, item 55): two streets joined by `&`,
+`AND`, `@` or `AT`, with the first street as components, the second in
+`unparsed`, `intersection_detected`, and `none` for key and slug; plus the
+look-alikes that are one street (`LAND AND SEA RD`, `BEACH AT SEA DR`,
+`STATE AND MAIN ST`, `AT&T WAY`), which must not warn.
 
 ### `tag.jsonl`
 

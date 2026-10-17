@@ -544,12 +544,17 @@ pub enum Warning {
     /// address (`docs/design.md` section 13, decision 36). Other countries
     /// are not recognized and stay in the parse as ordinary text.
     CountryIgnored,
+    /// Two streets joined by `&`, `AND`, `@` or `AT` (`MAIN ST & 1ST AVE`):
+    /// a corner, not an address (`docs/design.md` section 13, decision 37).
+    /// The first street is parsed, the second stays in
+    /// [`Diagnostics::unparsed`], and [`ParsedAddress::key`] is `None`.
+    IntersectionDetected,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 21] = [
+    pub const ALL: [Warning; 22] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -571,6 +576,7 @@ impl Warning {
         Warning::DefaultStateApplied,
         Warning::RepeatedLabel,
         Warning::CountryIgnored,
+        Warning::IntersectionDetected,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -598,6 +604,7 @@ impl Warning {
             Warning::DefaultStateApplied => "default_state_applied",
             Warning::RepeatedLabel => "repeated_label",
             Warning::CountryIgnored => "country_ignored",
+            Warning::IntersectionDetected => "intersection_detected",
         }
     }
 }

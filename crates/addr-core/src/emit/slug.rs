@@ -15,7 +15,9 @@ impl ParsedAddress {
     /// key and the RESO output, not the PO Box the USPS output writes. The
     /// slug says nothing about whether the address exists or is deliverable.
     pub fn slug(&self) -> Option<String> {
-        if self.diagnostics.has(&Warning::Placeholder) {
+        if self.diagnostics.has(&Warning::Placeholder)
+            || self.diagnostics.has(&Warning::IntersectionDetected)
+        {
             return None;
         }
         let u = self.to_usps();

@@ -129,6 +129,7 @@ rows of 2026-10-16 (dual addresses, floors, the parser fixes `rg-082` to
 | 2026-10-16 | A name or building on line 1 with the street on line 2 is the attention line, so the street comes from line 2 | 629 addresses in the same files |
 | 2026-10-16 | `default_state` (only when the option is set): a city found in the hinted state leaves the street name; the state-dependent readings (`CR`, `SR`) apply. The key still has no state | Only parsers given the option |
 | 2026-10-16 | A trailing country (`USA`, `UNITED STATES`) is dropped before tagging (item 54), so the key is the one the address has without it; before, the country broke the city, state or ZIP segments | Addresses that end in a country name |
+| 2026-10-16 | An intersection (`MAIN ST & 1ST AVE`) has no key and no slug (item 55); before, the `&` and both streets went into the street name | Addresses with two streets joined by `&`, `AND`, `@` or `AT` |
 
 The slug and `place` are not part of the key and change with these too.
 
@@ -145,8 +146,8 @@ formatting improves. Never store it as an identifier; use the key.
   one hyphen, with none at either end. Apostrophes are dropped (`O'BRIEN` ->
   `obrien`) and `#` reads as `unit`, so `#4` gives `unit-4` while `Apt 4`
   gives `apt-4`.
-- Missing parts are left out (`123-main-st`). `None` for a placeholder or an
-  address with no lines.
+- Missing parts are left out (`123-main-st`). `None` for a placeholder, an
+  intersection or an address with no lines.
 - A dual address (street and PO Box) is built from the street line and its
   units, not the PO Box the USPS output writes, so the slug, key and RESO
   output all name the street (`9418-cuba-rd-hayes-va-23072`; `docs/design.md`

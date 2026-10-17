@@ -9,6 +9,7 @@ use crate::assemble::assemble;
 use crate::clean::clean;
 use crate::country::strip_trailing;
 use crate::input::Fields;
+use crate::intersection;
 use crate::lexicon::Lexicons;
 use crate::place;
 use crate::tagger::{tag_fields, tag_line, LineLengths};
@@ -112,7 +113,16 @@ impl Parser {
             seg: seg_lengths(&toks, |s| input.get(s.start..s.end)),
             whole: Some(input.trim().chars().count()),
         };
-        let tagged = tag_line(&toks, self.lex, lens, self.default_state);
+        let cut = intersection::find(&toks, &self.lex);
+        let tagged = match &cut {
+            Some(c) => {
+                let kept = intersection::remove(&toks, c);
+                let mut t = tag_line(&kept, self.lex, lens, self.default_state);
+                t.tags = intersection::restore(t.tags, c);
+                t
+            }
+            None => tag_line(&toks, self.lex, lens, self.default_state),
+        };
         let mut addr = ParsedAddress::empty(input.to_string(), InputKind::SingleLine, None);
         assemble(
             &mut addr,
@@ -125,6 +135,9 @@ impl Parser {
         place::resolve(&mut addr, &self.lex, self.default_state);
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
+        }
+        if cut.is_some() {
+            addr.diagnostics.warn(Warning::IntersectionDetected);
         }
         Ok(addr)
     }
@@ -172,7 +185,25 @@ impl Parser {
             seg: seg_lengths(&toks, source),
             whole: None,
         };
-        let tagged = tag_fields(&toks, &ranges, self.lex, lens, self.default_state);
+        let cut = intersection::find(&toks, &self.lex);
+        let tagged = match &cut {
+            Some(c) => {
+                let kept = intersection::remove(&toks, c);
+                let shifted: Vec<_> = ranges
+                    .iter()
+                    .map(|(f, r)| {
+                        (
+                            *f,
+                            intersection::shift(r.start, c)..intersection::shift(r.end, c),
+                        )
+                    })
+                    .collect();
+                let mut t = tag_fields(&kept, &shifted, self.lex, lens, self.default_state);
+                t.tags = intersection::restore(t.tags, c);
+                t
+            }
+            None => tag_fields(&toks, &ranges, self.lex, lens, self.default_state),
+        };
         let mut addr =
             ParsedAddress::empty(fields.joined(), InputKind::Fields, Some(fields.clone()));
         assemble(
@@ -186,6 +217,9 @@ impl Parser {
         place::resolve(&mut addr, &self.lex, self.default_state);
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
+        }
+        if cut.is_some() {
+            addr.diagnostics.warn(Warning::IntersectionDetected);
         }
         Ok(addr)
     }
@@ -357,6 +391,50 @@ mod tests {
         };
         // Nothing else to parse: the field is kept, not emptied into an error.
         assert!(Parser::new().parse_fields(&f).is_ok());
+    }
+
+    #[test]
+    fn an_intersection_keeps_the_first_street_and_has_no_key() {
+        for input in [
+            "MAIN ST & 1ST AVE, MIAMI, FL 33101",
+            "main st and 1st ave miami fl 33101",
+            "MAIN ST @ 1ST AVE, MIAMI, FL 33101",
+            "MAIN ST AT 1ST AVE, MIAMI, FL 33101",
+        ] {
+            let a = Parser::new().parse(input).unwrap();
+            assert!(a.diagnostics.has(&Warning::IntersectionDetected), "{input}");
+            assert_eq!(a.street_name.as_deref(), Some("MAIN"), "{input}");
+            assert_eq!(a.city.as_deref(), Some("MIAMI"), "{input}");
+            assert!(a
+                .diagnostics
+                .unparsed
+                .as_deref()
+                .unwrap()
+                .to_uppercase()
+                .ends_with("1ST AVE"));
+            assert_eq!(a.key(crate::KeyOptions::property()), None, "{input}");
+            assert_eq!(a.slug(), None, "{input}");
+        }
+    }
+
+    #[test]
+    fn a_connector_inside_one_street_is_not_an_intersection() {
+        for input in [
+            "LAND AND SEA RD, MIAMI, FL 33101",
+            "100 BEACH AT SEA DR, MIAMI, FL 33101",
+            "1 STATE AND MAIN ST",
+            "123 AT&T WAY",
+            "123 MAIN ST APT 4 & 5, MIAMI, FL",
+            "MAIN ST &",
+            "MAIN ST & 1ST, MIAMI, FL",
+            "MAIN ST AND, 1ST AVE",
+        ] {
+            let a = Parser::new().parse(input).unwrap();
+            assert!(
+                !a.diagnostics.has(&Warning::IntersectionDetected),
+                "{input}"
+            );
+        }
     }
 
     #[test]

@@ -4,6 +4,17 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Intersections (item 55)
+
+- `MAIN ST & 1ST AVE` (also `AND`, `@`, `AT`) is detected when a name and a
+  street suffix come before the connector and a street suffix after it. The
+  first street is parsed, the second stays in `unparsed`, the new warning
+  `intersection_detected` is raised (`Warning::ALL` grows to 22), and `key()`
+  and `slug()` are `None`. `LAND AND SEA RD`, `BEACH AT SEA DR`,
+  `STATE AND MAIN ST` and `AT&T WAY` are single streets and do not warn.
+- Corpus `is-001` to `is-013`; the USPS round-trip check skips intersections;
+  key-format log entry.
+
 ### Trailing country (item 54)
 
 - A trailing `USA`, `US`, `UNITED STATES` or `UNITED STATES OF AMERICA` is
