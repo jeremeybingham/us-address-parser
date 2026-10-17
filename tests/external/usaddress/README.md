@@ -1,7 +1,7 @@
 # usaddress test data (vendored)
 
 Labeled US address test files from [datamade/usaddress](https://github.com/datamade/usaddress),
-used to compare this parser with usaddress (`docs/usaddress-comparison.md`).
+used to compare this parser with usaddress (`docs/usaddress-compat.md`).
 
 - Source commit: `aa7699b53a0843fc443f9e87285b88cbd9eaf50a` (2025-08-07).
 - License: MIT, copyright 2014 The Atlanta Journal Constitution. The license

@@ -91,7 +91,7 @@ forms = ["ATTN", "ATTENTION", "C/O", "CARE OF"]
 # by position: ROUTE 88 is a highway, ROUTE 2 BOX 15 a rural route.
 #
 # State-dependent abbreviations are deliberately left out of the base table
-# and belong in state packs (docs/design.md section 11): "SR" is State Road in
+# and belong in state packs (docs/how-it-works.md): "SR" is State Road in
 # Florida and State Route elsewhere (Appendix F itself shows both, SR 220 ->
 # STATE ROAD 220 and SR MM -> STATE ROUTE MM); "RR" is Ranch Road in Texas but
 # a rural route everywhere in Pub 28.
@@ -220,8 +220,8 @@ forms = ["DPO"]
 
 [country]
 # Names of the United States written after the address ("MIAMI, FL 33101,
-# USA"). Dropped from the parse with a `country_ignored` warning (design.md
-# decision 36); other countries are out of scope. Normalized keys, so
+# USA"). Dropped from the parse with a `country_ignored` warning;
+# other countries are out of scope. Normalized keys, so
 # "U.S.A." is USA. Not a USPS rule: Pub 28 addresses are domestic and carry
 # no country line; the names are plain English names for the country.
 phrases = [

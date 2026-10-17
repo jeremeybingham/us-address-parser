@@ -1,6 +1,6 @@
 //! Score `ParsedAddress::to_usaddress_tags` against usaddress's labeled test
 //! files (`tests/external/usaddress/`), with the coarse rules of
-//! `docs/usaddress-comparison.md`, and fail if the score drops below the
+//! `docs/usaddress-compat.md`, and fail if the score drops below the
 //! recorded floor. The full two-parser comparison is
 //! `tools/compare/compare_usaddress.py`; this test needs no Python.
 

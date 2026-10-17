@@ -1,5 +1,5 @@
 # Florida pack overrides: spellings that mean something else in Florida than
-# in the base tables (docs/design.md section 11; docs/packs/fl.md).
+# in the base tables (docs/packs/fl.md).
 #
 # Each [[suffix]] entry reads a street suffix spelling the base table already
 # has (data/suffixes.toml) as another suffix when the address is in Florida

@@ -10,7 +10,7 @@ current online edition as of October 2026.
 Formatting to Pub 28 is not validation. Nothing here checks that an address
 exists or is deliverable.
 
-## Lexicon tables (Milestone 1)
+## Lexicon tables
 
 `crates/doorplate/data/*.toml` is compiled into static tables by `crates/doorplate/build.rs`
 and read only through `Lexicons` (`crates/doorplate/src/lexicon.rs`).
@@ -22,28 +22,20 @@ entry whose `forms` leave out its own name or abbreviation.
 
 Each table was first transcribed from independent open-source copies
 (usaddress-scourgify and the street-address gem, both MIT), then checked in
-October 2026 against the live Pub 28 pages: Appendix C1 and C2 from a copy
-of the HTML supplied by the maintainer, Appendix B, Appendix F and the
-chapter 2 sections cited below fetched directly (`pe.usps.com` sends
-clients without a browser User-Agent to a "page not found" page). Before
-release, re-check every table against the live pages (`docs/design.md`,
-item 44, Milestone 8).
-
-**Re-checked 2026-10-17 (item 44).** Every table in the list below was
-compared with the live pages by `tools/pub28/verify.py` (it parses Appendix
-C1, C2 and B and diffs them against `crates/doorplate/data/suffixes.toml`, `units.toml`,
-`states.toml` and `directionals.toml`; `--emitter` also runs every Appendix F
-example through the parser and the USPS emitter): **0 differences** in 202
-suffix rows and their spellings, 24 designators and their range flags, 62
-state and military codes, 8 directionals. The rule sections cited here and in
-the emitter section (211 to 215, 221 to 224, 225 to 239, 241 to 246, 251 to
-255, 261, 262, 281 to 285, 341, 343, 35, 354, 356, Appendices A1, D1, D2, D4
-and F) were read again and say what this file says. The 238.1 and 239 examples
-are images and were not re-read. The check fetched the pages with a browser
-User-Agent. Two Appendix F examples failed and are fixed (see "Added
-2026-10-17" below); a third, `SR MM`, is left to state packs on purpose. One
-typo on the USPS side: the C1 page source has a literal `\u2009BYU` where
-BAYOU's abbreviation should be `BYU`; the tool strips it.
+October 2026 against the live Pub 28 pages. `tools/pub28/verify.py` repeats the
+check: it parses Appendix C1, C2 and B and compares them with
+`crates/doorplate/data/suffixes.toml`, `units.toml`, `states.toml` and
+`directionals.toml`, and with `--emitter` it runs every Appendix F example through
+the parser and the USPS emitter. Result on 2026-10-17: **0 differences** in 202
+suffix rows and their spellings, 24 designators and their range flags, 62 state
+and military codes and 8 directionals. The rule sections cited here and in the
+emitter section (211 to 215, 221 to 224, 225 to 239, 241 to 246, 251 to 255, 261,
+262, 281 to 285, 341, 343, 35, 354, 356, Appendices A1, D1, D2, D4 and F) were read
+again and say what this file says. The examples in 238.1 and 239 are images and
+were not re-read. `pe.usps.com` sends clients without a browser User-Agent to a
+"page not found" page, so the tool sends one. `SR MM` in Appendix F is not
+standardized on purpose: `SR` is left to state packs. The C1 page source has a
+literal `\u2009BYU` where BAYOU's abbreviation should be `BYU`; the tool strips it.
 
 Chapter 2 page map (all under `https://pe.usps.com/text/pub28/`): 225
 Military Addresses `28c2_010.htm`; 233 Directionals `28c2_014.htm`; 237
@@ -121,7 +113,7 @@ emitted.
   the Florida pack reads the observed CREEK spelling `CR` as CIRCLE
   (`crates/doorplate/data/packs/fl/overrides.toml`; evidence in `docs/packs/fl.md`).
 
-## Parser rules (Milestone 2)
+## Parser rules
 
 How the tagger (`crates/doorplate/src/tagger/`) reads an address, and where
 each rule comes from. Rules from Pub 28 cite its section; the rest come from
@@ -156,8 +148,8 @@ shapes in real county data and are not USPS rules.
 | A copy of the city at the end of the street line, possibly cut off, is dropped (`... DR FERNANDINA B`). Never dropped this way: a suffix; a value right after a designator or `#` (`SUITE A` before `ARCHER`); a single cut-off letter (`AVE S` before `ST PETERSBURG`, `SAXONY D` before `DELRAY BEACH`). | Florida address data (Nassau County; the exceptions from Pinellas, Palm Beach and other Florida address data). |
 | Multi-field input: a line 2 that repeats the end of line 1 is a copy and is skipped (`9453 LUTOO LANE` / `LUTOO LANE`). | Florida address data (observed). |
 | Placeholders: a whole street line in `[placeholder]`, or a placeholder before ` - ` (dropped, or the whole line when only a code follows). Asterisks around words are trimmed (`**Private Address**`); a line of only punctuation, asterisks included, is a placeholder. | Observed data; not a USPS rule (section 354 lists asterisks for removal). |
-| Trailing country: `USA`, `US`, `UNITED STATES`, `UNITED STATES OF AMERICA` after a comma, a ZIP or a state (or as a whole field other than the street line) is cut before tagging and raises `country_ignored` (decision 36; `crates/doorplate/data/special.toml` `[country]`). `US` in a highway name or after a street is kept. Other countries are not recognized. | Not a USPS rule: Pub 28 addresses are domestic and have no country line. Seen in real data (`co-001` to `co-015`). |
-| Intersections: `&`, `@`, `AND` or `AT` in one comma segment, after a name and a street suffix (a directional may follow, and a house number or directional may lead) and before words that run to a street suffix, split the input. The first street is parsed, the connector and second street go to `unparsed`, `intersection_detected` is raised, and `key()` and `slug()` are `None`. A suffix word alone is a name (`BEACH AT SEA DR`); a suffix directly before another is part of the name (`& PARK AVE`). `LAND AND SEA RD`, `STATE AND MAIN ST`, `AT&T WAY` are single streets. | Not a USPS rule: Pub 28 does not address intersections. Decision 37; corpus `is-001` to `is-013`. |
+| Trailing country: `USA`, `US`, `UNITED STATES`, `UNITED STATES OF AMERICA` after a comma, a ZIP or a state (or as a whole field other than the street line) is cut before tagging and raises `country_ignored` (`crates/doorplate/data/special.toml` `[country]`). `US` in a highway name or after a street is kept. Other countries are not recognized. | Not a USPS rule: Pub 28 addresses are domestic and have no country line. Seen in real data (`co-001` to `co-015`). |
+| Intersections: `&`, `@`, `AND` or `AT` in one comma segment, after a name and a street suffix (a directional may follow, and a house number or directional may lead) and before words that run to a street suffix, split the input. The first street is parsed, the connector and second street go to `unparsed`, `intersection_detected` is raised, and `key()` and `slug()` are `None`. A suffix word alone is a name (`BEACH AT SEA DR`); a suffix directly before another is part of the name (`& PARK AVE`). `LAND AND SEA RD`, `STATE AND MAIN ST`, `AT&T WAY` are single streets. | Not a USPS rule: Pub 28 does not address intersections. Corpus `is-001` to `is-013`. |
 | A street suffix glued to a city (`STREETDADE CITY FL`) is split only when the city is anchored for real: a state or ZIP in the same segment ends it only if nothing but a ZIP follows and no later segment holds a state or ZIP; the end of the segment ends it only if the next segment starts with a state or ZIP and the city's last word is not a street suffix; a word that completes a place with the words before it (`PICO RIVERA`) is never split. Before this, any word that began with a suffix spelling and ended in a place name was split (`RIVERA` into `RIV ERA`, `CREEKWOOD`, `AVENIDA DE LA REINA`, `STRAND`). | Not a USPS rule. Found by comparing with a national address database; corpus `nat-001` to `nat-008`. |
 | A word after `#` is the unit value (`# PRIMARY`, `# REAR`), and a letter range is a unit value (`APT A-D`). | Not a USPS rule; Pub 28 section 213 writes `#` with any secondary number. Seen in real data (corpus `nat-009`, `nat-010`, `nat-014`). |
 | A value right after `#` or a unit designator is not split by the glue rules: `# 2WD` is not house number 2 and a name, `APT I4` is not Interstate 4. | Not a USPS rule. Corpus `nat-011`, `nat-012`. |
@@ -167,9 +159,10 @@ shapes in real county data and are not USPS rules.
 | Truncation: `possibly_truncated` when a line of at least 30 characters ends in something incomplete: a cut-off ZIP, a designator without its number, a cut-off designator (`UNI`; a street suffix such as `ST` or `TRL` is never one, though it starts STE or TRAILER), or a name with no suffix. | Observed in county data (some sites cut lines at about 30 characters). |
 | The parser does not guess: `409742ND` (4097 42ND or 40974 2ND), slash pairs (`5210/5212`), comma lists of house numbers (`31967,32037,...`, `multiple_addresses`) and anything no rule claims go to `unparsed`. | Observed data. |
 
-Added 2026-10-15 from the usaddress comparison and the geocode benchmark
-(`docs/usaddress-comparison.md`; corpus cases `rg-050` to `rg-081`). Rules
-marked "decided" were chosen by the author:
+### Rules from the usaddress comparison and the geocode benchmark
+
+Corpus cases `rg-050` to `rg-081`. A rule marked "library choice" is not
+from Pub 28 or from data; it is how the library behaves.
 
 | Rule | Source |
 |---|---|
@@ -178,23 +171,24 @@ marked "decided" were chosen by the author:
 | A street and city in the first comma segment are split after the street (`626 E KILBOURN AVE MILWAUKEE, WI`), unless the segment ends in a suffix or directional (`427 SOUTH LA SALLE STREET, 60605` is all street). | usaddress test data. |
 | A unit starting the city's segment belongs to the street (`..., # 234 SANTA FE NM`). | Bug fix (usaddress test data). |
 | A unit before the street is the first unit (`APT 1B 626 E KILBOURN AVE`); a unit after the street is then the second. | Bug fix (usaddress test data). |
-| No ZIP, one line: a USPS state code or name ending the street is the state (`8517 CEDAR BARK CIR AL`). Never NE or FL (a directional and a floor). CT, KY, LA, MT, PR, WY and FM (also suffix or highway words) only right after a suffix written as an abbreviation shorter than the word (`CIR KY`; not `HIDDEN MEADOW CT` or `OAK PARK CT`). | Appendix B; decided. |
-| Hyphenated routes are split: `GA-25`, `US-385`, `CR-48`, `I-65`, when the letters are a highway prefix or a state code that is not a directional. `SR-54` stays whole (SR is left to state packs); `NE-2` stays whole. | Appendix F (written with a space); decided. |
-| A delivery line that is only `BOX` and a number is a PO Box (`BOX # 123456`). | Section 283 names CALLER, BIN, LOCKBOX and DRAWER, not plain BOX; decided. |
+| No ZIP, one line: a USPS state code or name ending the street is the state (`8517 CEDAR BARK CIR AL`). Never NE or FL (a directional and a floor). CT, KY, LA, MT, PR, WY and FM (also suffix or highway words) only right after a suffix written as an abbreviation shorter than the word (`CIR KY`; not `HIDDEN MEADOW CT` or `OAK PARK CT`). | Appendix B; library choice. |
+| Hyphenated routes are split: `GA-25`, `US-385`, `CR-48`, `I-65`, when the letters are a highway prefix or a state code that is not a directional. `SR-54` stays whole (SR is left to state packs); `NE-2` stays whole. | Appendix F (written with a space); library choice. |
+| A delivery line that is only `BOX` and a number is a PO Box (`BOX # 123456`). | Section 283 names CALLER, BIN, LOCKBOX and DRAWER, not plain BOX; library choice. |
 | Military box line in reverse order: `BOX 2877 PSC 103` is `PSC 103 BOX 2877`. | Section 238.1. |
-| A single letter between the house number and a directional belongs to the number (`428 B SOUTH MAIN ST`). Before a name word it is an initial in the name (`820 A PHILIP RANDOLPH BLVD`, `9058 T BIRD RD`). | Decided, narrowed after real data. |
-| A letter followed by two digits or more is a house number at the start of a street (`T703 STATE ROUTE 66`); a letter alone is not. | Decided. |
-| A county grid number written in two parts is one house number, kept as written (`N165 W2123`). | Decided. |
-| After COUNTY ROAD or COUNTY HIGHWAY, a route of one or two letters (`COUNTY ROAD J`). | Appendix F (letter routes); decided. |
-| `COUNTRY ROAD` / `COUNTRY RD` before a route number is an observed typo for COUNTY ROAD (`non_standard_abbreviation`); without a number it stays a street name. `HGWY` is an observed spelling of HIGHWAY (highway prefix and HWY suffix). | usaddress test data and Florida address data (observed); decided. |
+| A single letter between the house number and a directional belongs to the number (`428 B SOUTH MAIN ST`). Before a name word it is an initial in the name (`820 A PHILIP RANDOLPH BLVD`, `9058 T BIRD RD`). | Library choice, narrowed after real data. |
+| A letter followed by two digits or more is a house number at the start of a street (`T703 STATE ROUTE 66`); a letter alone is not. | Library choice. |
+| A county grid number written in two parts is one house number, kept as written (`N165 W2123`). | Library choice. |
+| After COUNTY ROAD or COUNTY HIGHWAY, a route of one or two letters (`COUNTY ROAD J`). | Appendix F (letter routes); library choice. |
+| `COUNTRY ROAD` / `COUNTRY RD` before a route number is an observed typo for COUNTY ROAD (`non_standard_abbreviation`); without a number it stays a street name. `HGWY` is an observed spelling of HIGHWAY (highway prefix and HWY suffix). | usaddress test data and Florida address data (observed); library choice. |
 | HC with ROUTE written out: `HC ROUTE`, `HC RTE`, `HC R`, `HWY CONTRACT ROUTE`, `HIGHWAY CONTRACT RTE`. | Section 251 (drop ROUTE). |
 | A stray backtick is trimmed (`1719\``). | Section 354 (punctuation removal). |
-| A house number and a unit with no street raise `missing_street_name` (`123 UNIT 1`). | Decided. |
-| Floors are numbers: an ordinal floor value is written without its ordinal suffix (`5TH FLOOR` is FL 5). | Appendix C2 (FL takes a range); decided. |
-| Building name: words ending in a `[building]` word (TOWER, BUILDING, HALL, CENTER, PLAZA, ...), at the end of the delivery lines, in their own line or comma segment or right after a unit (`SUITE 801 EAST TOWER`, line 2 `ANNEX BUILDING`), go in `building`. Not after the house number alone (`1 TRUMP TOWER` is a street). | Not a USPS rule (Pub 28 has no building line); usaddress BuildingName; decided. |
+| A house number and a unit with no street raise `missing_street_name` (`123 UNIT 1`). | Library choice. |
+| Floors are numbers: an ordinal floor value is written without its ordinal suffix (`5TH FLOOR` is FL 5). | Appendix C2 (FL takes a range); library choice. |
+| Building name: words ending in a `[building]` word (TOWER, BUILDING, HALL, CENTER, PLAZA, ...), at the end of the delivery lines, in their own line or comma segment or right after a unit (`SUITE 801 EAST TOWER`, line 2 `ANNEX BUILDING`), go in `building`. Not after the house number alone (`1 TRUMP TOWER` is a street). | Not a USPS rule (Pub 28 has no building line); usaddress BuildingName; library choice. |
 
-Added 2026-10-16 from Florida address data (corpus cases
-`rg-082` to `rg-097`):
+### Rules from Florida address data
+
+Corpus cases `rg-082` to `rg-097`.
 
 | Rule | Source |
 |---|---|
@@ -203,33 +197,35 @@ Added 2026-10-16 from Florida address data (corpus cases
 | A street cut across lines: when line 1's street part has no suffix and the next line or comma segment is a suffix, with at most a number before it and a directional after it, the two are one street (`8725 NW` / `18 TER`, `6556 CHESTNUT` / `CIR`, `750 NE` / `64 ST APT B202`). A line 2 of name words stays unparsed (`... OAK COURT` / `MAGNOLIA TERRACE`). | Florida address data (observed). |
 | A dash between the street and its unit is dropped (`3RD AVENUE - SUITE 1500`, `192ND STREET - #502`). | Section 354 (punctuation removal); Florida address data (observed). |
 
-Added 2026-10-16 from the place list, the Florida pack and three more Florida
-address files (corpus `fl-020` to `fl-033`, `rg-098` to `rg-120`, `ds-001`
-to `ds-007`). Most are data-quality rules with no USPS text behind them; the
-source column says what does back each one:
+### Rules from the place list, the Florida pack and more Florida address files
+
+Corpus `fl-020` to `fl-033`, `rg-098` to `rg-120`, `ds-001` to `ds-007`. Most are
+data-quality rules with no USPS text behind them; the source column says what
+does back each one.
 
 | Rule | Source |
 |---|---|
 | A state pack may add a highway prefix spelling the base table lacks, read in that state only: `SR` is STATE ROAD in Florida (`22200 SR 60`), `CTY HWY` is COUNTY HIGHWAY (observed). Elsewhere `SR` stays a street name. | Appendix F maps `SR` to both STATE ROAD and STATE ROUTE, which is why it is state-dependent; Florida choice from Florida address data (139 lines, none STATE ROUTE); `docs/packs/fl.md`. |
 | `DRT` is `DR`, `LNE` is `LANE`, `SU` is `SUITE` (observed spellings, `non_standard_abbreviation`). | Not in C1 or C2; Florida address data (`docs/packs/fl.md`). |
-| A penthouse right after a designator is that designator's value: `APT PH 5213` is `APT PH5213`, `SUITE PH` is `STE PH`. | Appendix C2 lists PH as a designator that takes no range; joining is decided (design.md decision 31); Florida address data (162 lines). |
+| A penthouse right after a designator is that designator's value: `APT PH 5213` is `APT PH5213`, `SUITE PH` is `STE PH`. | Appendix C2 lists PH as a designator that takes no range; joining the number to PH is a library choice; Florida address data (162 lines). |
 | A designator joined to its value by `.`, `:` or `-`, or run into a value that starts with a digit (`APT.1285`, `STE.200`, `APT:201`, `UNIT-4`, `APT3D`), is split. | Section 354 (punctuation is removed); Appendix C2 designators; Florida address data (about 1,200 lines). |
-| `BAY`, `STUDIO` and `BOOTH` followed by a value are a unit, written `UNIT` (observed spellings). A bare observed spelling with no value (`GULF TO BAY`) is not a unit. | C2 has no such words; its "blank, unable to determine" row takes `#`, and UNIT is the nearest listed designator; Florida address data (127, 99 and 11 lines); decided. |
-| `NO`, `NUM` or `NUMBER` between a designator and its value is dropped (`SUITE NO. 102` is `STE 102`). | Section 241 tells writers not to use NO or NUMBER in a rural route address; extended to unit values; decided; Florida address data. |
+| `BAY`, `STUDIO` and `BOOTH` followed by a value are a unit, written `UNIT` (observed spellings). A bare observed spelling with no value (`GULF TO BAY`) is not a unit. | C2 has no such words; its "blank, unable to determine" row takes `#`, and UNIT is the nearest listed designator; Florida address data (127, 99 and 11 lines). |
+| `NO`, `NUM` or `NUMBER` between a designator and its value is dropped (`SUITE NO. 102` is `STE 102`). | Section 241 tells writers not to use NO or NUMBER in a rural route address; extended to unit values; Florida address data. |
 | A cut-off copy of the address ahead of the whole one (`624 E COLONI 624 E COLONIAL DR`): the house number comes again after words that match the start of what follows, in one segment; the copy is dropped. | Data-quality rule, no USPS text; mailing-address fields in Florida data (about 1,785 lines). |
 | A name or building on line 1 (or in the first comma segment) with a house-numbered street on the next is the attention line. | Section 214 (an attention line goes above the address); Florida address data (629 lines). |
-| `default_state`: when the input names no state and has no known ZIP, a city is looked up in the hinted state and that state's pack readings (`CR`, `SR`) apply. It never fills `state`. | Library behavior, not a USPS rule (design.md decision 24). |
+| `default_state`: when the input names no state and has no known ZIP, a city is looked up in the hinted state and that state's pack readings (`CR`, `SR`) apply. It never fills `state`. | Library behavior, not a USPS rule. |
 | After a highway prefix, a route that starts with a letter: one letter, digits, at most one more letter (`HIGHWAY A1A`, `STATE ROAD A1A`). Elsewhere the route still starts with a digit. | Appendix F (routes after a prefix); Florida State Road A1A observed in Florida address data (407 rows were street names); corpus `rg-121`. |
-| After a highway route, the route anchors the units the way a street name does: a later line that is only a number is a bare unit (`HWY 27` / `405`). | Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36); corpus `rg-122`, `rg-123`. |
-| A number of one to three digits run into `ST` or `RD` where that is not the number's ordinal ending is the number plus the suffix: `178ST` is `178 ST` (178's ordinal is `178TH`); `21ST` and `3RD` stay whole; four digits or more stay whole (`is_glued_ordinal`). A cut-off copy ahead of the address is compared without word breaks, so it is still found after the split. | Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36) (about 1,050 rows such as `NE 199ST`); corpus `rg-124` to `rg-126`. |
-| A directional letter right after the suffix on its line, then a number, is the postdirectional and a bare unit (`DR E 203` is `DR E`, unit 203); the letter-and-number unit (`DR V 21`) stays for other letters and for a line of its own (`E 203`). | Section 233 (postdirectional after the suffix); Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36); corpus `rg-127`, `rg-128`. |
-| `UNIT # 4` takes the designator before `#` only when no ordinal after the street's suffix comes first: `RD 2ND FLOOR #260` is floor 2 and unit 260 (`SW 11TH APT #2` keeps 11TH as the name). | Appendix C2 (FL takes a range); Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36); corpus `rg-129`, `rg-130`. |
-| `PH FLOOR` is one unit, the penthouse: `PH`, and the floor word is dropped. | Appendix C2 (PH needs no range); Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36) (author's call); corpus `rg-131`. |
-| After a whole unit (designator or `#`, then a value), an exact copy of the city is dropped even when it starts with a suffix word (`UNIT 412 INLET BEACH` before `INLET BEACH`). As a last resort, a whole comma segment that repeats the city's last words is a cut-off copy (`RD,CLOUD` before `ST CLOUD`); a copy across the comma (`RD WESLEY` / `CHAPEL`) is still dropped whole first. | Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36); corpus `rg-132` to `rg-134`. |
-| A period after an abbreviation of two letters or more, with a letter right after it, separates words (`ST.CLOUD` is `ST CLOUD`, `CIR.APART`, `BLVD.N`), unless the pieces join into a known word (`BLV.D` stays `BLVD`); initials stay joined (`P.O.`, `U.S.A.`). A box word joined to its number by punctuation is split like a designator (`BOX.2351`). | Not a USPS rule (Pub 28 drops periods); Not a USPS rule; Florida address data, found while labeling the blind Florida sample (design.md item 36); corpus `rg-133`, `rg-135`, `rg-136`. |
+| After a highway route, the route anchors the units the way a street name does: a later line that is only a number is a bare unit (`HWY 27` / `405`). | Not a USPS rule; seen in Florida address data; corpus `rg-122`, `rg-123`. |
+| A number of one to three digits run into `ST` or `RD` where that is not the number's ordinal ending is the number plus the suffix: `178ST` is `178 ST` (178's ordinal is `178TH`); `21ST` and `3RD` stay whole; four digits or more stay whole (`is_glued_ordinal`). A cut-off copy ahead of the address is compared without word breaks, so it is still found after the split. | Not a USPS rule; seen in Florida address data (about 1,050 rows such as `NE 199ST`); corpus `rg-124` to `rg-126`. |
+| A directional letter right after the suffix on its line, then a number, is the postdirectional and a bare unit (`DR E 203` is `DR E`, unit 203); the letter-and-number unit (`DR V 21`) stays for other letters and for a line of its own (`E 203`). | Section 233 (postdirectional after the suffix); Not a USPS rule; seen in Florida address data; corpus `rg-127`, `rg-128`. |
+| `UNIT # 4` takes the designator before `#` only when no ordinal after the street's suffix comes first: `RD 2ND FLOOR #260` is floor 2 and unit 260 (`SW 11TH APT #2` keeps 11TH as the name). | Appendix C2 (FL takes a range); Not a USPS rule; seen in Florida address data; corpus `rg-129`, `rg-130`. |
+| `PH FLOOR` is one unit, the penthouse: `PH`, and the floor word is dropped. | Appendix C2 (PH needs no range); seen in Florida address data; corpus `rg-131`. |
+| After a whole unit (designator or `#`, then a value), an exact copy of the city is dropped even when it starts with a suffix word (`UNIT 412 INLET BEACH` before `INLET BEACH`). As a last resort, a whole comma segment that repeats the city's last words is a cut-off copy (`RD,CLOUD` before `ST CLOUD`); a copy across the comma (`RD WESLEY` / `CHAPEL`) is still dropped whole first. | Not a USPS rule; seen in Florida address data; corpus `rg-132` to `rg-134`. |
+| A period after an abbreviation of two letters or more, with a letter right after it, separates words (`ST.CLOUD` is `ST CLOUD`, `CIR.APART`, `BLVD.N`), unless the pieces join into a known word (`BLV.D` stays `BLVD`); initials stay joined (`P.O.`, `U.S.A.`). A box word joined to its number by punctuation is split like a designator (`BOX.2351`). | Not a USPS rule (Pub 28 drops periods); seen in Florida address data; corpus `rg-133`, `rg-135`, `rg-136`. |
 
-Added 2026-10-17 from the Pub 28 re-check (item 44; corpus `p28-twosuf-001`
-to `006`, `p28-highway-038` to `040`):
+### Rules from the Pub 28 re-check
+
+Corpus `p28-twosuf-001` to `006`, `p28-highway-038` to `040`.
 
 | Rule | Source |
 |---|---|
@@ -270,56 +266,46 @@ and 239 are images (`images/28c2_019_1.jpg`, `28c2_019_2.jpg`,
 | The attention line is not emitted; Pub 28 places it above the recipient, outside the address lines this library writes. | Section 214. |
 | Parts the parse did not find are left out. `diagnostics` is not consulted; unparsed text is not emitted. | Library behavior, not a USPS rule. |
 
-### Pub 28 verification of the emitter (October 2026)
+### Notes on the emitter rules
 
-`pe.usps.com` was blocked when the USPS emitter was written, so its layout
-rules were listed here to check against the live text. They were checked in
-October 2026. What each check found:
+Each was checked against the live Pub 28 text in October 2026 and again on
+2026-10-17 (`tools/pub28/verify.py`).
 
-1. **Punctuation.** Confirmed with two changes. Pub 28 lets punctuation be
-   omitted except the ZIP+4 hyphen (222, A1). It keeps the hyphen in
-   numbers and names, the slash in fractions, and a period in numbers such
-   as `39.2 RD` (232). The emitter used to drop that period (`392 RD`); it
-   now keeps it (corpus `p28-punct-001`). Apostrophes are on the 354
-   removal list, so `O'BRIEN` is `OBRIEN`. A second finding: hyphenated New
-   York style numbers (`112-10`, `289-01`, Appendix D1) raised
-   `multiple_addresses`; only a range with a larger second number of the
-   same length (`1204-1206`) does now.
-2. **Secondary unit placement.** The unit goes at the end of the delivery
-   line (213). When it does not fit, it goes on the line immediately above
-   (213.3, 343.1, 356). Pub 28 sets no line length (35), so the 40-character
-   placeholder is gone: `to_usps()` never wraps, `to_usps_wrapped(max_line)`
-   wraps at the caller's limit, and `UspsAddress::lines()` gives mailpiece
-   order.
-3. **`#` for an unknown designator.** Confirmed: `# 4` with a space
-   (213.2), and no `#` when the designator is known (213), so `APT #4` is
-   `APT 4`.
-4. **Last line.** Confirmed: `CITY ST ZIP` with at least one space (224;
-   two preferred between state and ZIP, one used), no comma (222), ZIP+4
-   hyphen kept. City names: spelled out in full, abbreviated only from the
-   City State file (223), so no SAINT/ST or FORT/FT rule is applied.
-5. **State inside a street name.** Implemented in the parser and both
-   emitters from Appendix F: a state code or name before a highway prefix
-   (`CA COUNTY RD 150`, `KY ST HWY 1`), or before a route number alone
-   (`KENTUCKY 440`, `KY 1207`, which take the HIGHWAY prefix), is kept as
-   `Highway::state` and written as its code. A state that is the whole
-   primary name (`OKLAHOMA AVE`) stays spelled out. Corpus
-   `p28-highway-028` to `p28-highway-037`.
-6. **Leading zeros.** Decided: keep route numbers as given (see the table
-   above). Stripping them only in the emitter would make the USPS output key
-   differently from its input; stripping them in the parser or key would
-   change `k1` keys for those inputs. Revisit with any `k2`.
-7. **Military and general delivery.** Confirmed against the 238.1 and 239
-   examples (`CPR 895 BOX 74` / `APO AE 09499-0001`,
-   `UNIT 9900 BOX 0500` / `DPO AE 09701-0500`) and section 261. The
-   corpus military and general delivery cases now check `usps`.
-8. **Key punctuation rule.** Traced: `docs/key-format.md` rule 1 now cites
-   sections 222 and 354.
-9. **Release re-check (done 2026-10-17).** Every lexicon table and the
-   emitter rules above were re-checked against the live Pub 28 pages
-   (`docs/design.md`, item 44); see "Re-checked 2026-10-17" under
-   "Verification status". Two bugs found and fixed (section 234.2 and letter
-   routes).
+1. **Punctuation.** Pub 28 lets punctuation be omitted except the ZIP+4 hyphen
+   (222, A1). It keeps the hyphen in numbers and names, the slash in fractions,
+   and a period in numbers such as `39.2 RD` (232), so the emitter keeps that
+   period (corpus `p28-punct-001`). Apostrophes are on the 354 removal list, so
+   `O'BRIEN` is `OBRIEN`. Hyphenated New York style numbers (`112-10`, `289-01`,
+   Appendix D1) are one house number; only a range with a larger second number of
+   the same length (`1204-1206`) raises `multiple_addresses`.
+2. **Secondary unit placement.** The unit goes at the end of the delivery line
+   (213). When it does not fit, it goes on the line immediately above (213.3,
+   343.1, 356). Pub 28 sets no line length (35), so `to_usps()` never wraps,
+   `to_usps_wrapped(max_line)` wraps at the caller's limit, and
+   `UspsAddress::lines()` gives mailpiece order.
+3. **`#` for an unknown designator.** `# 4` with a space (213.2), and no `#` when
+   the designator is known (213), so `APT #4` is `APT 4`.
+4. **Last line.** `CITY ST ZIP` with at least one space (224; two preferred
+   between state and ZIP, one used), no comma (222), ZIP+4 hyphen kept. City names
+   are spelled out in full and abbreviated only from the City State file (223),
+   which this library does not have, so no SAINT/ST or FORT/FT rule is applied.
+5. **State inside a street name.** From Appendix F: a state code or name before a
+   highway prefix (`CA COUNTY RD 150`, `KY ST HWY 1`), or before a route number
+   alone (`KENTUCKY 440`, `KY 1207`, which take the HIGHWAY prefix), is kept as
+   `Highway::state` and written as its code. A state that is the whole primary
+   name (`OKLAHOMA AVE`) stays spelled out. Corpus `p28-highway-028` to
+   `p28-highway-037`.
+6. **Leading zeros.** Route numbers are kept as given (see the table above).
+   Stripping them only in the emitter would make the USPS output key differently
+   from its input, and stripping them in the parser or key would change keys.
+7. **Military and general delivery.** The 238.1 and 239 examples
+   (`CPR 895 BOX 74` / `APO AE 09499-0001`, `UNIT 9900 BOX 0500` /
+   `DPO AE 09701-0500`) and section 261 are matched by the corpus, which checks
+   `usps` for these cases.
+8. **Key punctuation rule.** Rule 1 of `docs/key-format.md` cites sections 222
+   and 354.
+9. **Appendix F.** Every example in the "Examples in Use" column gives its
+   standard form, except `SR MM` (see Verification status).
 
 Special forms (sourced):
 

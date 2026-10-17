@@ -20,7 +20,7 @@ its training data; see tests/external/usaddress/README.md). `raw` has no
 labels: it reports where the two parsers disagree. `tag` compares the joined
 dicts of `ParsedAddress::tag()` (`doorplate parse --tag`) with `usaddress.tag()` on
 the strings of the same files, and the address types. The scoring rules are
-in docs/usaddress-comparison.md.
+in docs/usaddress-compat.md.
 """
 import argparse
 import collections
@@ -254,7 +254,7 @@ def gold_cmd(args):
     report = [
         "# usaddress comparison: labeled test files", "",
         "Scores are on the coarse labels (street parts folded into StreetName) unless marked fine.",
-        "Rules: docs/usaddress-comparison.md.", "",
+        "Rules: docs/usaddress-compat.md.", "",
     ]
     if seen:
         report += [
@@ -356,7 +356,7 @@ def raw_cmd(args):
     n = len(strings)
     report = [
         f"# usaddress comparison: {os.path.basename(args.file)} (no labels)", "",
-        "No gold labels: these are agreement rates, not accuracy. Rules: docs/usaddress-comparison.md.", "",
+        "No gold labels: these are agreement rates, not accuracy. Rules: docs/usaddress-compat.md.", "",
         f"- Addresses: {n}",
         f"- Same labels on every token: {c['addr_fine']} ({pct(c['addr_fine'], n)}); "
         f"coarse (street parts folded): {c['addr_coarse']} ({pct(c['addr_coarse'], n)})",
@@ -415,7 +415,7 @@ def tag_cmd(args):
     report = [
         "# usaddress.tag() vs ParsedAddress::tag()", "",
         "Strings of usaddress's labeled test files, minus those that use a label this "
-        "parser does not model. Rules: docs/usaddress-comparison.md.", "",
+        "parser does not model. Rules: docs/usaddress-compat.md.", "",
         f"- Addresses: {c['addresses']} ({c['held_out']} not in usaddress's training files, "
         f"{c['seen']} in them); unusable (no text, or usaddress failed): {c['unusable']}",
         f"- usaddress raised RepeatedLabelError: {c['usaddress_repeated_label_error']} "
