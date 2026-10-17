@@ -1,10 +1,10 @@
 # National place list (`crates/doorplate/data/places/`)
 
-Layer 2 of the lexicon (`docs/design.md` section 11, Milestone 5): place
+Layer 2 of the lexicon (`docs/how-it-works.md`): place
 names and ZIP places for every state, DC and Puerto Rico, generated from
 public data. It lets the parser find a city on a line with no commas, tell a
 street from a city before a ZIP, and complete a cut-off city. A curated state
-pack (`docs/packs/fl.md`) sits above it and wins for its state (decision 29).
+pack (`docs/packs/fl.md`) sits above it and wins for its state.
 
 This data helps the parser find and name the city. It does not say an
 address exists or can receive mail.
@@ -107,12 +107,12 @@ no places or no ZIPs.
   county column is the municipio). The 513 GeoNames rows left out are the
   511 military ZIPs (`APO AE` and the like, no state) and 2 Marshall
   Islands ZIPs. Other territories have no Census places in these files.
-  Puerto Rico urbanizations are not handled here (backlog).
+  Puerto Rico urbanizations are not handled here.
 
 ## How it is compiled in
 
 `build.rs` compiles `crates/doorplate/data/places/` when the `places-us` cargo feature is on
-(it is by default), under the state packs (decision 29):
+(it is by default), under the state packs:
 
 - A state with a curated pack keeps the pack's places and ZIPs. A national
   row whose comparison key the pack already has, as a name or a variant, is
@@ -123,19 +123,19 @@ no places or no ZIPs.
   in `build_us.py`), the pack's name, so it is the pack's place and not a
   second one. The pack's 1,473 ZIPs are untouched (GeoNames is the source of
   both, so the national ZIPs for Florida are the same pairs); the new places'
-  ZIPs come from the observed-ZIP table, which was rerun with them
+  ZIPs come from the observed-ZIP table, which includes them
   (`docs/packs/fl.md`); `build.rs` adds those pairs once the national rows
   are in, and leaves them out when `places-us` is off.
 - For every other state a name, variant or ZIP that would lead to two places
   is a build error, as in a pack. Names, counties and kinds are checked the
   same way.
-- The parser reads the national layer for every state (design.md item 25):
+- The parser reads the national layer for every state:
   `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52. So
   the Florida behaviors work everywhere: a city on a line with no commas, a
   street versus a city before a ZIP, a city run into the street, a cut-off
   city completed from the ZIP, and the place from the ZIP.
   `zip_city_mismatch` stays limited to states with a curated pack
-  (`Lexicons::has_pack`; decision 30), because the list names one place per
+  (`Lexicons::has_pack`), because the list names one place per
   ZIP, and its place equals the written city on only 75.8% of the
   benchmark's addresses.
 
@@ -160,7 +160,7 @@ Measured on the blind geocode benchmark (`local-data/geocode-benchmark/`,
 | ZIP's place equals the city | 75.8% |
 
 The last row is why `zip_city_mismatch` stays limited to states with a
-curated pack (decision 30): GeoNames names one place per ZIP, and many ZIPs
+curated pack: GeoNames names one place per ZIP, and many ZIPs
 are used by several. The list contains 657 of the Florida pack's 665 places
 (the pack wins for Florida and adds the rest: `BAREFOOT BAY`, `BRUCE`,
 `ENTERPRISE`, `INLET BEACH`, `PENSACOLA BEACH`, `PERDIDO KEY`, `WALNUT HILL`,
@@ -169,4 +169,4 @@ are used by several. The list contains 657 of the Florida pack's 665 places
 Florida's `rg-030` (`BELLVIEW`, 32526) is the case that showed the gap the
 national list opens: `BELLVIEW` is a Census place in Escambia County, but
 GeoNames names ZIP 32526 `PENSACOLA`, so the city looked wrong for its ZIP.
-`zips_observed.tsv` now lists `BELLVIEW` as a place of 32526.
+`zips_observed.tsv` lists `BELLVIEW` as a place of 32526.
