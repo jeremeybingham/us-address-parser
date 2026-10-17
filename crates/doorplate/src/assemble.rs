@@ -1,5 +1,5 @@
-//! Assembly (pipeline step 5, item 14): tagged tokens to a
-//! [`ParsedAddress`] with spans and warnings.
+//! Assembly (pipeline step 5): tagged tokens to a [`ParsedAddress`] with
+//! spans and warnings.
 //!
 //! Runs of tokens with the same tag form one component; lexicon values are
 //! looked up here from the joined text, so the tagger only decides *what*
@@ -178,7 +178,7 @@ pub(crate) fn assemble(
             }
             Tag::UnitNumber(n) => {
                 // A penthouse after a designator is one value: `APT PH 5213`
-                // is `APT PH5213` (design.md decision 31).
+                // is `APT PH5213`, so the unit stays one value.
                 let text = match run {
                     [first, rest @ ..]
                         if !rest.is_empty()

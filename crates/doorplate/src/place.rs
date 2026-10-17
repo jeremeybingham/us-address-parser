@@ -1,5 +1,4 @@
-//! Place resolution (Milestone 5; `docs/design.md` section 13, decisions 13
-//! and 14).
+//! Place resolution.
 //!
 //! Runs after assembly. Names the place the city stands for, from the place
 //! lists compiled into [`Lexicons`] (the national list for every state, with
@@ -8,8 +7,7 @@
 //! [`ParsedAddress::place`], beside it. A city the list knows whose ZIP the
 //! list does not give it gets [`Warning::ZipCityMismatch`], but only in a state
 //! with a curated pack: the national list names one place per ZIP, and many
-//! ZIPs are used by several, so the warning would fire too often elsewhere
-//! (design.md decision 30).
+//! ZIPs are used by several, so the warning would fire too often elsewhere.
 
 use crate::lexicon::{Lexicons, MatchKind, ZipPlaces};
 use crate::types::{ParsedAddress, Place, PlaceMatch, PlaceSource, Warning};
@@ -166,7 +164,7 @@ mod tests {
             .unwrap();
         assert!(!a.diagnostics.has(&Warning::ZipCityMismatch));
         // Outside a curated-pack state the ZIP names one place only, so a
-        // different city is not flagged (decision 30).
+        // different city is not flagged.
         let a = Parser::new()
             .parse("1 MAIN ST, ST LOUIS, MO 63301")
             .unwrap();

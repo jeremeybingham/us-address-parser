@@ -1,4 +1,4 @@
-//! Rule-based tagger (pipeline step 4, item 13).
+//! Rule-based tagger (pipeline step 4).
 //!
 //! Gives every token a [`Tag`]. Rules live in [`rules`]; this module holds
 //! the types, the entry points and the checks that run once everything is
@@ -19,7 +19,7 @@ use crate::types::{FieldName, Warning};
 /// Lines at least this long that end in something incomplete (a cut-off
 /// ZIP, a designator with no number, a cut-off word) get
 /// [`Warning::PossiblyTruncated`]. County sites cut address lines at about
-/// 30 characters (`docs/prior-art.md`).
+/// 30 characters.
 pub(crate) const TRUNCATION_MIN_LEN: usize = 30;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,10 +62,9 @@ pub(crate) enum Tag {
     Zip,
 }
 
-/// An uncertain rule that settled a boundary (item 37). Warnings report what
-/// went wrong; these record what the tagger had to judge on a parse that may
-/// have none. A confidence score (decision 12, deferred by decision 43) would be fitted
-/// on them.
+/// An uncertain rule that settled a boundary. Warnings report what went
+/// wrong; these record what the tagger had to judge on a parse that may have
+/// none. Kept as the input for a possible future confidence score.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Decision {
     /// The city is a line or comma segment of its own (`..., MIAMI`).
@@ -285,7 +284,7 @@ pub(crate) fn tag_fields(
     let mut line = l1.start.min(l2.start)..l1.end.max(l2.end);
     let mut t = Tagger::new(toks, lex, lens, hint);
     // Line 2 that repeats the end of line 1 (`9453 LUTOO LANE` / `LUTOO
-    // LANE`, DBPR data) is a copy.
+    // LANE`, seen in Florida address data) is a copy.
     if !l2.is_empty() && l2.start == l1.end && l2.len() <= l1.len() {
         let same = toks[l2.clone()]
             .iter()

@@ -255,9 +255,9 @@ impl PlaceSource {
     }
 }
 
-/// The place found for an address and how it was found (`docs/design.md`
-/// section 13, decision 13). [`ParsedAddress::city`] keeps what the input
-/// said; this names the place it stands for.
+/// The place found for an address and how it was found.
+/// [`ParsedAddress::city`] keeps what the input said; this names the place it
+/// stands for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PlaceMatch {
     pub place: Place,
@@ -391,7 +391,7 @@ pub enum FieldName {
     Zip,
 }
 
-/// Byte range into the original input (decision 13), not into cleaned text.
+/// Byte range into the original input, not into cleaned text.
 ///
 /// For single-line input `field` is `None` and the range indexes
 /// [`SourceInfo::original`]. For [`crate::Fields`] input it names the field
@@ -479,7 +479,7 @@ impl SourceInfo {
 /// name for storing in a database column.
 ///
 /// Several variants come from statuses that proved useful on real county
-/// data in auction-tracker (see `docs/prior-art.md`).
+/// address data.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Warning {
@@ -521,20 +521,19 @@ pub enum Warning {
     /// A ZIP that is not 5 digits, or ZIP+4 that is not 4 digits.
     InvalidZip,
     /// The city is a known place, but the place list does not give the ZIP
-    /// to it (`docs/design.md` section 13, decision 14). A disagreement
-    /// with the data, not a finding that the address is wrong.
+    /// to it. A disagreement with the data, not a finding that the address
+    /// is wrong.
     ///
     /// Only raised in a state with a curated pack (`Lexicons::has_pack`;
     /// Florida today). The national list names one place per ZIP and many
     /// ZIPs are used by several, so elsewhere the warning would fire on
-    /// addresses that are fine (decision 30). `ParsedAddress::place` is
+    /// addresses that are fine. `ParsedAddress::place` is
     /// still set in every state.
     ZipCityMismatch,
     /// The input names no state (and no known ZIP) and the parser was given
     /// a `default_state` ([`crate::ParseOptions`]) that decided a place
     /// match or a state-dependent reading. A hint, never a fill: `state`
-    /// stays empty and the key is unchanged (`docs/design.md` section 13,
-    /// decision 24).
+    /// stays empty and the key is unchanged.
     DefaultStateApplied,
     /// Reported by [`crate::ParsedAddress::tag`], never in `Diagnostics`: a
     /// usaddress label appears in two separate runs of tokens (two units give
@@ -542,12 +541,11 @@ pub enum Warning {
     /// for this; here the runs are joined and the label is reported.
     RepeatedLabel,
     /// A trailing "USA", "US" or "UNITED STATES" was dropped from the
-    /// address (`docs/design.md` section 13, decision 36). Other countries
-    /// are not recognized and stay in the parse as ordinary text.
+    /// address. Other countries are not recognized and stay in the parse as
+    /// ordinary text.
     CountryIgnored,
     /// Two streets joined by `&`, `AND`, `@` or `AT` (`MAIN ST & 1ST AVE`):
-    /// a corner, not an address (`docs/design.md` section 13, decision 37).
-    /// The first street is parsed, the second stays in
+    /// a corner, not an address. The first street is parsed, the second stays in
     /// [`Diagnostics::unparsed`], and [`ParsedAddress::key`] is `None`.
     IntersectionDetected,
 }
@@ -621,11 +619,10 @@ pub struct Diagnostics {
     pub warnings: Vec<Warning>,
     pub unparsed: Option<String>,
     /// Reserved: a calibrated probability (0.0 to 1.0) that the whole parse
-    /// is right. Always `None` in this release; the score is deferred
-    /// (`docs/design.md` section 13, decisions 12 and 43).
+    /// is right. Always `None`: this version does not compute a score.
     pub confidence: Option<f32>,
     pub library_version: &'static str,
-    /// The uncertain rules that settled a boundary (item 37), the input of a
+    /// The uncertain rules that settled a boundary, the input of a possible
     /// future confidence score.
     pub(crate) decisions: Vec<Decision>,
 }

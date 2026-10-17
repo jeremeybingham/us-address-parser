@@ -1,10 +1,10 @@
-//! Tokenizer (pipeline step 2, item 11).
+//! Tokenizer (pipeline step 2).
 //!
 //! Splits cleaned text into tokens that keep their byte span in the
 //! original input. Commas and semicolons separate *segments* (address lines
 //! or parts of one), which the tagger uses as strong boundaries.
 //!
-//! Punctuation rules, from the shapes in `docs/prior-art.md` and Pub 28:
+//! Punctuation rules, from Pub 28 and the shapes seen in county address data:
 //! - `#` is always its own token: `#309` -> `#` `309`.
 //! - Parentheses are dropped from the text but kept in the span, and the
 //!   token is marked `paren`: `(110)` -> `110`.

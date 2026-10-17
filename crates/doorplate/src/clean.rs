@@ -1,8 +1,8 @@
-//! Input cleaning (pipeline step 1, item 10).
+//! Input cleaning (pipeline step 1).
 //!
 //! Produces uppercase ASCII-leaning text with single spaces, and keeps a map
 //! from every cleaned byte back to the original input so components can
-//! report spans into the original text (decision 13).
+//! report spans into the original text.
 //!
 //! What it does:
 //! - Any Unicode whitespace or control character, including the

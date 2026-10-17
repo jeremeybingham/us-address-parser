@@ -2,8 +2,8 @@
 //!
 //! Inputs are the golden corpus (`tests/corpus/*.jsonl`), so the numbers
 //! track the shapes the library is tested on. Speed is not the library's
-//! bar (accuracy is, `docs/design.md` section 2); these are here to catch
-//! regressions and to size bulk jobs. Run with `--features rayon` to see
+//! main goal (accuracy is); these are here to catch regressions and to size
+//! bulk jobs. Run with `--features rayon` to see
 //! the parallel `parse_many`.
 
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]

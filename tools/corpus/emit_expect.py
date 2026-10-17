@@ -43,7 +43,7 @@ def name_text(e):
 def has_street(e): return bool(e.get("street_name") or e.get("highway"))
 
 def dual(e):
-    """A street and a PO Box in one record (Pub 28 section 215, decision 6)."""
+    """A street and a PO Box in one record (Pub 28 section 215)."""
     return has_street(e) and bool(e.get("po_box"))
 
 def unit_text(t,n):
@@ -84,7 +84,7 @@ def keyseg(s):
 def key(e,unit):
     st,z=e.get("state",""),e.get("zip5","")
     pre="k1:" if st and z else "k1n:"
-    # A dual address keys on the street (decision 6).
+    # A dual address keys on the street (docs/key-format.md).
     if e.get("po_box") and not has_street(e): body=["P",e["po_box"],st,z]
     elif e.get("rural_route"):
         r=e["rural_route"]; body=["R",r["kind"],r["route"],r.get("box",""),st,z]
@@ -98,15 +98,15 @@ def key(e,unit):
     return pre+body[0]+":"[:0]+"|".join([body[0]]+[keyseg(x) for x in body[1:]])[1:] if False else pre+"|".join([body[0]]+[keyseg(x) for x in body[1:]])
 
 def slug(e):
-    # A dual address follows the street, with its units (decision 11).
+    # A dual address follows the street, with its units (docs/key-format.md, Slug).
     l1=street_line(e) if dual(e) else line1(e)
     text=join(l1,city_of(e),e.get("state",""),e.get("zip5","")).replace("#"," unit ")
     return re.sub(r"[^a-z0-9]+","-",text.lower()).strip("-")
 
 def reso(e):
     r={}
-    # A dual address uses the street; the box is not emitted (decision 8 in
-    # docs/reso-mapping.md).
+    # A dual address uses the street; the box is not emitted
+    # (docs/reso-mapping.md).
     sp="" if dual(e) else special(e)
     num=e.get("street_number","") if not sp else ""
     if num: r["StreetNumber"]=plain(num)

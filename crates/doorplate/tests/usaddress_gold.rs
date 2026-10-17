@@ -11,8 +11,7 @@ use std::path::Path;
 
 use doorplate::Parser;
 
-/// Recorded scores (2026-10-15, after the benchmark rule fixes; 99.76% and
-/// 99.46%), rounded down. Raise them when the parser improves; never lower
+/// Recorded scores (99.76% of tokens and 99.46% of addresses), rounded down. Raise them when the parser improves; never lower
 /// them to make a change pass.
 const TOKEN_FLOOR: f64 = 99.7;
 const ADDRESS_FLOOR: f64 = 99.4;

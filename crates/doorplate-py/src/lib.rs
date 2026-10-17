@@ -1,4 +1,4 @@
-//! Python bindings for `doorplate` (`doorplate`, Milestone 6).
+//! Python bindings for `doorplate`, built with PyO3 and maturin.
 //!
 //! A thin layer: every value comes from `doorplate`, nothing is parsed or
 //! formatted here. `ParsedAddress` wraps the core type and reads it; the
@@ -255,7 +255,7 @@ impl PyParsedAddress {
     }
 
     /// Reserved for a calibrated probability that the parse is right. Always
-    /// `None` in this release (design.md decisions 12 and 43).
+    /// `None`: this version does not compute a score.
     #[getter]
     fn confidence(&self) -> Option<f32> {
         self.inner.diagnostics.confidence

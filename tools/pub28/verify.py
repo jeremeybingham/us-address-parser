@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare crates/doorplate/data/*.toml with the live Pub 28 tables (docs/design.md item 44).
+"""Compare crates/doorplate/data/*.toml with the live Pub 28 tables.
 
     python3 tools/pub28/verify.py --cache DIR [--fetch] [--emitter]
 

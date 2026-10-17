@@ -1,4 +1,4 @@
-//! Trailing country (item 54, decision 36).
+//! Trailing country.
 //!
 //! `MIAMI, FL 33101, USA` and `... FL 33101 UNITED STATES` carry a country
 //! the parser does not model. The tail is cut from the token list before
