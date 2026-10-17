@@ -24,14 +24,14 @@ Puerto Rico) and a curated Florida pack find cities, and `default_state`
 hints the state for input that names none. The Python wrapper
 (`us_address_parser`, abi3, `parse`/`parse_fields`/`parse_many`/`tag`/
 `parse_tokens`) is built and tested, with wheels for Linux, macOS and
-Windows built on every pull request. Measures: golden corpus 353 cases, all
+Windows built on every pull request. Measures: golden corpus 368 cases, all
 passing; blind geocode benchmark 96.1% of whole addresses (coarse) against
 usaddress's 88.2%; 27 Python tests. No CRF will be built (decision 32).
 Nothing is published yet.
 **Next (section 10): Milestone 8, hardening and release**, started ahead of
 Milestone 7 because calibrated confidence waits for the author's hand-labeled
 Florida sample (item 36). Milestone 8 removed the unused `model_version`
-and `crf` (item 53); next are `country_ignored` (item 54) and
+and `crf` (item 53) and added `country_ignored` (item 54); next are
 `intersection_detected` (item 55), fuzzing, the rename and data packaging,
 the Pub 28 recheck, and publishing. The custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
@@ -337,7 +337,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 
 | Check | Status |
 |---|---|
-| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 353 cases, all passing (the runner also checks `place`, `address_type`, `tag` and `default_state` cases). |
+| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 368 cases, all passing (the runner also checks `place`, `address_type`, `tag` and `default_state` cases). |
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
@@ -357,7 +357,7 @@ it says little about unseen data; the blind benchmark is the better measure.
 Each milestone ends with passing tests. Each numbered item is one pull
 request (its commits listed where it has more than one), small enough to
 review on its own and leaving `main` green. Milestones 0 to 6 are done; the
-open items are 36 to 38 (Milestone 7), 43 to 46, 54 and 55 (Milestone 8)
+open items are 36 to 38 (Milestone 7), 43 to 46 and 55 (Milestone 8)
 and 47 to 51 (Milestone 9). An item marked **(author)** needs the author's data or
 decision before it can start; **(any time)** has no dependency and can go
 in wherever it fits.
@@ -521,7 +521,7 @@ the Pub 28 recheck cover the final rules.
 53. **Remove the unused surface (done)** (decision 35): `Diagnostics::model_version`
     (Rust, Python property, stub) and the empty `crf` cargo feature. No parse
     changes.
-54. **Trailing country** (decision 36): recognize `USA`, `US`, `UNITED
+54. **Trailing country (done)** (decision 36): recognize `USA`, `US`, `UNITED
     STATES` (and `U.S.A.`) after the ZIP or state, drop it from the address
     and raise a new warning `country_ignored` (`Warning::ALL` grows by one).
     Other countries stay out of scope. Corpus cases for each shape,

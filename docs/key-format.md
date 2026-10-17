@@ -128,6 +128,7 @@ rows of 2026-10-16 (dual addresses, floors, the parser fixes `rg-082` to
 | 2026-10-16 | A designator joined to its value is split (`APT.1285`, `STE.200`, `APT:201`, `APT3D`) and `BAY`, `STUDIO`, `BOOTH` with a value are units; `SUITE NO. 102` drops the `NO` | Unit-level keys only |
 | 2026-10-16 | A name or building on line 1 with the street on line 2 is the attention line, so the street comes from line 2 | 629 addresses in the same files |
 | 2026-10-16 | `default_state` (only when the option is set): a city found in the hinted state leaves the street name; the state-dependent readings (`CR`, `SR`) apply. The key still has no state | Only parsers given the option |
+| 2026-10-16 | A trailing country (`USA`, `UNITED STATES`) is dropped before tagging (item 54), so the key is the one the address has without it; before, the country broke the city, state or ZIP segments | Addresses that end in a country name |
 
 The slug and `place` are not part of the key and change with these too.
 

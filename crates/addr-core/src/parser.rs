@@ -7,12 +7,13 @@ use std::fmt;
 
 use crate::assemble::assemble;
 use crate::clean::clean;
+use crate::country::strip_trailing;
 use crate::input::Fields;
 use crate::lexicon::Lexicons;
 use crate::place;
 use crate::tagger::{tag_fields, tag_line, LineLengths};
 use crate::tokenize::{tokenize, Token};
-use crate::types::{FieldName, InputKind, ParsedAddress, Span, StateKind};
+use crate::types::{FieldName, InputKind, ParsedAddress, Span, StateKind, Warning};
 
 /// Returned only for truly unusable input. Partial parses are never errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -105,7 +106,8 @@ impl Parser {
         {
             return Err(ParseError::EmptyInput);
         }
-        let toks = tokenize(&cleaned, None, 0, &self.lex);
+        let mut toks = tokenize(&cleaned, None, 0, &self.lex);
+        let country = strip_trailing(&mut toks, false, &self.lex);
         let lens = LineLengths {
             seg: seg_lengths(&toks, |s| input.get(s.start..s.end)),
             whole: Some(input.trim().chars().count()),
@@ -121,6 +123,9 @@ impl Parser {
             &|s: &Span| input.get(s.start..s.end),
         );
         place::resolve(&mut addr, &self.lex, self.default_state);
+        if country {
+            addr.diagnostics.warn(Warning::CountryIgnored);
+        }
         Ok(addr)
     }
 
@@ -139,11 +144,22 @@ impl Parser {
         let mut toks: Vec<Token> = Vec::new();
         let mut ranges = Vec::new();
         let mut seg = 0;
+        let mut country = false;
         for f in order {
             let start = toks.len();
             if let Some(v) = fields.get(f) {
-                let t = tokenize(&clean(v), Some(f), seg, &self.lex);
+                let mut t = tokenize(&clean(v), Some(f), seg, &self.lex);
                 seg = t.last().map_or(seg, |t| t.seg) + 1;
+                // A field that is only a country goes, unless it is all
+                // there is to parse.
+                let whole = f != FieldName::Line1
+                    && order.iter().any(|&g| {
+                        g != f
+                            && fields
+                                .get(g)
+                                .is_some_and(|v| v.chars().any(char::is_alphanumeric))
+                    });
+                country |= strip_trailing(&mut t, whole, &self.lex);
                 toks.extend(t);
             }
             ranges.push((f, start..toks.len()));
@@ -168,6 +184,9 @@ impl Parser {
             &source,
         );
         place::resolve(&mut addr, &self.lex, self.default_state);
+        if country {
+            addr.diagnostics.warn(Warning::CountryIgnored);
+        }
         Ok(addr)
     }
 
@@ -293,6 +312,51 @@ mod tests {
         assert!(a.diagnostics.has(&Warning::DefaultStateApplied));
         let b = hinted("OH").parse("22200 SR 60").unwrap();
         assert!(b.highway.is_none() && !b.diagnostics.has(&Warning::DefaultStateApplied));
+    }
+
+    #[test]
+    fn a_trailing_country_is_dropped_with_a_warning() {
+        let plain = Parser::new().parse("123 MAIN ST, MIAMI, FL 33101").unwrap();
+        for input in [
+            "123 MAIN ST, MIAMI, FL 33101 USA",
+            "123 MAIN ST, MIAMI, FL 33101, United States",
+            "123 MAIN ST MIAMI FL 33101 U.S.A.",
+        ] {
+            let a = Parser::new().parse(input).unwrap();
+            assert_eq!(
+                a.diagnostics.warnings,
+                vec![Warning::CountryIgnored],
+                "{input}"
+            );
+            assert_eq!(a.diagnostics.unparsed, None, "{input}");
+            assert_eq!(
+                a.key(crate::KeyOptions::property()),
+                plain.key(crate::KeyOptions::property()),
+                "{input}"
+            );
+            assert_eq!(a.source.original, input);
+        }
+        assert!(plain.diagnostics.warnings.is_empty());
+    }
+
+    #[test]
+    fn a_country_name_inside_the_address_stays() {
+        for input in [
+            "123 US HWY 1",
+            "123 MAIN ST US",
+            "USA",
+            "US",
+            "123 UNITED STATES AVE",
+        ] {
+            let a = Parser::new().parse(input).unwrap();
+            assert!(!a.diagnostics.has(&Warning::CountryIgnored), "{input}");
+        }
+        let f = Fields {
+            city: Some("USA".into()),
+            ..Fields::default()
+        };
+        // Nothing else to parse: the field is kept, not emptied into an error.
+        assert!(Parser::new().parse_fields(&f).is_ok());
     }
 
     #[test]

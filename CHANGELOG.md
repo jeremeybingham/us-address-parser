@@ -4,6 +4,16 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Trailing country (item 54)
+
+- A trailing `USA`, `US`, `UNITED STATES` or `UNITED STATES OF AMERICA` is
+  dropped before tagging and raises the new warning `country_ignored`
+  (`Warning::ALL` grows to 21). It is cut after a comma, a ZIP or a state, or
+  as a whole field other than the street line; `US` in a highway name or
+  after a street stays. Other countries are not recognized. The names are in
+  `data/special.toml` `[country]` (`Lexicons::is_country`).
+- Corpus `co-001` to `co-015` (`country.jsonl`); key-format log entry.
+
 ### Removed unused surface (item 53)
 
 - `Diagnostics::model_version` (and the Python `model_version` property and

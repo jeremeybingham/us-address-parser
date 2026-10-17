@@ -387,6 +387,12 @@ impl Lexicons {
     /// "0 UNKNOWN", "00 UNASSIGNED LOCATION RE"), or has no letters or digits
     /// at all ("-"). A leading run of zeros is ignored, and an
     /// "UNASSIGNED LOCATION" line may end in a short trailing code.
+    /// Whether `s` is a name of the United States (`USA`, `UNITED STATES`).
+    /// Source: `data/special.toml` `[country]`.
+    pub fn is_country(&self, s: &str) -> bool {
+        find_str(tables::COUNTRIES, &normalize_key(s))
+    }
+
     /// A word that ends a building name (`TOWER` in `EAST TOWER`).
     /// Source: `data/special.toml` `[building]`.
     pub fn is_building_word(&self, s: &str) -> bool {
@@ -538,6 +544,7 @@ mod tests {
             .collect();
         assert!(zips.windows(2).all(|w| w[0] < w[1]), "zip index order");
         assert!(tables::PLACEHOLDERS.windows(2).all(|w| w[0] < w[1]));
+        assert!(tables::COUNTRIES.windows(2).all(|w| w[0] < w[1]));
     }
 
     #[test]
@@ -709,6 +716,22 @@ mod tests {
             MilitaryPostOffice::Fpo
         );
         assert!(LEX.military("CMR").is_none());
+    }
+
+    #[test]
+    fn countries() {
+        for s in [
+            "USA",
+            "U.S.A.",
+            "us",
+            "United States",
+            "UNITED STATES OF AMERICA",
+        ] {
+            assert!(LEX.is_country(s), "{s:?}");
+        }
+        for s in ["CANADA", "UNITED", "STATES", "USAF", ""] {
+            assert!(!LEX.is_country(s), "{s:?}");
+        }
     }
 
     #[test]

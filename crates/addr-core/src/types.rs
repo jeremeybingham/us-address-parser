@@ -540,12 +540,16 @@ pub enum Warning {
     /// `OccupancyType` twice). `usaddress.tag()` raises `RepeatedLabelError`
     /// for this; here the runs are joined and the label is reported.
     RepeatedLabel,
+    /// A trailing "USA", "US" or "UNITED STATES" was dropped from the
+    /// address (`docs/design.md` section 13, decision 36). Other countries
+    /// are not recognized and stay in the parse as ordinary text.
+    CountryIgnored,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 20] = [
+    pub const ALL: [Warning; 21] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -566,6 +570,7 @@ impl Warning {
         Warning::ZipCityMismatch,
         Warning::DefaultStateApplied,
         Warning::RepeatedLabel,
+        Warning::CountryIgnored,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -592,6 +597,7 @@ impl Warning {
             Warning::ZipCityMismatch => "zip_city_mismatch",
             Warning::DefaultStateApplied => "default_state_applied",
             Warning::RepeatedLabel => "repeated_label",
+            Warning::CountryIgnored => "country_ignored",
         }
     }
 }
