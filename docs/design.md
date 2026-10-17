@@ -26,22 +26,24 @@ Puerto Rico) and a curated Florida pack find cities, and `default_state`
 hints the state for input that names none. The Python wrapper
 (`us_address_parser`, abi3, `parse`/`parse_fields`/`parse_many`/`tag`/
 `parse_tokens`) is built and tested, with wheels for Linux, macOS and
-Windows built on every pull request. Measures: golden corpus 404 cases, all
+Windows built on every pull request. Measures: golden corpus 428 cases, all
 passing; blind geocode benchmark 96.4% of whole addresses (coarse) against
 usaddress's 88.2%; 27 Python tests. No CRF will be built (decision 32).
 Nothing is published yet.
-**Next (section 10): Milestone 7, calibrated confidence**, then the rest of
-Milestone 8 (decision 41). Milestone 8's parser and hardening work is done:
+**Next (section 10): the release.** Milestone 7 is closed: the tagger
+records its uncertain decisions (item 37) and the hand-labeled Florida sample
+found and fixed seven rules (item 36). The calibrated confidence score
+(item 38) is **deferred past the first release** (decision 43): the data
+that exists supports only a coarse score, so `Diagnostics::confidence` stays
+`None` in the first release. Milestone 8's parser and hardening work is done:
 the unused `model_version` and `crf` removed (item 53), `country_ignored`
 (item 54), `intersection_detected` (item 55), the Netsyms fixes (item 56) and
-fuzz targets (item 43). What is left of it (the Pub 28 recheck, the rename
-and data packaging, publishing) waits for Milestone 7: item 37 (the tagger
-records its uncertain decisions) is done; next are the author's hand-labeled
-Florida sample (item 36), then the fitted score (item 38). The custom layer is Milestone 9.
-Before release (decision 42): benchmarks (item 57), a new name (item 58),
-examples (item 59), a customization guide (item 60), the text cleaning in
-`docs/repository_cleaning.md` (item 61), and a fresh repository with no
-history (item 62), from which the first release is published.
+fuzz targets (item 43). The last two Florida sample errors are fixed.
+**The release plan is decided (decision 44):** the custom layer and its
+companions first (items 47 to 50, then the examples and guide, 59 and 60),
+then the Pub 28 recheck (44), benchmarks (57), the name (58), the rename and
+packaging (45), the text cleaning in `docs/repository_cleaning.md` (61), a
+fresh repository with no history (62) and publishing from it (46).
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the decisions and the unscheduled backlog.
 
@@ -173,7 +175,7 @@ tools/
   compare/                  # usaddress comparison (gold, raw, tag modes) and training-overlap scripts
   packs/                    # Florida pack export, observed-ZIP and unmatched-city scripts, dbpr.py reader
   places/                   # build_us.py: national place list from Census and GeoNames data
-  calibrate/                # (planned, item 38) confidence fitting
+  calibrate/                # Florida-sample labeling (item 36) and an exploratory score fit (item 38, deferred)
 .github/workflows/ci.yml    # fmt, clippy, test, corpus report; Python tests (3.10, 3.13)
 .github/workflows/wheels.yml # abi3 wheels for Linux, macOS, Windows, built and tested on every PR
 local-data/                 # gitignored: private and unlicensed test data, never committed
@@ -217,8 +219,8 @@ decision 13), `diagnostics` and `source`.
 
 `Diagnostics` holds the warnings (`Warning`, each with a stable `code()`
 string; `Warning::ALL` lists them), the unparsed remainder, the library
-version and `confidence` (`None` until calibrated; meaning in section 13,
-decision 12). There is no `model_version`: no model is shipped (decision 35).
+version and `confidence` (reserved: always `None` in the first release,
+decision 43; intended meaning in section 13, decision 12). There is no `model_version`: no model is shipped (decision 35).
 
 ### Public API
 
@@ -322,7 +324,9 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
   repository README, "Coming from usaddress".
 - `ParseError` (a `ValueError`) only for input with no address text; a
   `default_state` that is not a state raises `ValueError`.
-- `confidence` is `float | None`: `None` until calibrated (Milestone 7).
+- `confidence` is `float | None`: always `None` in the first release
+  (decision 43); the field is kept so that adding the score later changes no
+  signature.
 - From Milestone 9, `Parser(custom_layer=path_or_text)` (planned).
 - No pandas or Polars dependency. The README has tested recipes for both
   (Polars first; 0.34 s against 0.45 s to build a 7-column frame from 100,000
@@ -345,7 +349,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 
 | Check | Status |
 |---|---|
-| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 404 cases, all passing (the runner also checks `place`, `address_type`, `tag` and `default_state` cases). |
+| **Golden corpus** (`tests/corpus/*.jsonl`): expected components and warnings; most cases also carry key, slug, USPS and RESO expectations written from the specs by `tools/corpus/emit_expect.py`. The runner fails on malformed records and on regressions against `passing.txt`. | Done: 428 cases, all passing (the runner also checks `place`, `address_type`, `tag` and `default_state` cases). |
 | **USPS round trip**: parsing the USPS output of a parsed address gives the same key. | Done (`tests/corpus.rs`). |
 | **Property tests** (proptest): no panic, valid spans, every emitter, `parse_many` consistency. | Done (`tests/no_panic.rs`). |
 | **usaddress gold score**: this parser on usaddress's labeled test files, with a floor. | Done (`tests/usaddress_gold.rs`). |
@@ -365,11 +369,13 @@ it says little about unseen data; the blind benchmark is the better measure.
 Each milestone ends with passing tests. Each numbered item is one pull
 request (its commits listed where it has more than one), small enough to
 review on its own and leaving `main` green. Milestones 0 to 6 are done; the
-open items are 36 and 38 (Milestone 7; 37 is done), 44 to 46, 57, 58, 61
-and 62 (Milestone 8), and 47 to 51, 59 and 60 (Milestone 9). Build order
-(decisions 41 and 42): 37, 36, 38, then 44, 57, 58, 45, 61, 62, 46.
-Milestone 9 may run beside them; the items chosen for the first release
-(section 13, open decisions) land before 61. An item marked **(author)** needs the author's data or
+open items are 44 to 46, 57, 58, 61
+and 62 (Milestone 8; Milestone 7 is closed and its item 38 deferred,
+decision 43), and 47 to 51, 59 and 60 (Milestone 9). **Build order
+(decision 44):** 47, 48, 49, 50, 59, 60, then 44, 57, 58, 45, 61, 62, 46.
+Items 36 and 37 are done, item 38 is deferred (decision 43) and item 51 is
+not in the first release. Item 58 (the name, the author's research) may run
+beside the Milestone 9 items. An item marked **(author)** needs the author's data or
 decision before it can start; **(any time)** has no dependency and can go
 in wherever it fits.
 
@@ -491,13 +497,14 @@ designators joined to values, a name on line 1, BAY and STUDIO units), corpus
     (manylinux), macOS universal2 and Windows x64, installed and tested on
     Python 3.10 and 3.13 on every pull request. Nothing is published.
 
-### Milestone 7: calibrated confidence
+### Milestone 7: calibrated confidence (closed; item 38 deferred)
 
 Runs before the rest of Milestone 8 (items 44 to 46; decision 41, which
 replaces the order of decision 38): the Florida sample can find parser bugs
 that change keys, and those must land before `k1` freezes at the first
-release. Order: item 37 (no dependency), item 36 (the author's labeling),
-item 38.
+release. Items 37 and 36 are done. Item 38 was started and then deferred
+past the first release (decision 43); the first release ships
+`confidence = None`.
 
 Calibrated confidence (decision 12):
 
@@ -536,17 +543,27 @@ Calibrated confidence (decision 12):
     `DefaultState` (a city or a pack highway spelling found under the hint).
     Internal (`pub(crate)`, read by item 38), with unit tests in
     `tagger/mod.rs`; no output or key changes (the corpus is unchanged).
-38. **Fit and ship the score.**
-    - Commit 1: `tools/calibrate/` fits each path's accuracy (a fixed table
-      or a small logistic model) on the golden corpus, usaddress's test
-      files and the Florida sample. The sample was used to fix seven rules
-      (item 36, commit 4), so it is no longer fully blind: fit and report
-      with that in mind (score its fixed rows on the parser before the fixes,
-      or hold part of it out), and keep the geocode benchmark for checking.
-    - Commit 2: the fitted table in `data/` with its source, compiled by
-      `build.rs`, and `Diagnostics::confidence` filled from it.
-    - Commit 3: `docs/confidence.md`, the calibration report, checked on
-      the geocode benchmark (used to check, never to fit).
+38. **Fit and ship the score (deferred past the first release, decision 43).**
+    - Commit 1 (done, kept as groundwork): `tools/calibrate/fit.py` fits a
+      small logistic model on the golden corpus, usaddress's test files and
+      the Florida sample (9,633 examples, only 52 wrong parses). The sample
+      was used to fix seven rules (item 36, commit 4), so it is scored with a
+      parser built before those fixes; the geocode benchmark is kept for
+      checking. The tagger's decisions reach `Diagnostics` (internal) and the
+      tools read them from `addr corpus features` and `addr parse --features`.
+      No parse or output change.
+    - Result, which is why the rest is deferred: the unconstrained fit was
+      unstable and misleading (it rewarded `missing_state`, a feature of the
+      synthetic test files); constrained so that no warning raises
+      confidence, it keeps six features and gives about 0.98 to most parses,
+      about 0.87 to a missing street number or a bare unit and about 0.58 to
+      an unparsed remainder. That separates clean parses from a few suspect
+      kinds and nothing more, and the Florida sample alone (190 rows, 12
+      failures) gives intervals too wide to claim more. The report is
+      `local-data/reports/confidence-fit.md` (private, not committed).
+    - Not started: the fitted table in `data/` compiled by `build.rs`, and
+      `docs/confidence.md`. What a later attempt needs is the backlog entry
+      "Calibrated confidence" in section 13.
 
 **No CRF fallback.** Item 29 decided no-go (decision 32), so the CRF items 39
 to 42 (a `crfs` spike, `tools/train/`, `models/`, `src/tagger/crf.rs`) are
@@ -557,13 +574,12 @@ Python toolchain and no retraining.
 ### Milestone 8: hardening and release
 
 In this order. The parser changes (53 to 56) came first so that fuzzing and
-the Pub 28 recheck cover the final rules. Items 44 to 46 wait for Milestone 7
-(decision 41): the Pub 28 recheck must cover any rule the Florida sample
-changes, and packaging must carry item 38's fitted table. The rename and
-packaging checks of item 45 may be tried early, but are redone after item 38.
+the Pub 28 recheck cover the final rules. Items 44 to 46 followed Milestone 7
+(decision 41): the Pub 28 recheck covers the rules the Florida sample changed.
+Item 38's fitted table is not packaged (decision 43).
 Items 57, 58, 61 and 62 (decision 42) prepare the release: measured
 benchmarks, a name, the text cleaning and a fresh repository. Release order:
-44, 57, 58, 45, 61, 62, 46.
+44, 57, 58, 45, 61, 62, 46 (preceded by the Milestone 9 items of decision 44).
 
 53. **Remove the unused surface (done)** (decision 35): `Diagnostics::model_version`
     (Rust, Python property, stub) and the empty `crf` cargo feature. No parse
@@ -592,8 +608,8 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     item 61): accuracy on the blind geocode benchmark, the golden corpus and
     the hand-labeled sample; speed in Rust (one by one, `parse_many` with
     `rayon`) and in Python (`parse`, `parse_many`, against usaddress on the
-    same inputs and machine); memory, binary and wheel size; confidence
-    calibration (item 38). Scripts in `benchmarks/` so the numbers can be
+    same inputs and machine); memory, binary and wheel size. Confidence is not
+    measured: it is `None` (decision 43). Scripts in `benchmarks/` so the numbers can be
     rerun; machine and versions recorded. usaddress is one reference point,
     not the frame.
 58. **Choose the name** **(author)** (decision 42, replacing the names of
@@ -630,7 +646,7 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     from then on a change to what an input produces needs `k2` (decision
     34).
 
-### Milestone 9: customization and extras (after Milestone 6; may run beside 7 and 8)
+### Milestone 9: customization and extras (items 47 to 50, 59 and 60 ship in the first release and come first, decision 44; item 51 does not)
 
 Features that make the library adaptable to a user's own data. None of them
 changes the shipped data or the `k1` key format.
@@ -658,7 +674,7 @@ changes the shipped data or the `k1` key format.
 59. **Examples** (decision 42): an `examples/` directory with invented
     addresses only: sample CSV and text input files (one line, split fields,
     messy real-world shapes), a Jupyter notebook (`parse`, `parse_many`,
-    `parse_fields`, keys and slugs, confidence, the CLI on a file), and
+    `parse_fields`, keys and slugs, the CLI on a file), and
     Polars and pandas pipelines (over item 50's helpers once they exist).
     Run in CI (the notebook executed with `nbconvert` or `nbmake`) so it
     stays current. Lands before item 61, which links to it.
@@ -673,12 +689,13 @@ changes the shipped data or the `k1` key format.
 50. **Dataframe helpers (optional extras):** `us_address_parser.pandas.parse_column`
     and `us_address_parser.polars.parse_column` (plus a Polars expression
     namespace if it proves cheap) returning component columns, key, slug and
-    `confidence`; implemented over `parse_many`; imported lazily; tests skip
+    (`confidence` is `None`, decision 43, so it is left out); implemented over
+    `parse_many`; imported lazily; tests skip
     when the library is absent; extras `[pandas]` and `[polars]`. Decision 26.
 51. **Optional emitters, if wanted** (the display-form and long-form open
     decisions in section 13): a mixed-case display form and a long-form
-    (unabbreviated) form, one pull request each. **(author)**: not started
-    until decided.
+    (unabbreviated) form, one pull request each. Not in the first release
+    (decision 44); stays an option for a later version.
 52. **User model file: dropped** (decision 32). There is no CRF to load a
     model into. Item number kept.
 
@@ -904,6 +921,8 @@ extensible; no state-specific rule in the tagger.
       that ship.
     - Calibration waits for the place list, because the place list changes
       which paths are uncertain.
+    - **Deferred past the first release (decision 43).** The plan above
+      stands as the target; the data to meet it does not exist yet.
 
 ### Decisions recorded 2026-10-16 (place list)
 
@@ -998,6 +1017,7 @@ revisit if they cause friction.
     does depend on the hand-labeled Florida sample (item 36), which is the
     author's work. Calibration moves to Milestone 7 (the CRF items that were to follow it
     are dropped, decision 32). It still lands before the first release.
+    *Superseded by decision 43: it is deferred past the first release.*
 28. **One pull request per plan item.** Section 10 lists the remaining work
     in build order as numbered items, each one pull request; commits within
     an item are listed where there are several. Open items found while
@@ -1121,10 +1141,11 @@ Made by the author while reviewing the plan after Milestone 6.
       that is a logged fix, after it a `k2` (decision 34).
     - Decision 27 already put calibration before the first release; a first
       release with `confidence` always `None` would ship an empty feature.
+      *Reversed by decision 43: a coarse score would be worse than none.*
     - The Pub 28 recheck (item 44) is meant to cover the final tables, and
       fixes from the sample may add spellings.
-    - Item 38 adds a fitted table to `data/`, which item 45 copies into the
-      crate.
+    - Item 38 was to add a fitted table to `data/`, which item 45 copies
+      into the crate. *Dropped by decision 43.*
     - Decision 32 (no CRF) is to be reopened if the sample shows a class of
       parses rules cannot reach; that answer is wanted before publishing.
     Order: 37, 36, 38, 44, 45, 46. Milestone 9 may run beside them, and item
@@ -1155,16 +1176,65 @@ Made by the author while reviewing the plan after Milestone 6.
       new repository with no history, and the first release is published
       from there.
 
+### Decisions recorded 2026-10-17 (confidence deferred)
+
+43. **The confidence score is deferred past the first release.** Made by the
+    author after item 38's first fit (`tools/calibrate/fit.py`):
+    - **Why.** The score claims "the whole parse is right", which needs
+      labeled answers. The only labeled data is the golden corpus, usaddress's
+      test files (synthetic, 99.6% right) and the 190-row Florida sample, in
+      all 52 wrong parses. Fitted on that, the score has six features and
+      separates clean parses (about 0.98) from a few suspect kinds
+      (0.58 to 0.87) and nothing finer; a score that looks precise and is not
+      would be worse than none. The large private files (DBPR, auction,
+      Netsyms) have no answers to score against.
+    - **First release.** `Diagnostics::confidence` (Rust) and `confidence`
+      (Python, stub) stay in the API and are always `None`; the docs say so.
+      The field is kept so that adding the score later changes no signature.
+      Decision 41's argument against shipping an always-`None` field is
+      reversed: an honest `None` beats a coarse number.
+    - **Kept** (small, no output change, needed by any later fit): the
+      tagger's decisions (item 37) and their export (`Diagnostics` internal
+      field, `addr corpus features`, `addr parse --features`,
+      `Corpus::features`), `tools/calibrate/` (labeling tools and `fit.py`),
+      and the Florida sample in `local-data/`.
+    - **Dropped from the release path:** the fitted table in `data/`, its
+      `build.rs` step, `docs/confidence.md`, the confidence line of
+      item 57's benchmarks, and item 38's place in the order of decisions
+      41 and 42.
+    - **Repository changes this implies** are done or listed in
+      `docs/repository_cleaning.md` section 8.
+    - **Reopen** with the backlog entry "Calibrated confidence".
+
+### Decisions recorded 2026-10-17 (release plan)
+
+44. **The release plan and its order.** Made by the author, after the
+    confidence score was deferred (decision 43):
+    - **Sample bugs first (done).** The last two fixable errors from the
+      Florida sample (two house numbers; box words before a numbered street,
+      with the spaced `N W` directionals they exposed) land before any
+      packaging, because they change keys and `k1` freezes at the release
+      (`docs/key-format.md`, corpus `rg-137` to `rg-144`).
+    - **Milestone 9 in the first release:** items 47 to 49 (the custom layer,
+      its provenance in output, CLI and Python access), 50 (dataframe
+      helpers) and, describing them, 59 (examples) and 60 (customization
+      guide). Item 51 (display and long-form emitters) is not in the first
+      release.
+    - **Order:** 47, 48, 49, 50, 59, 60; then 44 (Pub 28 recheck over the
+      final tables), 57 (benchmarks), 58 (the name; the author's research
+      may start any time), 45 (rename and packaging), 61 (text cleaning),
+      62 (fresh repository), 46 (publishing). Examples and the guide come
+      before the rename because item 45's rename map covers them.
+    - Not in the first release: the confidence score (decision 43), item 51,
+      NAD and OpenAddresses (v2, decision 39).
+
 ### Open decisions (for the author)
 
 Intersections, the trailing country and the city that is no known place were
 decided (decisions 36 to 38). These remain:
 
 - **The name** (item 58): from the short list in `docs/naming.md`.
-- **Which Milestone 9 items ship in the first release.** Recommend items 59
-  and 60 (examples, guide) and therefore 47 to 49 (the layer they describe)
-  and 50 (dataframe helpers, used by the examples); 51 only if decided
-  below. Whatever ships lands before item 61.
+- *Decided (decision 44):* the Milestone 9 items in the first release.
 
 - **Recipient and name lines, landmarks, `CornerOf`, `NotAddress`:** stay
   unmodeled. Recommend documenting them (decision 25, done in the README) and
@@ -1185,20 +1255,41 @@ when it is scheduled.
 
 - **Florida code** from the author **(author)**, to seed more corpus cases.
 - **The hand-labeled Florida sample** (item 36, **author**) is scheduled; it
-  is listed here too because it gates Milestone 7 and so the first release
-  (decision 41).
+  is listed here too because it gated Milestone 7 and so the first release
+  (decision 41); it is done, and is the base for the deferred confidence
+  score (below).
+- **Calibrated confidence** (item 38, deferred by decision 43). Needs
+  labeled answers at a scale the project does not have. In order of value:
+  1. *Stratified hand labeling of the rare paths* (`bare_unit`,
+     `city_by_suffix`, `number_letter`, `unparsed_remainder`,
+     `missing_street_number`, the other warnings), drawn by path so that
+     failures are not rare in the sample and weighted back when fitting;
+     about 200 labeled rows would add more than 2,000 random ones. The
+     collaborative mode in `tools/calibrate/README.md` fits this work.
+  2. *Weak labels from structured sources*: DBPR keeps line 1, line 2, city,
+     state and ZIP in separate columns, and Netsyms also the street number
+     and name. Join a record into one string, parse it and compare with the
+     stored fields: tens of thousands of automatic labels for those
+     components, not for units or attention lines. The score would then claim
+     "city, state, ZIP and street number are right" until a whole-parse
+     label exists. Decision 12 says to fit on licensed data only; using DBPR
+     (approved as a corpus source) or Netsyms (no formal license) for fitted
+     numbers needs the author's decision first.
+  3. Keep the geocode benchmark as the check, never the fit.
+  What the first attempt showed: constrain every coefficient to at most
+  zero, or the fit rewards features of the synthetic files; weight the
+  Florida sample (half the weight worked); an exact-path table did no better
+  than the logistic. Ship only if the held-out calibration is within a few
+  points per band; otherwise leave `None`. Whatever ships adds the fitted
+  table to `data/` (compiled by `build.rs`), fills `Diagnostics::confidence`
+  and adds `docs/confidence.md`; filling a field that was always `None` is
+  not a key-format change.
 - **Accuracy, not tied to packs** (`docs/usaddress-comparison.md`): named
   buildings without a building word (`THE GARRETT`), highway modifiers such as
   BUSINESS before a city on one line, a comma after a directional
   (`3324 N, ANDREWS AVE`, 17 DBPR rows), a PO Box on line 2 beside a street
   with no number, a unit followed by business words (`STE 903 BLU SPA`, left
   unparsed), and `possibly_truncated` firing on complete units.
-- **From the Florida sample** (item 36, `NOTES.md` beside it): two house
-  numbers separated by a space (`1309 1329 E VINE ST`, read as street name
-  `1329 E VINE`; label: first number, the second unparsed with
-  `multiple_addresses`), and stray `P O BOX` words before a street address
-  (`P O BOX 8491 N W 17TH STREET` / `#102`, read as a PO Box with the street
-  unparsed).
 - **Outside-source benchmark and place-list gaps** (v2, decision 39;
   `docs/future-sources.md`): NAD or Netsyms rows rendered in several styles,
   compared per state and per source, feeding corpus cases, place-list gaps and

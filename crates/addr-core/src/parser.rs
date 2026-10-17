@@ -437,6 +437,16 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "corpus")]
+    #[test]
+    fn decisions_reach_the_diagnostics() {
+        let p = Parser::new();
+        let a = p.parse("123 Main St, Miami, FL 33101").unwrap();
+        assert_eq!(a.diagnostics.decision_codes(), vec!["city_by_comma"]);
+        let a = p.parse("123 Main St Apt 4").unwrap();
+        assert!(a.diagnostics.decision_codes().is_empty());
+    }
+
     #[test]
     fn parses_a_full_address() {
         let a = Parser::new()

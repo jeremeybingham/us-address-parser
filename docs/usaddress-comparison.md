@@ -50,7 +50,7 @@ plan items are in `docs/design.md`).
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) | Done |
 | Default state | None | `default_state` hint, `--default-state` (decision 24) | Done |
 | Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug | Done |
-| Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; confidence planned (calibrated rule paths) | Milestone 7 |
+| Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; `confidence` reserved, always `None` (deferred, decision 43) | Backlog |
 | Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit | Done |
 | Customization | Retrain with parserator on your own labels | Fixed at compile time | Custom layer (decision 22, Milestone 9) |
 | Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed`. A trailing country is ignored with `country_ignored` and an intersection raises `intersection_detected` (planned) | Milestone 8, items 54 and 55; the rest stays unmodeled (design section 13) |

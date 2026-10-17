@@ -254,8 +254,8 @@ impl PyParsedAddress {
         self.inner.diagnostics.unparsed.as_deref()
     }
 
-    /// The calibrated probability that the parse is right. `None` until it
-    /// is calibrated (design.md decision 12).
+    /// Reserved for a calibrated probability that the parse is right. Always
+    /// `None` in this release (design.md decisions 12 and 43).
     #[getter]
     fn confidence(&self) -> Option<f32> {
         self.inner.diagnostics.confidence

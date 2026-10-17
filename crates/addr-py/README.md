@@ -34,7 +34,8 @@ uap.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
 - `default_state` is a lookup hint for input with no state; it never fills
   `state`. A value that is not a US state, DC or territory raises
   `ValueError`.
-- `confidence` is `None` until it is calibrated.
+- `confidence` is reserved and always `None` in this release (a calibrated
+  score is deferred; `docs/design.md` decision 43).
 
 ## Install
 

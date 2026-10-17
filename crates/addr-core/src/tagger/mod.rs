@@ -64,7 +64,8 @@ pub(crate) enum Tag {
 
 /// An uncertain rule that settled a boundary (item 37). Warnings report what
 /// went wrong; these record what the tagger had to judge on a parse that may
-/// have none. The confidence score (item 38, decision 12) is fitted on them.
+/// have none. A confidence score (decision 12, deferred by decision 43) would be fitted
+/// on them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Decision {
     /// The city is a line or comma segment of its own (`..., MIAMI`).
@@ -86,14 +87,26 @@ pub(crate) enum Decision {
     DefaultState,
 }
 
+impl Decision {
+    /// Stable snake_case identifier, read by the calibration tools.
+    #[cfg(feature = "corpus")]
+    pub(crate) const fn code(self) -> &'static str {
+        match self {
+            Decision::CityByComma => "city_by_comma",
+            Decision::CityBySuffix => "city_by_suffix",
+            Decision::CityByPlace => "city_by_place",
+            Decision::StateWithoutZip => "state_without_zip",
+            Decision::BareUnit => "bare_unit",
+            Decision::NumberLetter => "number_letter",
+            Decision::DefaultState => "default_state",
+        }
+    }
+}
+
 pub(crate) struct Tagged {
     pub tags: Vec<Tag>,
     pub warnings: Vec<Warning>,
     /// Each uncertain decision once, in the order first made.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by the confidence score, item 38")
-    )]
     pub decisions: Vec<Decision>,
 }
 

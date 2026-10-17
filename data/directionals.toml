@@ -15,9 +15,11 @@
 # Each entry:
 #   name   full directional
 #   abbr   standard abbreviation (what we emit)
-#   forms  accepted spellings, including name and abbreviation. Dotted and
-#          spaced forms ("N.", "N.E.", "N E") are handled by key normalization
-#          in the lexicon, not listed here.
+#   forms  accepted spellings, including name and abbreviation. Dotted forms
+#          ("N.", "N.E.") are handled by key normalization in the lexicon, not
+#          listed here. The two-letter forms written as two words ("N W")
+#          are listed: a DBPR address (`8491 N W 17TH STREET`) shows the
+#          letters spaced, and normalization does not join them.
 #
 # Whether a token like "N" or "NORTH" is a directional or part of the street
 # name ("NORTH ST") is decided by the tagger, not this table.
@@ -45,19 +47,19 @@ forms = ["W", "WEST"]
 [[directional]]
 name = "NORTHEAST"
 abbr = "NE"
-forms = ["NE", "NORTHEAST", "NORTH EAST", "NORTH-EAST"]
+forms = ["NE", "N E", "NORTHEAST", "NORTH EAST", "NORTH-EAST"]
 
 [[directional]]
 name = "NORTHWEST"
 abbr = "NW"
-forms = ["NW", "NORTHWEST", "NORTH WEST", "NORTH-WEST"]
+forms = ["NW", "N W", "NORTHWEST", "NORTH WEST", "NORTH-WEST"]
 
 [[directional]]
 name = "SOUTHEAST"
 abbr = "SE"
-forms = ["SE", "SOUTHEAST", "SOUTH EAST", "SOUTH-EAST"]
+forms = ["SE", "S E", "SOUTHEAST", "SOUTH EAST", "SOUTH-EAST"]
 
 [[directional]]
 name = "SOUTHWEST"
 abbr = "SW"
-forms = ["SW", "SOUTHWEST", "SOUTH WEST", "SOUTH-WEST"]
+forms = ["SW", "S W", "SOUTHWEST", "SOUTH WEST", "SOUTH-WEST"]
