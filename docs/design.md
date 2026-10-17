@@ -30,8 +30,8 @@ usaddress's 88.2%; 27 Python tests. No CRF will be built (decision 32).
 Nothing is published yet.
 **Next (section 10): Milestone 8, hardening and release**, started ahead of
 Milestone 7 because calibrated confidence waits for the author's hand-labeled
-Florida sample (item 36). Milestone 8 now begins with removing the unused
-`model_version` and `crf` (item 53), then `country_ignored` (item 54) and
+Florida sample (item 36). Milestone 8 removed the unused `model_version`
+and `crf` (item 53); next are `country_ignored` (item 54) and
 `intersection_detected` (item 55), fuzzing, the rename and data packaging,
 the Pub 28 recheck, and publishing. The custom layer is Milestone 9.
 Section 10 is the plan, in build order, one pull request per item; section
@@ -114,8 +114,8 @@ they cause friction.
 
 | # | Decision | Resolution |
 |---|---|---|
-| 1 | Parsing approach | Rules plus the place list. No CRF fallback: decided no-go after the place list (item 29; section 13, decisions 10 and 32). The empty `crf` cargo feature is removed in Milestone 8 (item 53). |
-| 2 | Model training | Not applicable: no model is trained or shipped (decision 32). Was: train in Python on usaddress's MIT-licensed data, Rust inference via `crfs`. The unused `model_version` and `crf` feature are removed in Milestone 8 (decision 35, item 53). |
+| 1 | Parsing approach | Rules plus the place list. No CRF fallback: decided no-go after the place list (item 29; section 13, decisions 10 and 32). The empty `crf` cargo feature was removed (item 53). |
+| 2 | Model training | Not applicable: no model is trained or shipped (decision 32). Was: train in Python on usaddress's MIT-licensed data, Rust inference via `crfs`. The unused `model_version` and `crf` feature were removed (decision 35, item 53). |
 | 3 | Input scope | Both single-line strings and multi-field input (line1, line2, city, state, zip). |
 | 4 | Geographic scope | US-wide grammar. Place data in layers (section 11): a national place list generated from public data, plus curated state packs, Florida first (Milestone 5). Other pack contents (road patterns) are deferred. |
 | 5 | Canonical key | Unit inclusion is an explicit option (default off, property level); the key carries a version prefix. City and ZIP+4 excluded. Spec in `docs/key-format.md`. |
@@ -210,8 +210,7 @@ decision 13), `diagnostics` and `source`.
 `Diagnostics` holds the warnings (`Warning`, each with a stable `code()`
 string; `Warning::ALL` lists them), the unparsed remainder, the library
 version and `confidence` (`None` until calibrated; meaning in section 13,
-decision 12). A `model_version` field exists but is always `None`: no model
-is shipped, and it is removed in Milestone 8 (decision 35, item 53).
+decision 12). There is no `model_version`: no model is shipped (decision 35).
 
 ### Public API
 
@@ -262,7 +261,7 @@ military `AE`).
 
 Cargo features: `rayon` (parallel `parse_many`), `corpus` (the golden-corpus
 runner, pulls in serde), `places-us` and `state-fl` (the place data, both on by
-default; section 11), and `crf` (empty; removed in item 53). The default build
+default; section 11). The default build
 has no runtime dependencies. The custom layer's loader (`CustomLayer::from_toml`) takes text
 and adds only a TOML parser dependency under a `custom-layer` feature; the
 core never reads files, so the CLI and the Python wrapper do the file I/O.
@@ -322,7 +321,6 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
   addresses). Optional helpers come later (Milestone 9, item 50; decision 26)
   as pure-Python extras that call `parse_many`. Multi-field input has no batch
   call (loop over `parse_fields`, or join the columns).
-- `model_version` is exposed and always `None`; it goes with item 53.
 
 ---
 
@@ -359,7 +357,7 @@ it says little about unseen data; the blind benchmark is the better measure.
 Each milestone ends with passing tests. Each numbered item is one pull
 request (its commits listed where it has more than one), small enough to
 review on its own and leaving `main` green. Milestones 0 to 6 are done; the
-open items are 36 to 38 (Milestone 7), 43 to 46 and 53 to 55 (Milestone 8)
+open items are 36 to 38 (Milestone 7), 43 to 46, 54 and 55 (Milestone 8)
 and 47 to 51 (Milestone 9). An item marked **(author)** needs the author's data or
 decision before it can start; **(any time)** has no dependency and can go
 in wherever it fits.
@@ -520,9 +518,9 @@ Python toolchain and no retraining.
 In this order. The parser changes (53 to 55) come first so that fuzzing and
 the Pub 28 recheck cover the final rules.
 
-53. **Remove the unused surface** (decision 35): `Diagnostics::model_version`
-    (Rust, Python property, stub, `to_dict`) and the empty `crf` cargo
-    feature. A small pull request; no parse changes.
+53. **Remove the unused surface (done)** (decision 35): `Diagnostics::model_version`
+    (Rust, Python property, stub) and the empty `crf` cargo feature. No parse
+    changes.
 54. **Trailing country** (decision 36): recognize `USA`, `US`, `UNITED
     STATES` (and `U.S.A.`) after the ZIP or state, drop it from the address
     and raise a new warning `country_ignored` (`Warning::ALL` grows by one).
@@ -937,10 +935,8 @@ revisit if they cause friction.
       retraining step for every fix, and could move other parses. The custom
       layer (decision 22) is the customization path.
     Consequences: items 39 to 42 and item 52 are dropped; `confidence` is
-    calibrated on the rule paths only (decision 12); `model_version` stays
-    `None` and is dropped or kept reserved when the Python wrapper is built
-    (Milestone 6); the empty `crf` cargo feature stays until the first release
-    and is removed then if unused. **Reopen if** the hand-labeled Florida
+    calibrated on the rule paths only (decision 12); `model_version` and the
+    empty `crf` cargo feature were removed (decision 35, item 53). **Reopen if** the hand-labeled Florida
     sample (item 36) or real use shows a persistent class of parses that
     rules and the place list cannot reach.
 

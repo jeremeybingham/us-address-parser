@@ -611,7 +611,6 @@ pub struct Diagnostics {
     /// decision 12).
     pub confidence: Option<f32>,
     pub library_version: &'static str,
-    pub model_version: Option<&'static str>,
 }
 
 impl Diagnostics {
@@ -635,7 +634,6 @@ impl Default for Diagnostics {
             unparsed: None,
             confidence: None,
             library_version: VERSION,
-            model_version: None,
         }
     }
 }

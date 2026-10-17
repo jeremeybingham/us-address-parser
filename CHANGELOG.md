@@ -4,6 +4,11 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Removed unused surface (item 53)
+
+- `Diagnostics::model_version` (and the Python `model_version` property and
+  stub entry) and the empty `crf` cargo feature. No parse or key changes.
+
 ### Documentation review after Milestone 6
 
 - Status, plan and layout brought up to date in `docs/design.md` and the

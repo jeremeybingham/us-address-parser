@@ -17,9 +17,6 @@ places-us = []
 state-fl = []
 # Parallel `Parser::parse_many`.
 rayon = ["dep:rayon"]
-# Reserved. No CRF fallback will be built (docs/design.md decision 32); remove
-# before the first release if still unused.
-crf = []
 # Golden-corpus loader and runner (`addr_core::corpus`), used by the corpus
 # test and `addr corpus test`. Pulls in serde; the default build has no
 # dependencies.

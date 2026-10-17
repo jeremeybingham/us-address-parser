@@ -266,12 +266,6 @@ impl PyParsedAddress {
         self.inner.diagnostics.library_version
     }
 
-    /// Always `None`: no model is shipped (design.md decision 32).
-    #[getter]
-    fn model_version(&self) -> Option<&'static str> {
-        self.inner.diagnostics.model_version
-    }
-
     /// `street`, `po_box`, `rural_route`, `military`, `general_delivery`,
     /// `dual` or `unknown`.
     fn address_type(&self) -> &'static str {
