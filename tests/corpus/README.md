@@ -17,7 +17,7 @@ stops passing (a regression), or if the corpus is malformed. When a change
 makes more cases pass, rerun with `UPDATE_CORPUS_BASELINE=1` and commit the
 updated `passing.txt` with it.
 
-Every parsing bug fixed gets a case here (`CLAUDE.md`).
+Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
 
 ## Record format
 
@@ -193,7 +193,7 @@ present where Pub 28's example has one.
 ### `regressions.jsonl`
 
 Cases for parsing bugs found over time, from Florida address data and from
-other tests (`CLAUDE.md`: every parsing bug fixed gets a case). Ids start with
+other tests (`CONTRIBUTING.md`: every parsing bug fixed gets a case). Ids start with
 `rg-`; each note says what went wrong.
 
 ### `keys.jsonl`, `reso.jsonl`

@@ -1,4 +1,4 @@
-//! Property tests for the never-panic rule (CLAUDE.md): any input parses
+//! Property tests for the never-panic rule (CONTRIBUTING.md): any input parses
 //! without panicking, every span indexes valid text, and every emitter runs.
 
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
