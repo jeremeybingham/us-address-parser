@@ -83,6 +83,6 @@ jobs:
         # Wheels for these may be missing on some platforms; the tests that
         # need them skip.
         continue-on-error: true
-        run: pip install usaddress pandas polars
+        run: pip install usaddress pandas polars nbclient nbformat ipykernel
       - name: Python tests
         run: pytest crates/addr-py/tests -q

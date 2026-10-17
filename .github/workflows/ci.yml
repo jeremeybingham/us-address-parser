@@ -56,6 +56,6 @@ jobs:
         run: |
           python -m venv .venv
           . .venv/bin/activate
-          pip install maturin pytest usaddress pandas polars
+          pip install maturin pytest usaddress pandas polars nbclient nbformat ipykernel
           maturin develop --manifest-path crates/addr-py/Cargo.toml
           pytest crates/addr-py/tests -q

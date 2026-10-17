@@ -16,6 +16,7 @@ progress, and the open tasks and decisions. Detailed specs live beside it:
 | `docs/prior-art.md` | Lessons from the author's Florida address code |
 | `tests/corpus/README.md` | Golden-corpus record format and labeling conventions |
 | `crates/addr-py/README.md` | The Python package: API, batch and dataframe recipes, usaddress mapping |
+| `examples/` | Notebook tour, Polars and pandas pipelines and invented sample inputs (item 59); run by `crates/addr-py/tests/test_examples.py` |
 | `docs/repository_cleaning.md` | Text changes deferred to the fresh repository before the first release (decision 42) |
 | `CHANGELOG.md` | What changed, newest first (everything is "Unreleased" until item 46) |
 
@@ -39,11 +40,12 @@ that exists supports only a coarse score, so `Diagnostics::confidence` stays
 the unused `model_version` and `crf` removed (item 53), `country_ignored`
 (item 54), `intersection_detected` (item 55), the Netsyms fixes (item 56) and
 fuzz targets (item 43). The last two Florida sample errors are fixed.
-**The release plan is decided (decision 44):** the custom layer and its
-companions first (items 47 to 50, then the examples and guide, 59 and 60),
-then the Pub 28 recheck (44), benchmarks (57), the name (58), the rename and
-packaging (45), the text cleaning in `docs/repository_cleaning.md` (61), a
-fresh repository with no history (62) and publishing from it (46).
+**The release plan is decided (decisions 44 and 45):** the dataframe helpers
+and examples first (items 50 and 59), then the Pub 28 recheck (44),
+benchmarks (57), the name (58), the rename and packaging (45), the text
+cleaning in `docs/repository_cleaning.md` (61), a fresh repository with no
+history (62) and publishing from it (46). The custom layer (items 47 to 49)
+and its guide (60) are deferred past the first release (decision 45).
 Section 10 is the plan, in build order, one pull request per item; section
 13 has the decisions and the unscheduled backlog.
 
@@ -53,8 +55,9 @@ in the Python surface, in customization, and in a few input and output
 shapes. They are now built or scheduled: `tag()`, `address_type` and
 `default_state` are done (Milestone 6, items 30 to 32); the trailing country
 and intersections are Milestone 8 items 54 and 55, done (decisions 36 and 37); a
-runtime **custom layer** (section 11, "Custom layer"; decision 22) and
-optional dataframe helpers are Milestone 9; display and long forms stay open
+runtime **custom layer** (section 11, "Custom layer"; decision 22; deferred
+past the first release, decision 45) and optional dataframe helpers are
+Milestone 9; display and long forms stay open
 in section 13.
 
 ---
@@ -79,8 +82,8 @@ source of domain knowledge; what carried over is in `docs/prior-art.md`.
 - Correcting addresses. The place list (Milestone 5) can fill a missing city from the ZIP or flag a city that disagrees with its ZIP, but the parsed `city` stays what the input said; the place match is reported beside it (section 13, decision 13).
 - Runtime-configurable *shipped* lexicons: the Pub 28 tables and the state
   packs are fixed at compile time. User customization is a separate,
-  add-only **custom layer** (section 11; Milestone 9), not an edit of those
-  tables.
+  add-only **custom layer** (section 11; deferred, decision 45), not an edit
+  of those tables.
 
 ---
 
@@ -130,7 +133,7 @@ they cause friction.
 | 4 | Geographic scope | US-wide grammar. Place data in layers (section 11): a national place list generated from public data, plus curated state packs, Florida first (Milestone 5). Other pack contents (road patterns) are deferred. |
 | 5 | Canonical key | Unit inclusion is an explicit option (default off, property level); the key carries a version prefix. City and ZIP+4 excluded. Spec in `docs/key-format.md`. |
 | 6 | Error model | Always return a `ParsedAddress` with diagnostics; `Result` only for unusable input (empty). |
-| 7 | Lexicon extensibility | Shipped lexicons and state packs are fixed at compile time. Users customize through an add-only runtime **custom layer** in the state-pack format (section 11; decision 22), planned for Milestone 9. |
+| 7 | Lexicon extensibility | Shipped lexicons and state packs are fixed at compile time. Users customize through an add-only runtime **custom layer** in the state-pack format (section 11; decision 22), deferred past the first release (decision 45). |
 | 8 | Data sources | USPS Pub 28 and the RESO Data Dictionary; provenance of each table documented. |
 | 9 | Python surface *(default)* | Done: typed objects plus `to_dict()`, and a usaddress-shaped `tag()` with `address_type` (decision 23). No pandas/Polars dependency in the wheel; tested recipes in the README, and optional dataframe helpers come later as extras (decision 26). |
 | 10 | Distribution *(default)* | abi3 wheels (built on every pull request for Linux, macOS and Windows); library and key-format versions tracked independently. Names: to be chosen (item 58, decision 42); decision 33's PyPI `us-address-parser` and crates.io `us-addr-core`, `us-addr-cli` are dropped. |
@@ -204,7 +207,7 @@ Emitters never mutate the parsed struct and never re-parse.
 - **Deterministic.** Same input, same output, across platforms.
 - **Spans preserved.** Components keep their source byte ranges (`SourceInfo::spans`).
 - **Never panic on input.** Covered by proptest properties (`tests/no_panic.rs`); fuzz targets (`fuzz/`, item 43) cover the public parse and emit paths.
-- **Lexicon access behind one interface** (`Lexicons`, built from `data/*.toml`, the national list and the packs at build time). The state packs and the planned custom layer plug in here.
+- **Lexicon access behind one interface** (`Lexicons`, built from `data/*.toml`, the national list and the packs at build time). The state packs and the deferred custom layer (decision 45) plug in here.
 - No global mutable state; `Parser` is cheap and `Send + Sync`.
 
 ### `ParsedAddress`
@@ -244,7 +247,7 @@ Added in Milestone 6 (decisions 23 and 24), and one planned addition:
 a.tag();                 // TaggedAddress: joined components keyed by usaddress label
 a.address_type();        // AddressType: Street, PoBox, RuralRoute, Military, GeneralDelivery, Dual, Unknown
 let p = Parser::with_options(ParseOptions { default_state: Some(state) })?;
-let p = Parser::new().with_custom_layer(CustomLayer::from_toml(&text)?);   // planned, Milestone 9
+let p = Parser::new().with_custom_layer(CustomLayer::from_toml(&text)?);   // deferred (decision 45); not in the first release
 ```
 
 `tag()` is the counterpart of `usaddress.tag()`: tokens that share a label
@@ -272,7 +275,7 @@ military `AE`).
 Cargo features: `rayon` (parallel `parse_many`), `corpus` (the golden-corpus
 runner, pulls in serde), `places-us` and `state-fl` (the place data, both on by
 default; section 11). The default build
-has no runtime dependencies. The custom layer's loader (`CustomLayer::from_toml`) takes text
+has no runtime dependencies. When built (deferred, decision 45), the custom layer's loader (`CustomLayer::from_toml`) takes text
 and adds only a TOML parser dependency under a `custom-layer` feature; the
 core never reads files, so the CLI and the Python wrapper do the file I/O.
 
@@ -327,7 +330,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 - `confidence` is `float | None`: always `None` in the first release
   (decision 43); the field is kept so that adding the score later changes no
   signature.
-- From Milestone 9, `Parser(custom_layer=path_or_text)` (planned).
+- Deferred (decision 45): `Parser(custom_layer=path_or_text)`. Not in the first release.
 - No pandas or Polars dependency. The README has tested recipes for both
   (Polars first; 0.34 s against 0.45 s to build a 7-column frame from 100,000
   addresses). Optional helpers come later (Milestone 9, item 50; decision 26)
@@ -341,7 +344,7 @@ wheels**, Python 3.10 and later, no runtime dependencies. API and recipes:
 - `addr parse "<address>"` prints one JSON record (components, warnings, key, slug, USPS and RESO output); `--pretty`, `--usps`, `--usaddress`, `--tag`, field options (`--line1` ... `--zip`), or one address per stdin line.
 - `addr parse-file IN.csv --column NAME [--line2 ...] [-o OUT.csv]` appends `addr_`-prefixed columns.
 - `addr corpus test [--dir DIR] [--verbose] [--update-baseline]` runs the golden corpus and prints the accuracy report.
-- `--default-state ST` on `parse` and `parse-file` (decision 24). Planned: `--custom-layer PATH` on `parse`, `parse-file` and `corpus test`, plus `addr layer check PATH` to validate a layer file (Milestone 9, item 49).
+- `--default-state ST` on `parse` and `parse-file` (decision 24). Deferred (decision 45): `--custom-layer PATH` on `parse`, `parse-file` and `corpus test`, plus `addr layer check PATH` to validate a layer file (item 49).
 
 ---
 
@@ -568,7 +571,7 @@ Calibrated confidence (decision 12):
 **No CRF fallback.** Item 29 decided no-go (decision 32), so the CRF items 39
 to 42 (a `crfs` spike, `tools/train/`, `models/`, `src/tagger/crf.rs`) are
 dropped. The numbers are kept so that references stay stable. User
-customization is the custom layer (section 11, Milestone 9), which needs no
+customization is the custom layer (section 11; deferred, decision 45), which needs no
 Python toolchain and no retraining.
 
 ### Milestone 8: hardening and release
@@ -646,12 +649,12 @@ benchmarks, a name, the text cleaning and a fresh repository. Release order:
     from then on a change to what an input produces needs `k2` (decision
     34).
 
-### Milestone 9: customization and extras (items 47 to 50, 59 and 60 ship in the first release and come first, decision 44; item 51 does not)
+### Milestone 9: customization and extras (items 50 and 59 ship in the first release and come first; items 47 to 49 and 60 are deferred, decision 45; item 51 is not in it either, decision 44)
 
 Features that make the library adaptable to a user's own data. None of them
 changes the shipped data or the `k1` key format.
 
-47. **Custom layer, format and loader** (section 11, "Custom layer"; decision
+47. **Deferred (decision 45).** **Custom layer, format and loader** (section 11, "Custom layer"; decision
     22): `CustomLayer` in `addr-core` (feature `custom-layer`), built from
     TOML text with the same table shapes as a state pack (`pack.toml`,
     `places.tsv`, `zips.tsv`, `overrides.toml`) plus `aliases.toml` for
@@ -663,22 +666,23 @@ changes the shipped data or the `k1` key format.
     words, placeholders, building words, highway prefixes, special words,
     state-scoped readings) and make each one extendable by a layer unless
     there is a reason not to, recorded in section 11.
-48. **Layer provenance in output:** `Diagnostics::custom_layer` (name,
+48. **Deferred (decision 45).** **Layer provenance in output:** `Diagnostics::custom_layer` (name,
     version, content fingerprint) records which layer produced a parse; no
     per-parse warning is added. Documented in `docs/key-format.md`: the key
     depends on the layer in use, so users who store keys must keep the layer
     fixed or re-key.
-49. **CLI and Python access:** `addr --custom-layer PATH`, `addr layer check
+49. **Deferred (decision 45).** **CLI and Python access:** `addr --custom-layer PATH`, `addr layer check
     PATH`, `Parser(custom_layer=...)` and a test suite that runs the golden
     corpus with a sample layer (`tests/corpus/layers/`).
-59. **Examples** (decision 42): an `examples/` directory with invented
+59. **Examples (done)** (decision 42; no layer example, decision 45): an `examples/` directory with invented
     addresses only: sample CSV and text input files (one line, split fields,
     messy real-world shapes), a Jupyter notebook (`parse`, `parse_many`,
     `parse_fields`, keys and slugs, the CLI on a file), and
     Polars and pandas pipelines (over item 50's helpers once they exist).
-    Run in CI (the notebook executed with `nbconvert` or `nbmake`) so it
+    Run in CI (the notebook executed with `nbclient` inside
+    `crates/addr-py/tests/test_examples.py`) so it
     stays current. Lands before item 61, which links to it.
-60. **Customization guide** (decision 42): one place, `custom/` at the
+60. **Deferred with items 47 to 49 (decision 45).** **Customization guide** (decision 42): one place, `custom/` at the
     repository root (or `docs/customizing.md` with `custom/template/`),
     that a new developer, or a capable LLM given the guide, can follow to
     build a layer without reading the code: what each file changes, a
@@ -686,12 +690,16 @@ changes the shipped data or the `k1` key format.
     spelling, a state-scoped reading), the checks to run (`addr layer
     check`, the corpus with the layer), and a ready prompt for an LLM.
     After items 47 to 49.
-50. **Dataframe helpers (optional extras):** `us_address_parser.pandas.parse_column`
-    and `us_address_parser.polars.parse_column` (plus a Polars expression
-    namespace if it proves cheap) returning component columns, key, slug and
-    (`confidence` is `None`, decision 43, so it is left out); implemented over
-    `parse_many`; imported lazily; tests skip
-    when the library is absent; extras `[pandas]` and `[polars]`. Decision 26.
+50. **Dataframe helpers (done; optional extras):** `us_address_parser.pandas.parse_column`
+    and `us_address_parser.polars.parse_column` return component columns, key,
+    slug, address type and warnings (`confidence` is `None`, decision 43, so
+    it is left out); implemented over `parse_many` through one shared column
+    reader (`_columns.py`); the library is imported when the function is
+    called; tests skip when it is absent; extras `[pandas]` and `[polars]`.
+    Decision 26. The Polars expression namespace was not built (it would parse
+    row by row or copy the column twice; the function over a Series is as
+    cheap); reopen only if asked. Output is all strings (`string` dtype in
+    pandas, `String` in Polars), null for a row with no address text.
 51. **Optional emitters, if wanted** (the display-form and long-form open
     decisions in section 13): a mixed-case display form and a long-form
     (unabbreviated) form, one pull request each. Not in the first release
@@ -772,10 +780,11 @@ output, and GeoNames (CC BY 4.0) as the ZIP source. Packs carry no model
 - Reporting the pack version in output. For the custom layer the fingerprint
   is reported (Milestone 9, item 48); shipped packs may follow.
 
-### Custom layer (user customization; Milestone 9)
+### Custom layer (user customization; deferred past the first release, decision 45)
 
 The same idea as a state pack, owned by the user and loaded at run time.
-Settled in decision 22; the design:
+Settled in decision 22; not built until a real layer needs it (decision 45).
+The design:
 
 **What it is.** A directory (or in-memory text) in the state-pack format:
 `layer.toml` (name, version, notes; same fields as `pack.toml`), and any of
@@ -867,7 +876,8 @@ extensible; no state-specific rule in the tagger.
   and scheduled.
 - **Migration friction from usaddress.** Users expect `tag()`, the label names
   and an `address_type`, and a way to adapt the parser to odd data. The first
-  three are done (Milestone 6); the last is the custom layer (Milestone 9).
+  three are done (Milestone 6); the last is the custom layer (deferred,
+  decision 45).
 - **Custom layer and key stability.** A layer can change a parse and so a
   key. Mitigation: add-only layers, a fingerprint in diagnostics, and a
   documented rule that stored keys need a fixed layer (section 11).
@@ -1219,14 +1229,37 @@ Made by the author while reviewing the plan after Milestone 6.
       its provenance in output, CLI and Python access), 50 (dataframe
       helpers) and, describing them, 59 (examples) and 60 (customization
       guide). Item 51 (display and long-form emitters) is not in the first
-      release.
-    - **Order:** 47, 48, 49, 50, 59, 60; then 44 (Pub 28 recheck over the
+      release. *Narrowed by decision 45: items 47 to 49 and 60 are deferred.*
+    - **Order:** 47, 48, 49, 50, 59, 60 (now 50, 59 only, decision 45); then 44 (Pub 28 recheck over the
       final tables), 57 (benchmarks), 58 (the name; the author's research
       may start any time), 45 (rename and packaging), 61 (text cleaning),
       62 (fresh repository), 46 (publishing). Examples and the guide come
       before the rename because item 45's rename map covers them.
     - Not in the first release: the confidence score (decision 43), item 51,
       NAD and OpenAddresses (v2, decision 39).
+
+### Decisions recorded 2026-10-17 (custom layer deferred)
+
+45. **The custom layer is deferred past the first release.** Made by the
+    author, who has no layer to test:
+    - **Why.** A layer built without a real user's data would be designed by
+      guessing, and nothing in the first release depends on it. The core is
+      already ready for it: `Lexicons` is the one interface, the tagger has no
+      layer-specific logic, and `k1` does not change with a layer.
+    - **Out of the first release:** items 47 (loader), 48 (provenance), 49
+      (CLI and Python access) and 60 (customization guide). Item 59
+      (examples) stays, with no layer example. Decision 44's order becomes 50,
+      59, 44, 57, 58, 45, 61, 62, 46.
+    - **Kept:** section 11 "Custom layer" and decision 22 as the design to
+      build from; the README and comparison say what users do instead (report
+      the input so the shipped tables are fixed; the golden corpus takes the
+      case).
+    - **No API break later.** `Parser::with_custom_layer` and
+      `Parser(custom_layer=...)` are new optional entry points.
+      `Diagnostics::custom_layer` is a new field on a struct that already has
+      a private field, so no code outside the crate can construct it or match
+      it without `..`; adding it is not a semver break.
+    - **Reopen** with the backlog entry "Custom layer".
 
 ### Open decisions (for the author)
 
@@ -1252,6 +1285,13 @@ decided (decisions 36 to 38). These remain:
 
 Known work with no place in section 10 yet. Move an item into section 10
 when it is scheduled.
+
+- **Custom layer** (items 47 to 49 and 60, deferred by decision 45). Build it
+  when someone has a real layer to test: a local community the place list
+  lacks, a street spelling, a state-scoped suffix reading. Design: section 11,
+  "Custom layer", and decision 22; the Milestone 9 entries keep the item text.
+  Check the list of tables read through `Lexicons` (item 47) at that time,
+  because they will have changed.
 
 - **Florida code** from the author **(author)**, to seed more corpus cases.
 - **The hand-labeled Florida sample** (item 36, **author**) is scheduled; it

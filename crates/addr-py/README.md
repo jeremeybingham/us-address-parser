@@ -58,8 +58,30 @@ machine (`benchmarks/bench_batch.py`):
 | `parse_many` and a Polars DataFrame of 7 columns | 0.34 s | 299,000 | 4.6x |
 
 A `ParsedAddress` computes its formats when you ask, so take only what you
-need. Neither pandas nor Polars is a dependency; these recipes work with
-either.
+need. Neither pandas nor Polars is a dependency. The helpers below cover the
+common case; the recipes after them are for when you want other fields.
+
+**Helpers.** Install the extra (`pip install "us-address-parser[polars]"` or
+`[pandas]`) and parse a column in one call:
+
+```python
+from us_address_parser.polars import parse_column   # or us_address_parser.pandas
+
+out = df.hstack(parse_column(df["address"]))                    # Polars
+out = df.join(parse_column(df["address"], default_state="FL"))  # pandas
+```
+
+`parse_column(series, *, columns=None, prefix="addr_", default_state=None)`
+returns a DataFrame with one string column per name, in the same order (and,
+in pandas, the same index) as the input. A null, blank or non-string row, or
+one with no address text, is null in every column. The default columns are
+`street_number`, `street_dir_prefix`, `street_name`, `street_suffix`,
+`street_dir_suffix`, `unit_type`, `unit_number`, `city`, `state`, `zip5`,
+`zip4`, `address_type`, `key`, `slug` and `warnings` (codes joined by commas).
+`AVAILABLE_COLUMNS` in either module lists the rest (`key_unit`,
+`usps_line1`, `usps_line2`, `usps_last_line`, `po_box`, `attention`,
+`building`, `unparsed`, ...). They are built over `parse_many`; there is no
+Polars expression namespace.
 
 **Polars** (the better fit next to a Rust parser; building the frame was
 taking about a quarter less time than pandas in the benchmark below):

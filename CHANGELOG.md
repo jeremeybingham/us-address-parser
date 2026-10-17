@@ -4,6 +4,25 @@ Nothing is released yet. Entries are newest first.
 
 ## Unreleased
 
+### Examples (item 59)
+
+- `examples/`: a notebook tour (`quickstart.ipynb`), Polars and pandas
+  pipelines, and three small invented input files (one-line, split fields,
+  messy text). `crates/addr-py/tests/test_examples.py` runs the scripts and
+  executes the notebook in CI.
+
+### Dataframe helpers (item 50)
+
+- `us_address_parser.pandas.parse_column(series, ...)` and
+  `us_address_parser.polars.parse_column(series, ...)` parse a column of
+  one-line addresses with `parse_many` and return a DataFrame of component
+  columns (street parts, unit, city, state, ZIP, address type, key, slug,
+  warnings; `columns=`, `prefix=` and `default_state=` choose others). Rows
+  with no address text are null. pandas or Polars is imported when the
+  function is called; install the extras `[pandas]` or `[polars]`.
+- Custom layer (items 47 to 49) and its guide (60) deferred past the first
+  release (decision 45).
+
 ### The last two Florida sample errors (item 36)
 
 - A two-letter directional written as two words (`N W 27 AVE`,
