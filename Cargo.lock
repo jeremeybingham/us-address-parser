@@ -202,7 +202,7 @@ dependencies = [
 
 [[package]]
 name = "doorplate"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "criterion",
  "doorplate",
@@ -215,7 +215,7 @@ dependencies = [
 
 [[package]]
 name = "doorplate-cli"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "csv",
  "doorplate",
@@ -224,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "doorplate-py"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "doorplate",
  "pyo3",

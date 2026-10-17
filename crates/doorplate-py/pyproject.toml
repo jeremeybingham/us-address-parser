@@ -8,11 +8,21 @@ description = "Parse US addresses into components; USPS Publication 28 and RESO 
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE", "NOTICE"]
+authors = [{ name = "Jeremey Bingham", email = "jeremeybingham@gmail.com" }]
 dynamic = ["version"]
-keywords = ["address", "parser", "usps", "reso", "geocoding"]
+keywords = ["address", "parser", "usps", "reso", "normalization"]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Rust",
+    "Topic :: Text Processing",
     "Typing :: Typed",
 ]
 # No runtime dependencies; the dataframe helpers need their own library.
@@ -23,7 +33,10 @@ pandas = ["pandas>=2"]
 polars = ["polars>=1"]
 
 [project.urls]
+Homepage = "https://github.com/jeremeybingham/doorplate"
 Repository = "https://github.com/jeremeybingham/doorplate"
+Documentation = "https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md"
+Issues = "https://github.com/jeremeybingham/doorplate/issues"
 
 [tool.maturin]
 # The package in python/ re-exports the compiled module doorplate._core.

@@ -25,6 +25,11 @@ jobs:
         run: python3 tools/corpus/emit_expect.py --check tests/corpus/*.jsonl
       - name: The crate packages and builds on its own (the tables are inside it)
         run: cargo package -p doorplate
+      - name: Each package carries the same license files and NOTICE as the repository root
+        run: |
+          for d in crates/doorplate crates/doorplate-cli crates/doorplate-py; do
+            for f in LICENSE-MIT LICENSE-APACHE NOTICE; do cmp "$f" "$d/$f"; done
+          done
 
   sdist:
     runs-on: ubuntu-latest

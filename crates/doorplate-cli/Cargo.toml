@@ -1,10 +1,15 @@
 [package]
 name = "doorplate-cli"
-description = "Command-line tool for the doorplate US address parser"
+description = "Command-line tool for the doorplate US address parser: JSON, USPS and RESO output, a match key, CSV files"
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords = ["address", "parser", "usps", "cli", "csv"]
+categories = ["command-line-utilities", "text-processing"]
 rust-version.workspace = true
 
 [[bin]]

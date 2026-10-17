@@ -1,0 +1,19 @@
+doorplate
+Copyright (c) 2026 Jeremey Bingham. Code licensed under MIT OR Apache-2.0.
+
+This product includes data from third parties under their own terms:
+
+- GeoNames postal code data (https://www.geonames.org/), licensed under the
+  Creative Commons Attribution 4.0 License
+  (https://creativecommons.org/licenses/by/4.0/). Used for the ZIP-to-place
+  tables in crates/doorplate/data/packs/ (see docs/packs/) and crates/doorplate/data/places/ (see
+  docs/places.md), and for the postal place names in crates/doorplate/data/places/. The
+  GeoNames data is provided "as is" and has been reformatted (upper-cased,
+  de-accented, joined with Census names).
+- US Census Bureau Gazetteer files and 2020 reference lists (public domain),
+  used for place names, county subdivisions and counties in crates/doorplate/data/packs/ and
+  crates/doorplate/data/places/.
+- Florida public-record address data, used for observed city and ZIP pairs
+  and street spellings in crates/doorplate/data/packs/fl/ (see
+  docs/packs/fl.md). Public record; no attribution is required.
+- usaddress test data (MIT, datamade), vendored in tests/external/usaddress/.

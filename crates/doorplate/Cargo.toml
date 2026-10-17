@@ -1,10 +1,15 @@
 [package]
 name = "doorplate"
-description = "Pure-Rust US address parser and normalizer (USPS Pub 28 / RESO emitters)"
+description = "US address parser: components, USPS Pub 28 and RESO output, a match key and a slug. Pure Rust; does not validate deliverability."
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords = ["address", "parser", "usps", "reso", "normalization"]
+categories = ["parser-implementations", "text-processing"]
 rust-version.workspace = true
 
 [features]

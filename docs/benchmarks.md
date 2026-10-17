@@ -12,7 +12,7 @@ the figures below say an address exists or can receive mail.
 
 **Machine:** Intel Core i9-9900K (14 threads), 49 GB RAM, Linux 6.18 on WSL2,
 Rust 1.91, Python 3.13 (speed and size runs in a virtual environment),
-doorplate 0.0.1 built with `--release`.
+doorplate 0.1.0 built with `--release`.
 
 ## In short
 
