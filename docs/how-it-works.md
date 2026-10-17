@@ -32,17 +32,17 @@ reported beside it (`place`).
 
 ```mermaid
 flowchart TD
-    A[raw input<br/>one line or fields] --> B[clean<br/>whitespace, accents, punctuation,<br/>uppercase; map back to the original]
-    B --> C[tokenize<br/>tokens with original spans,<br/>lines and comma segments, glued tokens split]
-    C --> D[classify<br/>token shapes and<br/>longest-match lexicon lookups]
-    D --> E[tagger<br/>rules and place lookups]
-    E --> F[assemble<br/>ParsedAddress, spans, warnings]
-    F --> G1[USPS]
-    F --> G2[RESO]
-    F --> G3[key]
-    F --> G4[slug]
-    F --> G5[usaddress tags]
-    L[(Lexicons<br/>Pub 28 tables, national places,<br/>state packs)] -.-> D
+    A["raw input<br/>one line or fields"] --> B["clean<br/>whitespace, accents, punctuation,<br/>uppercase; map back to the original"]
+    B --> C["tokenize<br/>tokens with original spans,<br/>lines and comma segments, glued tokens split"]
+    C --> D["classify<br/>token shapes and<br/>longest-match lexicon lookups"]
+    D --> E["tagger<br/>rules and place lookups"]
+    E --> F["assemble<br/>ParsedAddress, spans, warnings"]
+    F --> G1["USPS"]
+    F --> G2["RESO"]
+    F --> G3["key"]
+    F --> G4["slug"]
+    F --> G5["usaddress tags"]
+    L[("Lexicons<br/>Pub 28 tables, national places,<br/>state packs")] -.-> D
     L -.-> E
     L -.-> F
 ```

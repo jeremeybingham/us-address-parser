@@ -11,7 +11,7 @@ from pathlib import Path
 
 import polars as pl
 
-import doorplate as uap
+import doorplate as dp
 from doorplate.polars import parse_column
 
 DATA = Path(__file__).parent / "data"
@@ -46,7 +46,7 @@ def main(out: str | None = None) -> pl.DataFrame:
     # 5. Pre-split columns: no batch helper yet, so loop over parse_fields.
     split = pl.read_csv(DATA / "addresses_split.csv", infer_schema_length=0)
     rows = [
-        uap.parse_fields(
+        dp.parse_fields(
             line1=r["line1"], line2=r["line2"], city=r["city"], state=r["state"], zip=r["zip"]
         )
         for r in split.iter_rows(named=True)

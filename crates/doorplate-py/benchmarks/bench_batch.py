@@ -15,7 +15,7 @@ import pathlib
 import sys
 import time
 
-import doorplate as uap
+import doorplate as dp
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 
@@ -45,12 +45,12 @@ def main():
     base = corpus_inputs()
     texts = (base * (n // len(base) + 1))[:n]
     print(f"{n} addresses ({len(base)} distinct), {os.cpu_count()} CPUs, "
-          f"library {uap.__version__}")
+          f"library {dp.__version__}")
     rows = [
-        ("loop of parse", lambda: [uap.parse(s) for s in texts]),
-        ("parse_many", lambda: uap.parse_many(texts)),
-        ("loop of parse + to_dict", lambda: [uap.parse(s).to_dict() for s in texts]),
-        ("parse_many + to_dict", lambda: [a.to_dict() for a in uap.parse_many(texts) if a]),
+        ("loop of parse", lambda: [dp.parse(s) for s in texts]),
+        ("parse_many", lambda: dp.parse_many(texts)),
+        ("loop of parse + to_dict", lambda: [dp.parse(s).to_dict() for s in texts]),
+        ("parse_many + to_dict", lambda: [a.to_dict() for a in dp.parse_many(texts) if a]),
     ]
     cols = ["street_number", "street_name", "street_suffix", "unit_number",
             "city", "state", "zip5"]
@@ -61,7 +61,7 @@ def main():
             "parse_many -> pandas",
             lambda: pd.DataFrame(
                 [{c: getattr(a, c) for c in cols} if a else {}
-                 for a in uap.parse_many(texts)]
+                 for a in dp.parse_many(texts)]
             ),
         ))
     except ImportError:
@@ -70,7 +70,7 @@ def main():
         import polars as pl
 
         def to_polars():
-            parsed = uap.parse_many(texts)
+            parsed = dp.parse_many(texts)
             return pl.DataFrame(
                 {c: [getattr(a, c) if a else None for a in parsed] for c in cols},
                 schema={c: pl.String for c in cols},

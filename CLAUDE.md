@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Rust-core US address parser with a PyO3 Python wrapper. Read docs/design.md first.
+Rust-core US address parser with a PyO3 Python wrapper. Read docs/how-it-works.md first.
 
 ## Rules
 - doorplate must stay pure Rust with no Python dependency. PyO3 lives only in doorplate-py.
